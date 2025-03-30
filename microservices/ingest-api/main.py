@@ -1,39 +1,36 @@
-# main.py
 import logging
-from src.api_ingestion import APIIngestion
-from src.utils import get_params_from_config  # Caso você precise de algum arquivo de configuração
+import json
+from src.strategy.ingestion_api import APIIngestion
+from src.utils.utils import load_config, convert_to_json
 
 # Configuração de logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 def main():
     """
-    Função principal que faz a ingestão de dados de diferentes fontes.
+    Função principal que faz a ingestão de dados da API.
     """
     try:
-        # Você pode pegar os parâmetros do arquivo de configuração, ou de variáveis de ambiente
-        config = get_params_from_config()  # Retorna os parâmetros necessários para a ingestão
+        config = load_config("config.yaml")
 
-        for api_config in config["apis"]:
-            api_url = api_config["url"]
-            api_type = api_config["type"]  # Tipo da API (ex: REST ou GraphQL)
-            params = api_config["params"]
+        api_url = config["api"]["url"]
+        api_key = config["api"]["key"]
+        
+        ingestion_service = APIIngestion(api_url, "rest")
 
-            # Criação do objeto de ingestão de dados
-            ingestion_service = APIIngestion(api_url, api_type)
+        params = {"key": api_key}
 
-            # Realizar a ingestão
-            data = ingestion_service.ingest(params)
+        response = ingestion_service.ingest(params)
 
-            # Log de sucesso
-            logger.info(f"Ingestão realizada com sucesso para API: {api_url}")
+        data = convert_to_json(response)
 
-            # Você pode armazenar ou fazer algo com os dados depois da ingestão
+        print(data)
+
+        logger.info(f"Ingestão realizada com sucesso para API: {api_url}")
 
     except Exception as e:
-        logger.error(f"Erro durante a ingestão de dados: {str(e)}")
-
+        logger.exception(f"Erro crítico durante a execução: {e}")
 
 if __name__ == "__main__":
     main()

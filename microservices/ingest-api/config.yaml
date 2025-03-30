@@ -1,9 +1,15 @@
-api_url: "https://api.mockaroo.com/api/clients"
-api_key: "SUA_CHAVE"
-raw_storage_account: "seuarmazem.blob.core.windows.net"
-raw_container: "raw"
-raw_folder: "clients/api"
-azure_sas_token: "SUA_SAS_TOKEN"
+api:
+  url: "https://my.api.mockaroo.com/offerchannel/client_csv.json"
+  key: "8af74270"
+
+storage:
+  raw:
+    account: "seuarmazem.blob.core.windows.net"
+    container: "raw"
+    folder: "clients/api"
+
+azure:
+  sas_token: "SUA_SAS_TOKEN"
 
 # version
 # setup
