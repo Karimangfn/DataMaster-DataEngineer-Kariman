@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-class APIIngestionStrategy(ABC):
+class IngestStrategy(ABC):
+
     @abstractmethod
-    def ingest(self, data_source):
+    def ingest(self, file_path: str):
         pass
