@@ -1,0 +1,55 @@
+name: Deploy Microservices to AKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      azure_credentials:
+        description: 'Azure credentials in JSON format (optional)'
+        required: false
+        type: string
+      acr_name:
+        description: 'Azure Container Registry name (optional)'
+        required: false
+        type: string
+      aks_cluster_name:
+        description: 'AKS cluster name (optional)'
+        required: false
+        type: string
+      resource_group:
+        description: 'Azure resource group name (optional)'
+        required: false
+        type: string
+
+jobs:
+  deploy_microservices:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Azure CLI login
+        uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "${{ github.event.inputs.resource_group || secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ github.event.inputs.aks_cluster_name || secrets.AKS_CLUSTER_NAME }}" \
+            --overwrite-existing
+
+      - name: Deploy to AKS
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+
+          for service in ingest-api ingest-db ingest-files; do
+            version=$(cat microservices/$service/VERSION)
+            echo "Deploying $service with version $version"
+
+            export SERVICE_NAME=$service
+            export IMAGE="$acr_name.azurecr.io/$service:$version"
+
+            envsubst < microservices/$service/deployment.yaml | kubectl apply -f -
+          done

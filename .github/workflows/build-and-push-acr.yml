@@ -1,0 +1,60 @@
+name: Build and Push Docker Images to ACR
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      azure_credentials:
+        description: 'Azure credentials in JSON format (optional)'
+        required: false
+        type: string
+      acr_name:
+        description: 'Azure Container Registry name (optional)'
+        required: false
+        type: string
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Azure CLI
+        uses: azure/setup-azurecli@v1
+        with:
+          azure-cli-version: '2.35.0'
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          echo "ACR name: $acr_name"
+          az acr login --name $acr_name
+
+      - name: Build and Push Images if New Version
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+
+          for service in ingest-api ingest-db ingest-files; do
+            version=$(cat microservices/$service/VERSION)
+
+            echo "Checking if image $acr_name.azurecr.io/$service:$version exists..."
+
+            exists=$(az acr repository show-tags --name $acr_name \
+              --repository $service --output tsv | grep -x "$version" || true)
+
+            if [ "$exists" ]; then
+              echo "❌ Version $version of $service already exists. Skipping."
+            else
+              echo "✅ Building and pushing $service:$version"
+              docker build -t $acr_name.azurecr.io/$service:$version ./microservices/$service
+              docker push $acr_name.azurecr.io/$service:$version
+            fi
+          done
