@@ -3,7 +3,7 @@
 &nbsp;
 
 <p align="center">
-  <img src="assets/img/Data-Master-Logo.png" width="300">
+  <img src="assets/images/Data-Master-Logo.png" width="300">
 </p>
 &nbsp;
 
