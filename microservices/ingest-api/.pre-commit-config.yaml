@@ -5,7 +5,7 @@ repos:
   hooks:
   - id: isort
     name: isort
-    stages: [commit]
+    stages: [pre-commit]
     language: system
     entry: isort
     args: [--honor-noqa]
@@ -13,16 +13,16 @@ repos:
 
   - id: flake8
     name: flake8
-    stages: [commit]
+    stages: [pre-commit]
     language: system
     entry: flake8
     types: [python]
 
   - id: bandit
     name: bandit
-    stages: [commit]
+    stages: [pre-commit]
     language: system
     pass_filenames: false
     entry: bandit
-    args: [--severity-level, medium, --recursive]
+    args: [--severity-level, medium, --recursive, src, tests]
     types: [python]

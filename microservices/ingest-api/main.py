@@ -1,11 +1,13 @@
 import logging
-import json
+
 from src.strategy.ingestion_api import APIIngestion
-from src.utils.utils import load_config, convert_to_json
+from src.utils.utils import convert_to_json, load_config
 
 # Configuração de logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 def main():
     """
@@ -16,7 +18,7 @@ def main():
 
         api_url = config["api"]["url"]
         api_key = config["api"]["key"]
-        
+
         ingestion_service = APIIngestion(api_url, "rest")
 
         params = {"key": api_key}
@@ -31,6 +33,7 @@ def main():
 
     except Exception as e:
         logger.exception(f"Erro crítico durante a execução: {e}")
+
 
 if __name__ == "__main__":
     main()

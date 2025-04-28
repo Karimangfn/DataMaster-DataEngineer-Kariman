@@ -1,5 +1,6 @@
 from .ingestion_rest_api import RestAPIIngestion
 
+
 class APIIngestion:
     def __init__(self, api_url, api_type):
         self.api_url = api_url

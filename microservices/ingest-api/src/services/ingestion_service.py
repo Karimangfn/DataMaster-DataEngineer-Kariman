@@ -1,5 +1,6 @@
 from src.ingestion.api_ingestor import APIIngestor
 
+
 class IngestionService:
     """Gerenciador de ingestão de dados via API"""
 
