@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - develop
+    paths:
+      - '**/VERSION'
   pull_request:
     branches:
       - develop
+    paths:
+      - '**/VERSION'
   workflow_dispatch:
     inputs:
       azure_credentials:
