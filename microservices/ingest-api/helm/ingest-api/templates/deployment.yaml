@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ingest-api.fullname" . }}
+  labels:
+    {{- include "ingest-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ingest-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ingest-api.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: API_URL
+              value: {{ .Values.config.api.url | quote }}
+            - name: API_KEY
+              value: {{ .Values.config.api.key | quote }}
+            - name: STORAGE_ACCOUNT
+              value: {{ .Values.config.storage.raw.account | quote }}
+            - name: STORAGE_CONTAINER
+              value: {{ .Values.config.storage.raw.container | quote }}
+            - name: STORAGE_FOLDER
+              value: {{ .Values.config.storage.raw.folder | quote }}
+            - name: AZURE_SAS_TOKEN
+              value: {{ .Values.config.azure.sas_token | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

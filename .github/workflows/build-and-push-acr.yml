@@ -1,0 +1,90 @@
+name: Build and Push to ACR
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - '**/VERSION'
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - '**/VERSION'
+  workflow_dispatch:
+    inputs:
+      azure_credentials:
+        description: 'Azure Credentials JSON'
+        required: false
+        type: string
+      acr_name:
+        description: 'Azure Container Registry Name'
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Passo 1: Check out o código
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Passo 2: Configurar o Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Passo 3: Configurar o Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      # Passo 4: Instalar dependências com setup.py
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      # Passo 5: Configurar login no Azure CLI
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+
+      # Passo 6: Login no Azure Container Registry (ACR)
+      - name: Login to ACR
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          az acr login --name $acr_name
+
+      # Passo 7: Validar se a tag já existe no ACR
+      - name: Check if image tag exists in ACR
+        id: check_acr_tag
+        run: |
+          TAG=${{ github.sha }} # Ou qualquer tag que você queira validar
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          IMAGE="${acr_name}.azurecr.io/ingest-api:$TAG"
+          
+          if az acr repository show-tags --name $acr_name --repository ingest-api --query "[?contains(@, '$TAG')]" | grep -q "$TAG"; then
+            echo "Tag $TAG already exists. Skipping build and push."
+            echo "skip_build=true" >> $GITHUB_ENV
+          else
+            echo "Tag $TAG does not exist. Proceeding with build and push."
+            echo "skip_build=false" >> $GITHUB_ENV
+          fi
+
+      # Passo 8: Construir e push da imagem Docker, caso a tag não exista
+      - name: Build Docker image
+        if: env.skip_build == 'false'
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          docker build -t ${acr_name}.azurecr.io/ingest-api:${{ github.sha }} .
+
+      # Passo 9: Push da imagem para o ACR, caso a tag não exista
+      - name: Push Docker image to ACR
+        if: env.skip_build == 'false'
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          docker push ${acr_name}.azurecr.io/ingest-api:${{ github.sha }}
