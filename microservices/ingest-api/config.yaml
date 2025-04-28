@@ -10,10 +10,3 @@ storage:
 
 azure:
   sas_token: "SUA_SAS_TOKEN"
-
-# version
-# setup
-# pre-commit
-# deployment?
-# changelog?
-# .editorconfig?

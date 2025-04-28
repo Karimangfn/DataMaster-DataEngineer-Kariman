@@ -1,0 +1,34 @@
+replicaCount: 1
+
+image:
+  repository: "{{ .Values.global.acrName }}.azurecr.io/ingest-api"
+  pullPolicy: IfNotPresent
+  tag: "{{ .Values.image.tag }}"
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /readiness
+    port: http
+
+config:
+  storage:
+    accountName: ""
+    container: "raw"
+    folder: "clients/api"
+
+  azure:
+    sas_token: ""

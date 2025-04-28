@@ -1,0 +1,28 @@
+default_language_version:
+  python: python3.9
+repos:
+- repo: local
+  hooks:
+  - id: isort
+    name: isort
+    stages: [commit]
+    language: system
+    entry: isort
+    args: [--honor-noqa]
+    types: [python]
+
+  - id: flake8
+    name: flake8
+    stages: [commit]
+    language: system
+    entry: flake8
+    types: [python]
+
+  - id: bandit
+    name: bandit
+    stages: [commit]
+    language: system
+    pass_filenames: false
+    entry: bandit
+    args: [--severity-level, medium, --recursive]
+    types: [python]
