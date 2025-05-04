@@ -1,7 +1,7 @@
 FROM ubuntu:25.04
 
 RUN apt-get update && apt-get install -y \
-    python3.11 \
+    python3.9 \
     python3-pip \
     python3-setuptools \
     && apt-get clean
