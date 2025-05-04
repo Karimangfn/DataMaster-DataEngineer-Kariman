@@ -28,30 +28,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
           python-version: '3.11'
 
-      - name: Detect service path from changed VERSION file
-        id: detect_path
+      - name: Install dependencies
         run: |
-          path=$(git diff --name-only ${{ github.event.before || github.sha }} | grep 'VERSION' | head -n1 | xargs dirname)
-          echo "service_path=$path" >> $GITHUB_OUTPUT
-
-      - name: Read service name and version
-        id: read_info
-        run: |
-          path=${{ steps.detect_path.outputs.service_path }}
-          version=$(cat "$path/VERSION")
-          service=$(basename "$path")
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "service=$service" >> $GITHUB_OUTPUT
+          cd $(git diff --name-only ${{ github.sha }}^..${{ github.sha }} | grep 'VERSION' | head -n 1 | xargs dirname)
+          python -m pip install --upgrade pip
+          pip install .
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -60,28 +51,36 @@ jobs:
 
       - name: Login to ACR
         run: |
-          az acr login --name ${{ github.event.inputs.acr_name || secrets.ACR_NAME }}
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          az acr login --name $acr_name
 
-      - name: Check if tag already exists in ACR
-        id: tag_check
-        continue-on-error: true
+      - name: Read version from VERSION file
+        id: read_version
         run: |
-          set -e
-          exists=$(az acr repository show-tags \
-            --name ${{ github.event.inputs.acr_name || secrets.ACR_NAME }} \
-            --repository ${{ steps.read_info.outputs.service }} \
-            --query "contains(@, '${{ steps.read_info.outputs.version }}')" \
-            --output tsv 2>/dev/null || echo false)
+          VERSION=$(cat $(git diff --name-only ${{ github.sha }}^..${{ github.sha }} | grep 'VERSION' | head -n 1 | xargs dirname)/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-          echo "Tag exists? $exists"
-          echo "tag_exists=$exists" >> $GITHUB_OUTPUT
+      - name: Check if image with version exists in ACR
+        id: check_acr_tag
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          IMAGE="${acr_name}.azurecr.io/ingest-api:$VERSION"
+          if az acr repository show-tags --name $acr_name --repository ingest-api --query "[?contains(@, '$VERSION')]" | grep -q "$VERSION"; then
+            echo "Tag $VERSION already exists. Skipping build and push."
+            echo "skip_build=true" >> $GITHUB_ENV
+          else
+            echo "Tag $VERSION does not exist. Proceeding with build and push."
+            echo "skip_build=false" >> $GITHUB_ENV
+          fi
 
       - name: Build Docker image
-        if: steps.tag_check.outputs.tag_exists != 'true'
+        if: env.skip_build == 'false'
         run: |
-          docker build -t ${{ github.event.inputs.acr_name || secrets.ACR_NAME }}.azurecr.io/${{ steps.read_info.outputs.service }}:${{ steps.read_info.outputs.version }} ${{ steps.detect_path.outputs.service_path }}
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          docker build -t ${acr_name}.azurecr.io/ingest-api:${{ env.VERSION }} .
 
-      - name: Push Docker image
-        if: steps.tag_check.outputs.tag_exists != 'true'
+      - name: Push Docker image to ACR
+        if: env.skip_build == 'false'
         run: |
-          docker push ${{ github.event.inputs.acr_name || secrets.ACR_NAME }}.azurecr.io/${{ steps.read_info.outputs.service }}:${{ steps.read_info.outputs.version }}
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          docker push ${acr_name}.azurecr.io/ingest-api:${{ env.VERSION }}
