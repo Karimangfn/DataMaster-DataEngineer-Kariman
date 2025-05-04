@@ -85,7 +85,13 @@ jobs:
         if: env.skip_build == 'false'
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-          docker buildx build -t $acr_name.azurecr.io/ingest-api:$VERSION -f $service_path/Dockerfile $service_path/
+          service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          echo "service_path=$service_path"
+          if [ -f "$service_path/Dockerfile" ]; then
+            docker buildx build -t $acr_name.azurecr.io/ingest-api:$VERSION -f $service_path/Dockerfile $service_path/
+          else
+            echo "Dockerfile not found in $service_path. Skipping build."
+          fi
 
       - name: Push Docker image to ACR
         if: env.skip_build == 'false'
