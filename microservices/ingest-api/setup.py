@@ -1,6 +1,11 @@
 from setuptools import find_packages, setup
 
 
+def read_version():
+    with open('VERSION') as f:
+        return f.read().strip()
+
+
 def read_requirements():
     with open('requirements.txt') as f:
         return f.read().splitlines()
@@ -8,7 +13,7 @@ def read_requirements():
 
 setup(
     name="Ingest API",
-    version="0.0.1",
+    version=read_version(),
     author="Kariman",
     description="Microsserviço para ingestão de dados de uma API",
     packages=find_packages(),

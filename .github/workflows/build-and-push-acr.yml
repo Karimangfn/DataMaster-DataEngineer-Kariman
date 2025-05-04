@@ -27,39 +27,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Passo 1: Check out o código
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Passo 2: Configurar o Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # Passo 3: Configurar o Python
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
 
-      # Passo 4: Instalar dependências com setup.py
+      - name: Detect changed service path
+        id: detect_path
+        run: |
+          set -e
+          path=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'VERSION' | head -n1 | xargs dirname)
+          echo "Detected service path: $path"
+          echo "service_path=$path" >> $GITHUB_OUTPUT
+
       - name: Install dependencies
         run: |
+          cd "${{ steps.detect_path.outputs.service_path }}"
           python -m pip install --upgrade pip
           pip install .
 
-      # Passo 5: Configurar login no Azure CLI
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-      # Passo 6: Login no Azure Container Registry (ACR)
       - name: Login to ACR
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
 
-      # Passo 7: Validar se a tag já existe no ACR
       - name: Check if image tag exists in ACR
         id: check_acr_tag
         run: |
@@ -75,14 +77,12 @@ jobs:
             echo "skip_build=false" >> $GITHUB_ENV
           fi
 
-      # Passo 8: Construir e push da imagem Docker, caso a tag não exista
       - name: Build Docker image
         if: env.skip_build == 'false'
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           docker build -t ${acr_name}.azurecr.io/ingest-api:${{ github.sha }} .
 
-      # Passo 9: Push da imagem para o ACR, caso a tag não exista
       - name: Push Docker image to ACR
         if: env.skip_build == 'false'
         run: |
