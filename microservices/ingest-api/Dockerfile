@@ -15,6 +15,4 @@ RUN pip3 install --upgrade pip \
 
 COPY . .
 
-ENV PYTHONUNBUFFERED=1
-
 CMD ["python3", "src/main.py"]
