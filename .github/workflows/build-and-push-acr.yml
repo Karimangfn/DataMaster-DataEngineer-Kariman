@@ -63,6 +63,8 @@ jobs:
       - name: Read version from VERSION file
         id: read_version
         run: |
+          service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          echo "service_path=$service_path"
           VERSION=$(cat $service_path/VERSION)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
