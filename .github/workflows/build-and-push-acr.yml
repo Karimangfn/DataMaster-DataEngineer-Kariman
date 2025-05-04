@@ -85,7 +85,7 @@ jobs:
         if: env.skip_build == 'false'
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-          docker build -t ${acr_name}.azurecr.io/ingest-api:${{ env.VERSION }} -f $service_path/Dockerfile $service_path
+          docker buildx build -t $acr_name.azurecr.io/ingest-api:$VERSION -f $service_path/Dockerfile $service_path
 
       - name: Push Docker image to ACR
         if: env.skip_build == 'false'
