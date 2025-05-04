@@ -40,9 +40,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd $(git diff --name-only ${{ github.sha }}^..${{ github.sha }} | grep 'VERSION' | head -n 1 | xargs dirname)
-          python -m pip install --upgrade pip
-          pip install .
+          service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          echo "service_path=$service_path"
+          if [ -f "$service_path/setup.py" ]; then
+            cd $service_path
+            python -m pip install --upgrade pip
+            pip install .
+          else
+            echo "setup.py not found in $service_path. Skipping dependency installation."
+          fi
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -57,7 +63,7 @@ jobs:
       - name: Read version from VERSION file
         id: read_version
         run: |
-          VERSION=$(cat $(git diff --name-only ${{ github.sha }}^..${{ github.sha }} | grep 'VERSION' | head -n 1 | xargs dirname)/VERSION)
+          VERSION=$(cat $service_path/VERSION)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Check if image with version exists in ACR
@@ -71,7 +77,6 @@ jobs:
           else
             echo "Tag $VERSION does not exist. Proceeding with build and push."
             echo "skip_build=false" >> $GITHUB_ENV
-          fi
 
       - name: Build Docker image
         if: env.skip_build == 'false'
