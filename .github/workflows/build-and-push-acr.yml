@@ -12,6 +12,15 @@ on:
     paths:
       - '**/VERSION'
   workflow_dispatch:
+    inputs:
+      azure_credentials:
+        description: 'Azure Credentials JSON'
+        required: true
+        type: string
+      acr_name:
+        description: 'Azure Container Registry Name'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -47,11 +56,11 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
       - name: Login to ACR
         run: |
-          az acr login --name ${{ secrets.ACR_NAME }}
+          az acr login --name ${{ github.event.inputs.acr_name || secrets.ACR_NAME }}
 
       - name: Check if tag already exists in ACR
         id: tag_check
@@ -59,7 +68,7 @@ jobs:
         run: |
           set -e
           exists=$(az acr repository show-tags \
-            --name ${{ secrets.ACR_NAME }} \
+            --name ${{ github.event.inputs.acr_name || secrets.ACR_NAME }} \
             --repository ${{ steps.read_info.outputs.service }} \
             --query "contains(@, '${{ steps.read_info.outputs.version }}')" \
             --output tsv 2>/dev/null || echo false)
@@ -70,9 +79,9 @@ jobs:
       - name: Build Docker image
         if: steps.tag_check.outputs.tag_exists != 'true'
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ steps.read_info.outputs.service }}:${{ steps.read_info.outputs.version }} ${{ steps.detect_path.outputs.service_path }}
+          docker build -t ${{ github.event.inputs.acr_name || secrets.ACR_NAME }}.azurecr.io/${{ steps.read_info.outputs.service }}:${{ steps.read_info.outputs.version }} ${{ steps.detect_path.outputs.service_path }}
 
       - name: Push Docker image
         if: steps.tag_check.outputs.tag_exists != 'true'
         run: |
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ steps.read_info.outputs.service }}:${{ steps.read_info.outputs.version }}
+          docker push ${{ github.event.inputs.acr_name || secrets.ACR_NAME }}.azurecr.io/${{ steps.read_info.outputs.service }}:${{ steps.read_info.outputs.version }}
