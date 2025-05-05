@@ -25,15 +25,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Azure CLI
         uses: azure/setup-azurecli@v1
 
       - name: Login to Azure
-        run: |
-          echo "${{ github.event.inputs.azure_credentials }}" > azure_credentials.json
-          az login --service-principal --username $(jq -r '.clientId' azure_credentials.json) --password $(jq -r '.clientSecret' azure_credentials.json) --tenant $(jq -r '.tenantId' azure_credentials.json)
+        uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
       - name: Get AKS credentials
         run: |
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Helm
         run: |
