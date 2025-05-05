@@ -1,6 +1,14 @@
 name: Deploy to AKS
 
 on:
+  # Uncomment below if you want to trigger this after build workflow finishes successfully
+  # workflow_run:
+  #   workflows: ["Build and Push to ACR"]
+  #   types:
+  #     - completed
+  #   branches:
+  #     - develop
+
   workflow_dispatch:
     inputs:
       azure_credentials:
@@ -12,56 +20,54 @@ on:
         required: false
         type: string
       aks_name:
-        description: 'Azure Kubernetes Service Name'
+        description: 'AKS Cluster Name'
         required: false
         type: string
       resource_group:
-        description: 'Resource Group Name'
+        description: 'Azure Resource Group Name'
         required: false
         type: string
 
-  # Comentado para teste manual sem depender do outro workflow
-  # workflow_run:
-  #   workflows: ["Build and Push to ACR"]
-  #   types:
-  #     - completed
-
 jobs:
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: Set up Azure CLI
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-      - name: Get AKS credentials
-        run: |
-          aks_name="${{ github.event.inputs.aks_name || secrets.AKS_NAME }}"
-          resource_group="${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }}"
-          az aks get-credentials --resource-group $resource_group --name $aks_name --overwrite-existing
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-
-      - name: Read service path and version
-        id: read_version
+      - name: Locate service path and version
+        id: version
         run: |
           service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
           VERSION=$(cat "$service_path/VERSION")
           echo "service_path=$service_path" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }}" \
+            --name "${{ github.event.inputs.aks_name || secrets.AKS_NAME }}" \
+            --file ./kubeconfig
+
+      - name: Test kubectl access
+        run: |
+          export KUBECONFIG=./kubeconfig
+          kubectl get nodes
 
       - name: Deploy with Helm
         run: |
+          export KUBECONFIG=./kubeconfig
           image_name=$(basename "$service_path")
           helm upgrade --install $image_name "$service_path/helm" \
             --set image.repository=${{ github.event.inputs.acr_name || secrets.ACR_NAME }}.azurecr.io/$image_name \
             --set image.tag=$VERSION \
             --namespace default \
-            --create-namespace
+            --create-namespace \
+            --kubeconfig ./kubeconfig
