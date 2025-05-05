@@ -29,45 +29,43 @@ on:
         type: string
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  setup-aks:
+    runs-on: self-hosted  # Garante que o job rode no runner auto-hospedado
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v2
+      
       - name: Set up Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+        uses: azure/setup-azurecli@v1
 
-      - name: Locate service path and version
-        id: version
+      - name: Login to Azure
         run: |
-          service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-          VERSION=$(cat "$service_path/VERSION")
-          echo "service_path=$service_path" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "${{ github.event.inputs.azure_credentials }}" > azure_credentials.json
+          az login --service-principal --username $(jq -r '.clientId' azure_credentials.json) --password $(jq -r '.clientSecret' azure_credentials.json) --tenant $(jq -r '.tenantId' azure_credentials.json)
 
       - name: Get AKS credentials
         run: |
-          az aks get-credentials \
-            --resource-group "${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }}" \
-            --name "${{ github.event.inputs.aks_name || secrets.AKS_NAME }}" \
-            --file ./kubeconfig
+          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group }} --name ${{ github.event.inputs.aks_name }} --admin
 
-      - name: Test kubectl access
-        run: |
-          export KUBECONFIG=./kubeconfig
-          kubectl get nodes
+      - name: Verify kubectl access
+        run: kubectl get nodes
 
-      - name: Deploy with Helm
+  deploy-to-aks:
+    needs: setup-aks
+    runs-on: self-hosted  # Também precisa rodar no self-hosted runner para acessar a VNet
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Helm
         run: |
-          export KUBECONFIG=./kubeconfig
+          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3.sh | bash
+
+      - name: Deploy to AKS with Helm
+        run: |
           image_name=$(basename "$service_path")
           helm upgrade --install $image_name "$service_path/helm" \
-            --set image.repository=${{ github.event.inputs.acr_name || secrets.ACR_NAME }}.azurecr.io/$image_name \
-            --set image.tag=$VERSION \
+            --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
+            --set image.tag=${{ github.event.inputs.version }} \
             --namespace default \
-            --create-namespace \
-            --kubeconfig ./kubeconfig
+            --create-namespace
