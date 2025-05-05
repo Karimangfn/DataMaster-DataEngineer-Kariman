@@ -59,7 +59,7 @@ jobs:
 
       - name: Deploy to AKS with Helm
         run: |
-          service_path="${{ needs.setup-aks.outputs.service_path }}"
+          service_path="${{ needs.setup_aks.outputs.service_path }}"
           image_name=$(basename "$service_path")
           helm upgrade --install $image_name "$service_path/helm" \
             --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
