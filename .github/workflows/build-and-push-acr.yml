@@ -97,4 +97,7 @@ jobs:
         if: env.skip_build == 'false'
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-          docker push ${acr_name}.azurecr.io/ingest-api:${{ env.VERSION }}
+          service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          image_name=$(basename "$service_path")
+          echo "Pushing image: $acr_name.azurecr.io/$image_name:$VERSION"
+          docker push $acr_name.azurecr.io/$image_name:$VERSION
