@@ -1,14 +1,6 @@
 name: Deploy to AKS
 
 on:
-  # Uncomment below if you want to trigger this after build workflow finishes successfully
-  # workflow_run:
-  #   workflows: ["Build and Push to ACR"]
-  #   types:
-  #     - completed
-  #   branches:
-  #     - develop
-
   workflow_dispatch:
     inputs:
       azure_credentials:
@@ -34,7 +26,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      
+
       - name: Set up Azure CLI
         uses: azure/setup-azurecli@v1
 
@@ -47,8 +39,12 @@ jobs:
         run: |
           az aks get-credentials --resource-group ${{ github.event.inputs.resource_group }} --name ${{ github.event.inputs.aks_name }} --admin
 
-      - name: Verify kubectl access
-        run: kubectl get nodes
+      - name: Verify kubectl access (using az aks command invoke)
+        run: |
+          az aks command invoke \
+            --resource-group ${{ github.event.inputs.resource_group }} \
+            --name ${{ github.event.inputs.aks_name }} \
+            --command "kubectl get nodes"
 
   deploy-to-aks:
     needs: setup-aks
@@ -69,3 +65,10 @@ jobs:
             --set image.tag=${{ github.event.inputs.version }} \
             --namespace default \
             --create-namespace
+
+      - name: Verify deployment in AKS (using az aks command invoke)
+        run: |
+          az aks command invoke \
+            --resource-group ${{ github.event.inputs.resource_group }} \
+            --name ${{ github.event.inputs.aks_name }} \
+            --command "kubectl get deployments -n default"
