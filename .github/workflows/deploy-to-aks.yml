@@ -21,7 +21,7 @@ on:
         type: string
 
 jobs:
-  setup-aks:
+  setup_aks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -36,14 +36,7 @@ jobs:
         run: |
           az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
 
-      - name: Verify kubectl access (using az aks command invoke)
-        run: |
-          az aks command invoke \
-            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
-            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
-            --command "kubectl get nodes"
-
-  deploy-to-aks:
+  deploy_to_aks:
     needs: setup-aks
     runs-on: ubuntu-latest
     steps:
