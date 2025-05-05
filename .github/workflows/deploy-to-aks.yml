@@ -21,7 +21,7 @@ on:
         type: string
 
 jobs:
-  setup_aks:
+  setup:
     runs-on: ubuntu-latest
     outputs:
       service_path: ${{ steps.find_path.outputs.service_path }}
@@ -45,8 +45,8 @@ jobs:
           echo "service_path=$path"
           echo "service_path=$path" >> $GITHUB_OUTPUT  # Define a saída para o próximo job
 
-  deploy_to_aks:
-    needs: setup_aks
+  deploy:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -57,9 +57,13 @@ jobs:
         with:
           version: 'v3.7.0'
 
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
+
       - name: Deploy to AKS with Helm
         run: |
-          service_path="${{ needs.setup_aks.outputs.service_path }}"
+          service_path="${{ needs.setup.outputs.service_path }}"
           image_name=$(basename "$service_path")
           helm upgrade --install $image_name "$service_path/helm" \
             --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
