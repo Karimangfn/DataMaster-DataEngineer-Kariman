@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: ""  # deixado em branco para ser setado via --set
+  repository: ""
   pullPolicy: IfNotPresent
-  tag: ""          # também setado via --set
+  tag: ""
 
 nameOverride: ""
 fullnameOverride: ""
