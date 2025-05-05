@@ -34,13 +34,13 @@ jobs:
 
       - name: Get AKS credentials
         run: |
-          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group }} --name ${{ github.event.inputs.aks_name }} --admin
+          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
 
       - name: Verify kubectl access (using az aks command invoke)
         run: |
           az aks command invoke \
-            --resource-group ${{ github.event.inputs.resource_group }} \
-            --name ${{ github.event.inputs.aks_name }} \
+            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
+            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
             --command "kubectl get nodes"
 
   deploy-to-aks:
@@ -66,6 +66,6 @@ jobs:
       - name: Verify deployment in AKS (using az aks command invoke)
         run: |
           az aks command invoke \
-            --resource-group ${{ github.event.inputs.resource_group }} \
-            --name ${{ github.event.inputs.aks_name }} \
+            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
+            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
             --command "kubectl get deployments -n default"
