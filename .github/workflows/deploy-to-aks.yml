@@ -21,10 +21,8 @@ on:
         type: string
 
 jobs:
-  setup:
+  setup_and_deploy:
     runs-on: ubuntu-latest
-    outputs:
-      service_path: ${{ steps.find_path.outputs.service_path }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,44 +34,29 @@ jobs:
 
       - name: Get AKS credentials
         run: |
-          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
+          az aks get-credentials \
+            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
+            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
+            --admin
 
       - name: Find service path
         id: find_path
         run: |
           path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
           echo "service_path=$path"
-          echo "service_path=$path" >> $GITHUB_OUTPUT  # Define a saída para o próximo job
-
-  deploy:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          echo "service_path=$path" >> $GITHUB_OUTPUT
 
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
         with:
           version: 'v3.7.0'
 
-      - name: Get AKS credentials
-        run: |
-          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
-
       - name: Deploy to AKS with Helm
         run: |
-          service_path="${{ needs.setup.outputs.service_path }}"
+          service_path="${{ steps.find_path.outputs.service_path }}"
           image_name=$(basename "$service_path")
           helm upgrade --install $image_name "$service_path/helm" \
             --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
             --set image.tag=${{ github.event.inputs.version }} \
             --namespace default \
             --create-namespace
-
-      - name: Verify deployment in AKS (using az aks command invoke)
-        run: |
-          az aks command invoke \
-            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
-            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
-            --command "kubectl get deployments -n default"
