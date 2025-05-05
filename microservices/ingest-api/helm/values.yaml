@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: "{{ .Values.global.acrName }}.azurecr.io/ingest-api"
+  repository: ""  # deixado em branco para ser setado via --set
   pullPolicy: IfNotPresent
-  tag: "{{ .Values.image.tag }}"
+  tag: ""          # também setado via --set
 
 nameOverride: ""
 fullnameOverride: ""
@@ -14,21 +14,16 @@ service:
 
 resources: {}
 
-livenessProbe:
-  httpGet:
-    path: /health
-    port: http
-
-readinessProbe:
-  httpGet:
-    path: /readiness
-    port: http
-
 config:
+  api:
+    url: ""
+    key: ""
+
   storage:
-    accountName: ""
-    container: "raw"
-    folder: "clients/api"
+    raw:
+      account: ""
+      container: "raw"
+      folder: "clients/api"
 
   azure:
     sas_token: ""
