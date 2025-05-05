@@ -23,26 +23,20 @@ on:
         type: string
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
           python-version: '3.11'
-
-  dependencies:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -56,36 +50,15 @@ jobs:
             echo "setup.py not found in $service_path. Skipping dependency installation."
           fi
 
-  azure_login:
-    runs-on: ubuntu-latest
-    needs: dependencies
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-  acr_login:
-    runs-on: ubuntu-latest
-    needs: azure_login
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Login to ACR
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
-
-  check_image:
-    runs-on: ubuntu-latest
-    needs: acr_login
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Read version from VERSION file
         id: read_version
@@ -107,13 +80,6 @@ jobs:
             echo "Tag $VERSION does not exist. Proceeding with build and push."
             echo "skip_build=false" >> $GITHUB_ENV
           fi
-
-  build_and_push:
-    runs-on: ubuntu-latest
-    needs: check_image
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Build Docker image
         if: env.skip_build == 'false'
@@ -137,3 +103,4 @@ jobs:
           image_name=$(basename "$service_path")
           echo "Pushing image: $acr_name.azurecr.io/$image_name:$VERSION"
           docker push $acr_name.azurecr.io/$image_name:$VERSION
+          
