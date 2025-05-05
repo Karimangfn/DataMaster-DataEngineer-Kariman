@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY setup.py requirements.txt ./
+COPY setup.py requirements.txt VERSION ./
 
 RUN pip install --upgrade pip \
     && pip install .
