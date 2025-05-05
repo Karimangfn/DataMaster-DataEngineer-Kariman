@@ -22,7 +22,7 @@ on:
 
 jobs:
   setup-aks:
-    runs-on: self-hosted  # Garante que o job rode no runner auto-hospedado
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -48,7 +48,7 @@ jobs:
 
   deploy-to-aks:
     needs: setup-aks
-    runs-on: self-hosted  # Também precisa rodar no self-hosted runner para acessar a VNet
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
