@@ -43,8 +43,11 @@ jobs:
         id: find_path
         run: |
           path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          version=$(cat "$path/VERSION")
+          echo "version=$version"
           echo "service_path=$path"
           echo "service_path=$path" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
@@ -53,12 +56,13 @@ jobs:
 
       - name: Deploy to AKS with Helm
         run: |
-          service_path="${{ steps.find_path.outputs.service_path }}"
+          service_path="${{ steps.find_info.outputs.service_path }}"
+          version="${{ steps.find_info.outputs.version }}"
           image_name=$(basename "$service_path")
-          full_image="${{ secrets.ACR_NAME }}.azurecr.io/$image_name:${{ github.event.inputs.version }}"
+          full_image="${{ secrets.ACR_NAME }}.azurecr.io/$image_name:$version"
           echo "Deploying image: $full_image"
           helm upgrade --install $image_name "$service_path/helm" \
             --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
-            --set image.tag=${{ github.event.inputs.version }} \
+            --set image.tag=$version \
             --namespace default \
             --create-namespace
