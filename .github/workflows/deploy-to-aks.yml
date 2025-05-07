@@ -56,8 +56,8 @@ jobs:
 
       - name: Deploy to AKS with Helm
         run: |
-          service_path="${{ steps.find_info.outputs.service_path }}"
-          version="${{ steps.find_info.outputs.version }}"
+          service_path="${{ steps.find_path.outputs.service_path }}"
+          version="${{ steps.find_path.outputs.version }}"
           image_name=$(basename "$service_path")
           full_image="${{ secrets.ACR_NAME }}.azurecr.io/$image_name:$version"
           echo "Deploying image: $full_image"
