@@ -126,7 +126,7 @@ jobs:
 
   build_and_push:
     runs-on: ubuntu-latest
-    needs: check_image
+    needs: [check_image, setup]
     if: needs.check_image.outputs.skip_build == 'false'
     steps:
       - name: Checkout code
