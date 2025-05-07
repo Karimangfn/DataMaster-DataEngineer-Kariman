@@ -44,7 +44,7 @@ jobs:
         id: find_path
         run: |
           path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-          image_name=$(basename "$service_path")
+          image_name=$(basename "$path")
           echo "service_path=$path"
           echo "image_name=$image_name"
           echo "service_path=$path" >> $GITHUB_OUTPUT
