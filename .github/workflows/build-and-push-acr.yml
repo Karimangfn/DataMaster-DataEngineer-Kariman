@@ -133,6 +133,11 @@ jobs:
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
+      - name: Login to ACR
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          az acr login --name $acr_name
+
       - name: Build Docker image
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
