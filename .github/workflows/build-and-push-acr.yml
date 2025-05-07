@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       service_path: ${{ steps.find_path.outputs.service_path }}
+      image_name: ${{ steps.find_path.outputs.image_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,8 +44,11 @@ jobs:
         id: find_path
         run: |
           path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          image_name=$(basename "$service_path")
           echo "service_path=$path"
+          echo "image_name=$image_name"
           echo "service_path=$path" >> $GITHUB_OUTPUT
+          echo "image_name=$image_name" >> $GITHUB_OUTPUT
 
   install_dependencies:
     runs-on: ubuntu-latest
@@ -138,31 +142,11 @@ jobs:
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
 
-      # - name: Build Docker image
-      #   run: |
-      #     acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-      #     version="${{ needs.check_image.outputs.version }}"
-      #     service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-      #     image_name=$(basename "$service_path")
-
-      #     echo "Building image: $acr_name.azurecr.io/$image_name:$version"
-      #     docker build -t $acr_name.azurecr.io/$image_name:$version -f $service_path/Dockerfile $service_path/
-
-      # - name: Push Docker image to ACR
-      #   run: |
-      #     acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-      #     version="${{ needs.check_image.outputs.version }}"
-      #     service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-      #     image_name=$(basename "$service_path")
-
-      #     echo "Pushing image: $acr_name.azurecr.io/$image_name:$version"
-      #     docker push $acr_name.azurecr.io/$image_name:$version
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ steps.extract_service_path.outputs.service_path }}
-          file: ${{ steps.extract_service_path.outputs.service_path }}/Dockerfile
+          context: ${{ needs.setup.outputs.service_path }}
+          file: ${{ needs.setup.outputs.service_path }}/Dockerfile
           platforms: linux/arm64
           push: true
-          tags: ${{ secrets.ACR_NAME }}.azurecr.io/${{ steps.extract_service_path.outputs.image_name }}:${{ needs.check_image.outputs.version }}
+          tags: ${{ secrets.ACR_NAME }}.azurecr.io/${{ needs.setup.outputs.image_name }}:${{ needs.check_image.outputs.version }}
