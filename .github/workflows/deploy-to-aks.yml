@@ -55,6 +55,8 @@ jobs:
         run: |
           service_path="${{ steps.find_path.outputs.service_path }}"
           image_name=$(basename "$service_path")
+          full_image="${{ secrets.ACR_NAME }}.azurecr.io/$image_name:${{ github.event.inputs.version }}"
+          echo "Deploying image: $full_image"
           helm upgrade --install $image_name "$service_path/helm" \
             --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
             --set image.tag=${{ github.event.inputs.version }} \
