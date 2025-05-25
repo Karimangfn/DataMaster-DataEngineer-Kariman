@@ -9,30 +9,14 @@ on:
         type: string
 
 jobs:
-  terraform:
-    name: Terraform Provisioning
+  resource-group:
+    name: Creating Resource Group
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: ./infraestructure
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set Azure credentials from input or secret
-        id: set-creds
-        run: |
-          if [ -n "${{ github.event.inputs.azure_credentials }}" ]; then
-            echo "Using credentials from input"
-            echo "${{ github.event.inputs.azure_credentials }}" > $GITHUB_WORKSPACE/creds.json
-            echo "CREDS_PATH=$GITHUB_WORKSPACE/creds.json" >> $GITHUB_ENV
-          else
-            echo "Using credentials from secret"
-            echo "${{ secrets.AZURE_CREDENTIALS }}" > $GITHUB_WORKSPACE/creds.json
-            echo "CREDS_PATH=$GITHUB_WORKSPACE/creds.json" >> $GITHUB_ENV
-          fi
+      - uses: actions/checkout@v3
 
       - name: Azure Login
         uses: azure/login@v1
@@ -44,14 +28,161 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform Init
-        run: terraform init
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_resource_group.rg
+      - run: terraform apply -auto-approve -target=azurerm_resource_group.rg
 
-      - name: Terraform Validate
-        run: terraform validate
+  acr:
+    name: Creating Container Registry (ACR)
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_container_registry.acr
+      - run: terraform apply -auto-approve -target=azurerm_container_registry.acr
 
-      - name: Terraform Plan
-        run: terraform plan
+  keyvault:
+    name: Creating Key Vault
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_key_vault.kv
+      - run: terraform apply -auto-approve -target=azurerm_key_vault.kv
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+  aks:
+    name: Creating AKS Cluster
+    runs-on: ubuntu-latest
+    needs: [resource-group, acr, keyvault]
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_kubernetes_cluster.aks
+      - run: terraform apply -auto-approve -target=azurerm_kubernetes_cluster.aks
+
+  role-assignment:
+    name: Creating Role Assignment for AKS ACR Pull
+    runs-on: ubuntu-latest
+    needs: aks
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_role_assignment.aks_acr_pull
+      - run: terraform apply -auto-approve -target=azurerm_role_assignment.aks_acr_pull
+
+  databricks:
+    name: Creating Databricks Workspace
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_databricks_workspace.dbw
+      - run: terraform apply -auto-approve -target=azurerm_databricks_workspace.dbw
+
+  storage-account:
+    name: Creating Storage Account
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_storage_account.lake
+      - run: terraform apply -auto-approve -target=azurerm_storage_account.lake
+
+  storage-containers:
+    name: Creating Storage Containers
+    runs-on: ubuntu-latest
+    needs: storage-account
+    defaults:
+      run:
+        working-directory: ./infraestructure
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_storage_container.raw -target=azurerm_storage_container.bronze -target=azurerm_storage_container.silver -target=azurerm_storage_container.gold
+      - run: terraform apply -auto-approve -target=azurerm_storage_container.raw -target=azurerm_storage_container.bronze -target=azurerm_storage_container.silver -target=azurerm_storage_container.gold
