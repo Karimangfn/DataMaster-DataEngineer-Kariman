@@ -1,11 +1,17 @@
 variable "prefix" {
-  description = "Resource Names"
+  description = "Prefix for all resource names"
   type        = string
-  default     = "datamasterrsc"
+  default     = "dtmstr001"
 }
 
 variable "location" {
-  description = "Azure Region"
+  description = "Azure region to deploy resources"
   type        = string
   default     = "East US"
 }
+
+variable "suffix" {
+  description = "Suffix for all resource names"
+  type        = string
+}
+
