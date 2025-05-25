@@ -23,6 +23,16 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
 
+      - name: Check Azure Subscription Access
+        run: |
+          if ! az account show > /dev/null 2>&1; then
+            echo "❌ Falha no Azure login."
+            echo "🔐 Verifique se a Subscription e o subscriptionID existem ou se são validos."
+            echo "🔐 Verifique se a Service Principal tem acesso à Subscription."
+            echo "💡 Dica: atribua a função 'Contributor' ou 'Owner' na subscription para o appId do SPN."
+            exit 1
+          fi
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
