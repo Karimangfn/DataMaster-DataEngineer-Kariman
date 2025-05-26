@@ -25,10 +25,16 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+      - name: Read run ID
+        id: get-run-id
+        run: |
+          if [ ! -f infrastructure/run_id.txt ]; then
+            echo "❌ Arquivo run_id.txt não encontrado!"
+            echo "⚠️ Infraestrutura não criada para exclusão."
+            echo "🛑 Encerrando o workflow."
+            exit 1
+          fi
+          echo "RUN_ID=$(cat infrastructure/run_id.txt)" >> "$GITHUB_ENV"
 
       - name: Download Terraform state from previous run
         uses: actions/download-artifact@v4
@@ -38,10 +44,10 @@ jobs:
           run-id: ${{ env.RUN_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read run ID
-        id: get-run-id
-        run: |
-          echo "RUN_ID=$(cat infrastructure/run_id.txt)" >> "$GITHUB_ENV"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
 
       - run: terraform init
       - run: terraform validate
