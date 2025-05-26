@@ -72,7 +72,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
-          path: infrastructure/terraform.tfstate
+          path: ./infrastructure
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
