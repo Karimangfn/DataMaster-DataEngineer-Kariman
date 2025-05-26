@@ -1,5 +1,8 @@
 name: Clean Cloud Infrastructure
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
