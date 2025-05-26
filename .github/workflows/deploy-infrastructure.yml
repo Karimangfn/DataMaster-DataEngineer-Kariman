@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: terraform-run-id
-          path: run_id.txt
+          path: ./infrastructure/run_id.txt
       
       # - name: Commit Terraform state
       #   run: |
