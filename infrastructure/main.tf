@@ -44,24 +44,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     network_plugin = "azure"
   }
 
-  addon_profile {
-    oms_agent {
-      enabled = false
-    }
-
-    kube_dashboard {
-      enabled = false
-    }
-
-    azure_policy {
-      enabled = false
-    }
-
-    http_application_routing {
-      enabled = false
-    }
-  }
-
   sku_tier = "Free"
 
   role_based_access_control_enabled = true
