@@ -15,6 +15,7 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -29,11 +30,24 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Download Terraform state
+      - name: Download run_id artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-run-id
+          path: ./infrastructure
+
+      - name: Read run ID
+        id: get-run-id
+        run: |
+          echo "RUN_ID=$(cat infrastructure/run_id.txt)" >> "$GITHUB_ENV"
+
+      - name: Download Terraform state from previous run
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
+          run-id: ${{ env.RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: terraform init
       - run: terraform validate
