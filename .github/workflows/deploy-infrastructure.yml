@@ -10,6 +10,7 @@ on:
 
 jobs:
   get-subscription:
+    name: Retrieving Subscription
     runs-on: ubuntu-latest
     outputs:
       subscription_id: ${{ steps.get-subscription-id.outputs.subscription_id }}
@@ -32,6 +33,7 @@ jobs:
   resource-group:
     name: Creating Resource Group
     runs-on: ubuntu-latest
+    needs: get-subscription
     defaults:
       run:
         working-directory: ./infrastructure
