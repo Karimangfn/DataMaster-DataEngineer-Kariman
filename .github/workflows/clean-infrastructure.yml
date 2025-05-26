@@ -30,12 +30,6 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Download run_id artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-run-id
-          path: ./infrastructure
-
       - name: Read run ID
         id: get-run-id
         run: |
