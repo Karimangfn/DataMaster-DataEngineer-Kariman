@@ -62,5 +62,5 @@ jobs:
 
       - run: terraform init
       - run: terraform validate
-      - run: terraform plan -var="subscription_id=${{ needs.get-subscription.outputs.subscription_id }}"
-      - run: terraform destroy -auto-approve -var="subscription_id=${{ needs.get-subscription.outputs.subscription_id }}"
+      - run: terraform plan -var="subscription_id=${{ env.ARM_SUBSCRIPTION_ID }}"
+      - run: terraform destroy -auto-approve -var="subscription_id=${{ env.ARM_SUBSCRIPTION_ID }}"
