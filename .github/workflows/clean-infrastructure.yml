@@ -30,13 +30,22 @@ jobs:
       - name: Read run ID
         id: get-run-id
         run: |
-          if [ ! -f run_id.txt ]; then
-            echo "❌ Arquivo run_id.txt não encontrado!"
+          RUN_ID_PATH="../assets/terraform_state/run_id.txt"
+          if [ ! -f "$RUN_ID_PATH" ]; then
+            echo "❌ Arquivo run_id.txt não encontrado em $RUN_ID_PATH!"
             echo "⚠️ Infraestrutura não criada para exclusão."
             echo "🛑 Encerrando o workflow."
             exit 1
           fi
-          echo "RUN_ID=$(cat run_id.txt)" >> "$GITHUB_ENV"
+
+          if [ ! -s "$RUN_ID_PATH" ]; then
+            echo "❌ Arquivo run_id.txt está vazio em $RUN_ID_PATH!"
+            echo "⚠️ Infraestrutura não criada para exclusão."
+            echo "🛑 Encerrando o workflow."
+            exit 1
+          fi
+
+          echo "RUN_ID=$(cat $RUN_ID_PATH)" >> "$GITHUB_ENV"
 
       - name: Download Terraform state from previous run
         uses: actions/download-artifact@v4
