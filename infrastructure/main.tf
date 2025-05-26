@@ -1,10 +1,14 @@
+resource "random_id" "unique" {
+  byte_length = 2
+}
+
 resource "azurerm_resource_group" "rg" {
-  name     = "${var.prefix}-${var.suffix}-rg"
+  name     = "${var.prefix}-${random_id.unique.hex}-rg"
   location = var.location
 }
 
 resource "azurerm_container_registry" "acr" {
-  name                = "${var.prefix}${var.suffix}acr"
+  name                = "${var.prefix}${random_id.unique.hex}acr"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
@@ -12,7 +16,7 @@ resource "azurerm_container_registry" "acr" {
 }
 
 resource "azurerm_key_vault" "kv" {
-  name                        = "${var.prefix}${var.suffix}kv"
+  name                        = "${var.prefix}${random_id.unique.hex}kv"
   location                    = azurerm_resource_group.rg.location
   resource_group_name         = azurerm_resource_group.rg.name
   tenant_id                   = data.azurerm_client_config.current.tenant_id
@@ -21,10 +25,10 @@ resource "azurerm_key_vault" "kv" {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "${var.prefix}-${var.suffix}aks"
+  name                = "${var.prefix}-${random_id.unique.hex}aks"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = "${var.prefix}-${var.suffix}aks"
+  dns_prefix          = "${var.prefix}-${random_id.unique.hex}aks"
 
   default_node_pool {
     name                = "default"
@@ -57,16 +61,16 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
 }
 
 resource "azurerm_databricks_workspace" "dbw" {
-  name                = "${var.prefix}-${var.suffix}-dbw"
+  name                = "${var.prefix}-${random_id.unique.hex}-dbw"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "standard"
 
-  managed_resource_group_name = "${var.prefix}-${var.suffix}-dbw-mrg"
+  managed_resource_group_name = "${var.prefix}-${random_id.unique.hex}-dbw-mrg"
 }
 
 resource "azurerm_storage_account" "lake" {
-  name                     = lower("${var.prefix}${var.suffix}lake")
+  name                     = lower("${var.prefix}${random_id.unique.hex}lake")
   resource_group_name      = azurerm_resource_group.rg.name
   location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
