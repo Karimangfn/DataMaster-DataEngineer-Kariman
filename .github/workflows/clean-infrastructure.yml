@@ -35,13 +35,6 @@ jobs:
           name: terraform-state
           path: ./infrastructure
 
-      - name: Check if terraform.tfstate exists
-        run: |
-          if [ ! -f terraform.tfstate ]; then
-            echo "Nenhuma infraestrutura foi detectada para exclusão."
-            exit 0
-          fi
-
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -var="subscription_id=$(az account show --query id -o tsv)"
