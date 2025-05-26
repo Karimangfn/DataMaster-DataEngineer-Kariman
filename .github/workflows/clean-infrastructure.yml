@@ -9,36 +9,12 @@ on:
         type: string
 
 jobs:
-  # get-subscription:
-  #   name: Fetching Subscription
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     subscription_id: ${{ steps.get-subscription-id.outputs.subscription_id }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
-
-  #     - name: Get Subscription ID
-  #       id: get-subscription-id
-  #       run: |
-  #         SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-  #         echo "subscription_id=$SUBSCRIPTION_ID" >> $GITHUB_OUTPUT
-  #       env:
-  #         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
-
   terraform-destroy:
     name: Deleting Cloud Infrastructure
     runs-on: ubuntu-latest
-    # needs: get-subscription
     defaults:
       run:
         working-directory: ./infrastructure
-    # env:
-    #     ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
