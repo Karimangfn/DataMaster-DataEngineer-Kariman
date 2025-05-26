@@ -30,11 +30,6 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Read run ID
-        id: get-run-id
-        run: |
-          echo "RUN_ID=$(cat infrastructure/run_id.txt)" >> "$GITHUB_ENV"
-
       - name: Download Terraform state from previous run
         uses: actions/download-artifact@v4
         with:
@@ -42,6 +37,11 @@ jobs:
           path: ./infrastructure
           run-id: ${{ env.RUN_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read run ID
+        id: get-run-id
+        run: |
+          echo "RUN_ID=$(cat infrastructure/run_id.txt)" >> "$GITHUB_ENV"
 
       - run: terraform init
       - run: terraform validate
