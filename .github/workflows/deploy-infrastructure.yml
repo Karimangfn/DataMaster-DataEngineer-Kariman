@@ -9,12 +9,34 @@ on:
         type: string
 
 jobs:
+  get-subscription:
+    runs-on: ubuntu-latest
+    outputs:
+      subscription_id: ${{ steps.get-subscription-id.outputs.subscription_id }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+
+      - name: Get Subscription ID
+        id: get-subscription-id
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          echo "subscription_id=$SUBSCRIPTION_ID" >> $GITHUB_OUTPUT
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+
   resource-group:
     name: Creating Resource Group
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
 
@@ -30,8 +52,8 @@ jobs:
 
       - run: terraform init
       - run: terraform validate
-      - run: terraform plan -target=azurerm_resource_group.rg
-      - run: terraform apply -auto-approve -target=azurerm_resource_group.rg
+      - run: terraform plan -target=azurerm_resource_group.rg -var="subscription_id=${{ needs.get-subscription.outputs.subscription_id }}"
+      - run: terraform apply -auto-approve -target=azurerm_resource_group.rg -var="subscription_id=${{ needs.get-subscription.outputs.subscription_id }}"
 
   acr:
     name: Creating Container Registry (ACR)
@@ -40,16 +62,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_container_registry.acr
@@ -62,16 +89,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_key_vault.kv
@@ -84,16 +116,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_kubernetes_cluster.aks
@@ -106,16 +143,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_role_assignment.aks_acr_pull
@@ -128,16 +170,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_databricks_workspace.dbw
@@ -150,16 +197,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_storage_account.lake
@@ -172,16 +224,21 @@ jobs:
     defaults:
       run:
         working-directory: ./infrastructure
+    env:
+        ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
     steps:
       - uses: actions/checkout@v3
+      
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+      
       - run: terraform init
       - run: terraform validate
       - run: terraform plan -target=azurerm_storage_container.raw -target=azurerm_storage_container.bronze -target=azurerm_storage_container.silver -target=azurerm_storage_container.gold
