@@ -10,7 +10,7 @@ on:
 
 jobs:
   get-subscription:
-    name: Retrieving Subscription
+    name: Fetching Subscription
     runs-on: ubuntu-latest
     outputs:
       subscription_id: ${{ steps.get-subscription-id.outputs.subscription_id }}
