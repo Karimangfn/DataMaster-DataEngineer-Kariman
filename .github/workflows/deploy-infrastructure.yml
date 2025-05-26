@@ -30,6 +30,9 @@ jobs:
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
 
+      - name: Debug Subscription ID
+        run: echo "SUBSCRIPTION_ID = ${{ needs.get-subscription.outputs.subscription_id }}"
+
   resource-group:
     name: Creating Resource Group
     runs-on: ubuntu-latest
