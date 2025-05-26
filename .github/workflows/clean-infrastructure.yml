@@ -31,7 +31,7 @@ jobs:
       - name: Read run ID
         id: get-run-id
         run: |
-          if [ ! -f infrastructure/run_id.txt ]; then
+          if [ ! -f run_id.txt ]; then
             echo "❌ Arquivo run_id.txt não encontrado!"
             echo "⚠️ Infraestrutura não criada para exclusão."
             echo "🛑 Encerrando o workflow."
