@@ -22,12 +22,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
 
+      - name: Debug Subscription ID
+        run: echo "SUBSCRIPTION_ID = ${{ needs.get-subscription.outputs.subscription_id }}"
+
       - name: Get Subscription ID
         id: get-subscription-id
         run: |
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           echo "::add-mask::$SUBSCRIPTION_ID"
           echo "subscription_id=$SUBSCRIPTION_ID" >> $GITHUB_OUTPUT
+
+      - name: Debug Subscription ID
+        run: echo "SUBSCRIPTION_ID = ${{ needs.get-subscription.outputs.subscription_id }}"
 
   terraform-destroy:
     name: Deleting Cloud Infrastructure
