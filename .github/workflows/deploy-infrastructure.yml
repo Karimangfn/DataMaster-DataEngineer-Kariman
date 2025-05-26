@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
 
@@ -39,7 +39,7 @@ jobs:
     needs: resource-group
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
@@ -61,7 +61,7 @@ jobs:
     needs: resource-group
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
@@ -83,7 +83,7 @@ jobs:
     needs: [resource-group, acr, keyvault]
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
@@ -105,7 +105,7 @@ jobs:
     needs: aks
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
@@ -127,7 +127,7 @@ jobs:
     needs: resource-group
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
@@ -149,7 +149,7 @@ jobs:
     needs: resource-group
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
@@ -171,7 +171,7 @@ jobs:
     needs: storage-account
     defaults:
       run:
-        working-directory: ./infraestructure
+        working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Azure Login
