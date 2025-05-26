@@ -36,23 +36,23 @@ jobs:
       - run: terraform plan -target=azurerm_resource_group.rg -var="subscription_id=$(az account show --query id -o tsv)"
       - run: terraform apply -auto-approve -target=azurerm_resource_group.rg -var="subscription_id=$(az account show --query id -o tsv)"
 
+      - name: Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+
       - name: Save current run ID
         run: echo "${{ github.run_id }}" > run_id.txt
       
-      - name: Upload run_id artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-run-id
-          path: ./infrastructure/run_id.txt
-      
-      # - name: Commit Terraform state
-      #   run: |
-      #     git config --global user.name "github-actions"
-      #     git config --global user.email "actions@github.com"
-      #     git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-      #     git add terraform.tfstate
-      #     git commit -m "Update terraform state"
-      #     git push
+      - name: Commit Run ID
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git add run_id.txt
+          git commit -m "Last tfstate run_id"
+          git push
 
   # acr:
   #   name: Creating Container Registry (ACR)
