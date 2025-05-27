@@ -10,7 +10,11 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
-
   subscription_id = var.subscription_id
+
+  features {
+    keyvault {
+      purge_soft_delete_on_destroy = false
+    }
+  }
 }
