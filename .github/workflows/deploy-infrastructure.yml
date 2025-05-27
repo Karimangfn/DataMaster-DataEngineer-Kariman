@@ -40,6 +40,7 @@ jobs:
         with:
           name: terraform-state
           path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: Save current run ID
         run: echo "${{ github.run_id }}" > ../assets/terraform_state/run_id.txt
@@ -89,6 +90,7 @@ jobs:
         with:
           name: terraform-state
           path: infrastructure/terraform.tfstate
+          overwrite: true
 
   keyvault:
     name: Creating Key Vault
@@ -126,7 +128,8 @@ jobs:
         with:
           name: terraform-state
           path: infrastructure/terraform.tfstate
-
+          overwrite: true
+          
   # aks:
   #   name: Creating AKS Cluster
   #   runs-on: ubuntu-latest
