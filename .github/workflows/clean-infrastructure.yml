@@ -4,11 +4,6 @@ permissions: write-all
 
 on:
   workflow_dispatch:
-    inputs:
-      azure_credentials:
-        description: 'Optional Azure credentials (JSON format). Will be used if AZURE_CREDENTIALS secret is not set.'
-        required: false
-        type: string
 
 jobs:
   terraform-destroy:
