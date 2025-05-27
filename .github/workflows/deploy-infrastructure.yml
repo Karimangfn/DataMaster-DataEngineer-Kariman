@@ -90,32 +90,42 @@ jobs:
           name: terraform-state
           path: infrastructure/terraform.tfstate
 
-  # keyvault:
-  #   name: Creating Key Vault
-  #   runs-on: ubuntu-latest
-  #   needs: resource-group
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   env:
-  #       ARM_SUBSCRIPTION_ID: ${{ needs.get-subscription.outputs.subscription_id }}
-  #   steps:
-  #     - uses: actions/checkout@v3
+  keyvault:
+    name: Creating Key Vault
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || github.event.inputs.azure_credentials }}
       
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
-  #     - run: terraform init
-  #     - run: terraform validate
-  #     - run: terraform plan -target=azurerm_key_vault.kv
-  #     - run: terraform apply -auto-approve -target=azurerm_key_vault.kv
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -target=azurerm_key_vault.kv -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: terraform apply -auto-approve -target=azurerm_key_vault.kv -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
 
   # aks:
   #   name: Creating AKS Cluster
