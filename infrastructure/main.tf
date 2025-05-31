@@ -31,13 +31,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix          = "${var.prefix}-${random_id.unique.hex}aks"
 
   default_node_pool {
-    name                = "default"
-    min_count           = 1
-    max_count           = 2
-    vm_size             = "Standard_D2als_v6"
-    os_disk_size_gb     = 30
-    max_pods            = 30
-    zones               = []
+    name                 = "default"
+    auto_scaling_enabled = true
+    min_count            = 1
+    max_count            = 2
+    vm_size              = "Standard_D2als_v6"
+    os_disk_size_gb      = 30
+    max_pods             = 30
+    zones                = []
   }
 
   identity {
