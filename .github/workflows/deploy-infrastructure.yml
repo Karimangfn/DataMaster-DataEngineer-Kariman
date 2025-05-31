@@ -6,9 +6,43 @@ on:
   workflow_dispatch:
 
 jobs:
+  check-role-assignments:
+    name: Check Azure Role Assignments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Check Role Assignments
+        run: |
+          set -e
+
+          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
+          SCOPE="/subscriptions/$SUBSCRIPTION_ID"
+
+          echo "🔍 Verificando permissões do Service Principal: $CLIENT_ID no escopo $SCOPE..."
+
+          ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
+
+          echo "$ROLES" | grep -q "Contributor" || {
+            echo "❌ Service Principal não tem o papel 'Contributor'"
+            exit 1
+          }
+
+          echo "$ROLES" | grep -q "User Access Administrator" || {
+            echo "❌ Service Principal não tem o papel 'User Access Administrator'"
+            exit 1
+          }
+
+          echo "✅ Client ID tem os papéis 'Contributor' e 'User Access Administrator'."
+          
   resource-group:
     name: Creating Resource Group
     runs-on: ubuntu-latest
+    needs: check-role-assignments
     defaults:
       run:
         working-directory: ./infrastructure
