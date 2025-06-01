@@ -7,10 +7,10 @@ on:
 
 jobs:
   check-gh-pat:
-    name: Verifica GH_PAT_TOKEN e permissões
+    name: Check GH_PAT_TOKEN and permissions
     runs-on: ubuntu-latest
     steps:
-      - name: Verifica se GH_PAT_TOKEN está presente
+      - name: Check if GH_PAT_TOKEN is present
         run: |
           if [ -z "${{ secrets.GH_PAT_TOKEN }}" ]; then
             echo "Erro: a secret GH_PAT_TOKEN não está definida no repositório."
@@ -19,7 +19,7 @@ jobs:
             echo "Secret GH_PAT_TOKEN encontrada."
           fi
 
-      - name: Testa permissão do token via API (checa se consegue acessar o repositório atual)
+      - name: Test token permission via API (checks if it can access the current repository)
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           REPO: ${{ github.repository }}
