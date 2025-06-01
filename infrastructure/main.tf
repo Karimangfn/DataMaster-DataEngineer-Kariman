@@ -8,7 +8,7 @@ resource "azurerm_resource_group" "rg" {
 }
 
 resource "azurerm_container_registry" "acr" {
-  name                = "${var.prefix}-${random_id.unique.hex}-acr"
+  name                = "${var.prefix}${random_id.unique.hex}acr"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
@@ -16,7 +16,7 @@ resource "azurerm_container_registry" "acr" {
 }
 
 resource "azurerm_key_vault" "kv" {
-  name                        = "${var.prefix}-${random_id.unique.hex}-akv"
+  name                        = "${var.prefix}${random_id.unique.hex}akv"
   location                    = azurerm_resource_group.rg.location
   resource_group_name         = azurerm_resource_group.rg.name
   tenant_id                   = data.azurerm_client_config.current.tenant_id
@@ -25,7 +25,7 @@ resource "azurerm_key_vault" "kv" {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "${var.prefix}-${random_id.unique.hex}-aks"
+  name                = "${var.prefix}${random_id.unique.hex}aks"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   dns_prefix          = "${var.prefix}-${random_id.unique.hex}aks"
