@@ -61,7 +61,10 @@ jobs:
 
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_resource_group.rg -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: | 
+          terraform apply -auto-approve \
+            -target=azurerm_resource_group.rg \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -110,7 +113,10 @@ jobs:
       
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_container_registry.acr -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_container_registry.acr \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -147,7 +153,10 @@ jobs:
       
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_key_vault.kv -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_key_vault.kv \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -184,10 +193,22 @@ jobs:
       
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_network_watcher.default -var="subscription_id=$(az account show --query id -o tsv)"
-      - run: terraform apply -auto-approve -target=azurerm_kubernetes_cluster.aks -var="subscription_id=$(az account show --query id -o tsv)"
-      - run: terraform apply -auto-approve -target=azurerm_role_assignment.aks_acr_pull -var="subscription_id=$(az account show --query id -o tsv)"
-      - run: terraform destroy -auto-approve -target=azurerm_network_watcher.default -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_kubernetes_cluster.aks \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_role_assignment.aks_acr_pull \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform destroy -auto-approve \
+            -target=azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -224,9 +245,18 @@ jobs:
       
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_network_watcher.default -var="subscription_id=$(az account show --query id -o tsv)"
-      - run: terraform apply -auto-approve -target=azurerm_databricks_workspace.dbw -var="subscription_id=$(az account show --query id -o tsv)"
-      - run: terraform destroy -auto-approve -target=azurerm_network_watcher.default -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_databricks_workspace.dbw \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform destroy -auto-approve \
+            -target=azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -263,7 +293,10 @@ jobs:
       
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_storage_account.lake -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_storage_account.lake \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -300,7 +333,13 @@ jobs:
       
       - run: terraform init
       - run: terraform validate
-      - run: terraform apply -auto-approve -target=azurerm_storage_container.raw -target=azurerm_storage_container.bronze -target=azurerm_storage_container.silver -target=azurerm_storage_container.gold -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_storage_container.raw \
+            -target=azurerm_storage_container.bronze \
+            -target=azurerm_storage_container.silver \
+            -target=azurerm_storage_container.gold \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
