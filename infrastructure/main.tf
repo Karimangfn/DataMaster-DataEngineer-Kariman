@@ -77,7 +77,7 @@ managed_resource_group_name = "${var.prefix}-${random_id.unique.hex}-dbw-mrg"
 }
 
 resource "azurerm_storage_account" "lake" {
-  name                     = "${var.prefix}-${random_id.unique.hex}-lake"
+  name                     = "${var.prefix}${random_id.unique.hex}lake"
   resource_group_name      = azurerm_resource_group.rg.name
   location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
