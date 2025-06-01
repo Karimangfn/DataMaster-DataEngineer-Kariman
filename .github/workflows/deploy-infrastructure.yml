@@ -39,6 +39,26 @@ jobs:
             echo "Token válido e com acesso ao repositório."
           fi
 
+      - name: Test if token can access secrets API
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Verificando se o token pode acessar a API de secrets..."
+          HTTP_CODE=$(curl -s -o secrets_response.json -w "%{http_code}" \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/$REPO/actions/secrets)
+  
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Erro: o token GH_PAT_TOKEN não tem permissão para acessar a API de secrets no repositório $REPO."
+            echo "Resposta da API:"
+            cat secrets_response.json
+            exit 1
+          else
+            echo "Token tem acesso à API de secrets. Provavelmente pode criar secrets também."
+          fi
+
   check-azure-role-assignments:
     name: Check Azure Role Assignments
     runs-on: ubuntu-latest
