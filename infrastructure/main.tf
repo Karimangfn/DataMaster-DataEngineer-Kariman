@@ -5,6 +5,11 @@ resource "random_id" "unique" {
 resource "azurerm_resource_group" "rg" {
   name     = "${var.prefix}-${random_id.unique.hex}-rg"
   location = var.location
+
+  tags = {
+    environment = "dev"
+    updated_by  = "ci-cd"
+  }
 }
 
 resource "azurerm_container_registry" "acr" {
@@ -72,6 +77,11 @@ resource "azurerm_databricks_workspace" "dbw" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "standard"
+
+    tags = {
+    environment = "dev"
+    updated_by  = "ci-cd"
+  }
 
 managed_resource_group_name = "${var.prefix}-${random_id.unique.hex}-dbw-mrg"
 }
