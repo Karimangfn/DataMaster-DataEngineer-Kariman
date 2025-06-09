@@ -1,0 +1,109 @@
+name: Validate Microservice
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'microservices/**'
+
+jobs:
+  precommit:
+    name: Run Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pre-commit
+
+      - name: Run Pre-commit
+        run: make precommit
+
+  tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: precommit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run Unit Tests
+        run: make test
+
+  mypy:
+    name: Run MyPy
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install mypy
+
+      - name: Run MyPy
+        run: make mypy
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: mypy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker Build Image
+        run: make docker-build
+
+  check_acr_version:
+    name: Check Image Version in ACR
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Read version and check image
+        run: |
+          service_path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          version=$(cat $service_path/VERSION)
+          image_name=$(basename "$service_path")
+          acr_name=${{ secrets.ACR_NAME }}
+
+          echo "Checking if image exists: $acr_name.azurecr.io/$image_name:$version"
+
+          if az acr repository show-tags --name $acr_name --repository $image_name --query "[?contains(@, '$version')]" | grep -q "$version"; then
+            echo "Image version already exists in ACR."
+            exit 1
+          else
+            echo "Image version does not exist. OK."
+          fi
