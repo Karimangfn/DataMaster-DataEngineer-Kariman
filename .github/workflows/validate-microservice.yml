@@ -20,16 +20,22 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Detect service path
+        id: detect_service_path
+        run: |
+          path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          service_path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/requirements.txt' | head -n 1 | xargs dirname)
-          pip install -r $service_path/requirements.txt
+          pip install -r ${{ steps.detect_service_path.outputs.path }}/requirements.txt
           pip install pre-commit
 
       - name: Run Pre-commit
+        working-directory: ${{ steps.detect_service_path.outputs.path }}
         run: make precommit
-
+  
   tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
