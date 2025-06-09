@@ -23,7 +23,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          service_path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/requirements.txt' | head -n 1 | xargs dirname)
+          pip install -r $service_path/requirements.txt
           pip install pre-commit
 
       - name: Run Pre-commit
