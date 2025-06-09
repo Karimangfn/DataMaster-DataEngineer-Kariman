@@ -35,7 +35,7 @@ jobs:
       - name: Run Pre-commit
         working-directory: ${{ steps.detect_service_path.outputs.path }}
         run: make precommit
-  
+
   tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
@@ -48,13 +48,20 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Detect service path
+        id: detect_service_path
+        run: |
+          path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r ${{ steps.detect_service_path.outputs.path }}/requirements.txt
           pip install pytest pytest-cov
 
       - name: Run Unit Tests
+        working-directory: ${{ steps.detect_service_path.outputs.path }}
         run: make test
 
   mypy:
@@ -69,13 +76,20 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Detect service path
+        id: detect_service_path
+        run: |
+          path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r ${{ steps.detect_service_path.outputs.path }}/requirements.txt
           pip install mypy
 
       - name: Run MyPy
+        working-directory: ${{ steps.detect_service_path.outputs.path }}
         run: make mypy
 
   docker-build:
@@ -85,7 +99,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect service path
+        id: detect_service_path
+        run: |
+          path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
       - name: Docker Build Image
+        working-directory: ${{ steps.detect_service_path.outputs.path }}
         run: make docker-build
 
   check_acr_version:
@@ -100,9 +121,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Detect service path
+        id: detect_service_path
+        run: |
+          path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
       - name: Read version and check image
         run: |
-          service_path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
+          service_path=${{ steps.detect_service_path.outputs.path }}
           version=$(cat $service_path/VERSION)
           image_name=$(basename "$service_path")
           acr_name=${{ secrets.ACR_NAME }}
