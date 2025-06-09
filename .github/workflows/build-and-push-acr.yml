@@ -1,26 +1,27 @@
 name: Build and Push to ACR
 
 on:
-  push:
-    branches:
-      - develop
-    paths:
-      - '**/VERSION'
-  pull_request:
-    branches:
-      - develop
-    paths:
-      - '**/VERSION'
   workflow_dispatch:
-    inputs:
-      azure_credentials:
-        description: 'Azure Credentials JSON'
-        required: false
-        type: string
-      acr_name:
-        description: 'Azure Container Registry Name'
-        required: false
-        type: string
+  # push:
+  #   branches:
+  #     - develop
+  #   paths:
+  #     - '**/VERSION'
+  # pull_request:
+  #   branches:
+  #     - develop
+  #   paths:
+  #     - '**/VERSION'
+  # workflow_dispatch:
+  #   inputs:
+  #     azure_credentials:
+  #       description: 'Azure Credentials JSON'
+  #       required: false
+  #       type: string
+  #     acr_name:
+  #       description: 'Azure Container Registry Name'
+  #       required: false
+  #       type: string
 
 jobs:
   setup:
