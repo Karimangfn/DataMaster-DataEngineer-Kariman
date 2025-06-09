@@ -33,7 +33,14 @@ spec:
               value: {{ .Values.config.storage.raw.container | quote }}
             - name: STORAGE_FOLDER
               value: {{ .Values.config.storage.raw.folder | quote }}
-            - name: AZURE_SAS_TOKEN
-              value: {{ .Values.config.azure.sas_token | quote }}
+
+            - name: AZURE_CLIENT_ID
+              value: {{ .Values.config.azure.clientId | quote }}
+            - name: AZURE_CLIENT_SECRET
+              value: {{ .Values.config.azure.clientSecret | quote }}
+            - name: AZURE_SUBSCRIPTION_ID
+              value: {{ .Values.config.azure.subscriptionId | quote }}
+            - name: AZURE_TENANT_ID
+              value: {{ .Values.config.azure.tenantId | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
