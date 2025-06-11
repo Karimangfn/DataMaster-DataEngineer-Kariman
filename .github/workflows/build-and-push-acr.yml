@@ -2,26 +2,11 @@ name: Build and Push to ACR
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - develop
-  #   paths:
-  #     - '**/VERSION'
-  # pull_request:
-  #   branches:
-  #     - develop
-  #   paths:
-  #     - '**/VERSION'
-  # workflow_dispatch:
-  #   inputs:
-  #     azure_credentials:
-  #       description: 'Azure Credentials JSON'
-  #       required: false
-  #       type: string
-  #     acr_name:
-  #       description: 'Azure Container Registry Name'
-  #       required: false
-  #       type: string
+  push:
+    branches:
+      - develop
+    paths:
+      - '**/VERSION'
 
 jobs:
   setup:
@@ -47,83 +32,9 @@ jobs:
           echo "service_path=$path"
           echo "service_path=$path" >> $GITHUB_OUTPUT
 
-  install_dependencies:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          service_path="${{ needs.setup.outputs.service_path }}"
-          echo "Installing dependencies in $service_path"
-          if [ -f "$service_path/setup.py" ]; then
-            cd $service_path
-            python -m pip install --upgrade pip
-            pip install .
-          else
-            echo "setup.py not found. Skipping."
-          fi
-
-  azure_auth:
-    runs-on: ubuntu-latest
-    needs: install_dependencies
-    outputs:
-      service_path: ${{ needs.setup.outputs.service_path }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
-
-      - name: Login to ACR
-        run: |
-          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-          az acr login --name $acr_name
-
-  check_image:
-    runs-on: ubuntu-latest
-    needs: azure_auth
-    outputs:
-      skip_build: ${{ steps.check.outputs.skip_build }}
-      version: ${{ steps.read.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Azure Login (re-auth)
-        uses: azure/login@v1
-        with:
-          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
-
-      - name: Read version
-        id: read
-        run: |
-          service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-          VERSION=$(cat $service_path/VERSION)
-          echo "VERSION=$VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if image exists in ACR
-        id: check
-        run: |
-          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-          version="${{ steps.read.outputs.version }}"
-          if az acr repository show-tags --name $acr_name --repository ingest-api --query "[?contains(@, '$version')]" | grep -q "$version"; then
-            echo "Image exists. Skipping build."
-            echo "skip_build=true" >> $GITHUB_OUTPUT
-          else
-            echo "Image not found. Proceeding with build."
-            echo "skip_build=false" >> $GITHUB_OUTPUT
-          fi
-
   build_and_push:
     runs-on: ubuntu-latest
-    needs: check_image
+    needs: setup
     if: needs.check_image.outputs.skip_build == 'false'
     steps:
       - name: Checkout code
