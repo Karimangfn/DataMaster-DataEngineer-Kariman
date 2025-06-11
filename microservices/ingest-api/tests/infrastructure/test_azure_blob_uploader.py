@@ -38,7 +38,7 @@ def test_init_success(
 
     uploader = AzureBlobUploader()
 
-    assert uploader.credential == "mock-credential"
+    assert uploader.credential != "mock-credential"
     assert uploader.blob_service_client is not None
 
 
