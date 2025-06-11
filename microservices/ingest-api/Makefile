@@ -8,8 +8,8 @@ mypy:
 	mypy src/
 
 docker-build:
-	@service_path=$$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname); \
-	image_name=$$(basename $$service_path); \
-	docker build -t $$image_name:test -f $$service_path/Dockerfile $$service_path
+	@image_name=$$(basename $$PWD); \
+	echo "Building image $$image_name:test"; \
+	docker build -t $$image_name:test .
 
 check: precommit test mypy docker-build
