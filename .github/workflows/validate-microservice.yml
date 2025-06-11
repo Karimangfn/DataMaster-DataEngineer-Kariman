@@ -93,7 +93,7 @@ jobs:
         run: make mypy
 
   docker-build:
-    name: Validate Docker Build
+    name: Validate Docker Image Build
     runs-on: ubuntu-latest
     needs: mypy
     steps:
