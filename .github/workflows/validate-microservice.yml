@@ -127,18 +127,29 @@ jobs:
           path=$(git ls-tree -r HEAD --name-only | grep 'microservices/.*/VERSION' | head -n 1 | xargs dirname)
           echo "path=$path" >> "$GITHUB_OUTPUT"
 
-      - name: Read version and check image
+      - name: Check if ACR exists
+        run: |
+          acr_name=${{ secrets.ACR_NAME }}
+          echo "Checking if ACR '$acr_name' exists..."
+          if ! az acr show --name "$acr_name" > /dev/null 2>&1; then
+            echo "❌ ACR '$acr_name' does not exist or is not accessible."
+            exit 1
+          else
+            echo "✅ ACR '$acr_name' exists and is accessible."
+          fi
+
+      - name: Check if image version exists in ACR
         run: |
           service_path=${{ steps.detect_service_path.outputs.path }}
           version=$(cat $service_path/VERSION)
           image_name=$(basename "$service_path")
           acr_name=${{ secrets.ACR_NAME }}
-
+      
           echo "Checking if image exists: $acr_name.azurecr.io/$image_name:$version"
-
-          if az acr repository show-tags --name $acr_name --repository $image_name --query "[?contains(@, '$version')]" | grep -q "$version"; then
-            echo "Image version already exists in ACR."
+      
+          if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
+            echo "❌ Image version already exists in ACR."
             exit 1
           else
-            echo "Image version does not exist. OK."
+            echo "✅ Image version does not exist. OK."
           fi
