@@ -23,7 +23,10 @@ config:
     raw:
       account: ""
       container: "raw"
-      folder: "clients/api"
+      folder: "api"
 
   azure:
-    sas_token: ""
+    clientId: ""
+    clientSecret: ""
+    subscriptionId: ""
+    tenantId: ""
