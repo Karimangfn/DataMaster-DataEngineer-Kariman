@@ -2,23 +2,10 @@ name: Deploy to AKS
 
 on:
   workflow_dispatch:
-    inputs:
-      azure_credentials:
-        description: 'Azure Credentials JSON'
-        required: false
-        type: string
-      acr_name:
-        description: 'Azure Container Registry Name'
-        required: false
-        type: string
-      aks_name:
-        description: 'AKS Cluster Name'
-        required: false
-        type: string
-      resource_group:
-        description: 'Azure Resource Group Name'
-        required: false
-        type: string
+  workflow_run:
+    workflows: ["Build and Push to ACR"]
+    types:
+      - completed
 
 jobs:
   setup_and_deploy:
