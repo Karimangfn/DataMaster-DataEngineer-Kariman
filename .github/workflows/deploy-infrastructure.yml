@@ -237,50 +237,50 @@ jobs:
         run: |
           gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
 
-  keyvault:
-    name: Creating Key Vault
-    runs-on: ubuntu-latest
-    needs: acr
-    defaults:
-      run:
-        working-directory: ./infrastructure
-    steps:
-      - uses: actions/checkout@v3
+  # keyvault:
+  #   name: Creating Key Vault
+  #   runs-on: ubuntu-latest
+  #   needs: acr
+  #   defaults:
+  #     run:
+  #       working-directory: ./infrastructure
+  #   steps:
+  #     - uses: actions/checkout@v3
       
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Download Terraform state
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
+  #     - name: Download Terraform state
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: ./infrastructure
       
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
-      - run: |
-          terraform apply -auto-approve \
-            -target=azurerm_key_vault.kv \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+  #     - run: terraform init
+  #     - run: terraform validate
+  #     - run: |
+  #         terraform apply -auto-approve \
+  #           -target=azurerm_key_vault.kv \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
+  #     - name: Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
           
   aks:
     name: Creating AKS Cluster
     runs-on: ubuntu-latest
-    needs: [resource-group, acr, keyvault]
+    needs: [resource-group, acr]
     defaults:
       run:
         working-directory: ./infrastructure
@@ -337,130 +337,130 @@ jobs:
         run: |
           gh secret set AKS_NAME --repo $REPO --body "$KUBERNETES_SERVICE"
 
-  databricks:
-    name: Creating Databricks Workspace
-    runs-on: ubuntu-latest
-    needs: aks
-    defaults:
-      run:
-        working-directory: ./infrastructure
-    steps:
-      - uses: actions/checkout@v3
+  # databricks:
+  #   name: Creating Databricks Workspace
+  #   runs-on: ubuntu-latest
+  #   needs: aks
+  #   defaults:
+  #     run:
+  #       working-directory: ./infrastructure
+  #   steps:
+  #     - uses: actions/checkout@v3
       
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
+  #     - name: Download Terraform state
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: ./infrastructure
       
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
-      - run: |
-          terraform apply -auto-approve \
-            -target=azurerm_network_watcher.default \
-            -target=azurerm_databricks_workspace.dbw \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+  #     - run: terraform init
+  #     - run: terraform validate
+  #     - run: |
+  #         terraform apply -auto-approve \
+  #           -target=azurerm_network_watcher.default \
+  #           -target=azurerm_databricks_workspace.dbw \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-          terraform destroy -auto-approve \
-            -target=azurerm_network_watcher.default \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+  #         terraform destroy -auto-approve \
+  #           -target=azurerm_network_watcher.default \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
+  #     - name: Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
 
-  storage-account:
-    name: Creating Storage Account
-    runs-on: ubuntu-latest
-    needs: databricks
-    defaults:
-      run:
-        working-directory: ./infrastructure
-    steps:
-      - uses: actions/checkout@v3
+  # storage-account:
+  #   name: Creating Storage Account
+  #   runs-on: ubuntu-latest
+  #   needs: databricks
+  #   defaults:
+  #     run:
+  #       working-directory: ./infrastructure
+  #   steps:
+  #     - uses: actions/checkout@v3
       
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
+  #     - name: Download Terraform state
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: ./infrastructure
       
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
-      - run: |
-          terraform apply -auto-approve \
-            -target=azurerm_storage_account.lake \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+  #     - run: terraform init
+  #     - run: terraform validate
+  #     - run: |
+  #         terraform apply -auto-approve \
+  #           -target=azurerm_storage_account.lake \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
+  #     - name: Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
 
-  storage-containers:
-    name: Creating Storage Containers
-    runs-on: ubuntu-latest
-    needs: storage-account
-    defaults:
-      run:
-        working-directory: ./infrastructure
-    steps:
-      - uses: actions/checkout@v3
+  # storage-containers:
+  #   name: Creating Storage Containers
+  #   runs-on: ubuntu-latest
+  #   needs: storage-account
+  #   defaults:
+  #     run:
+  #       working-directory: ./infrastructure
+  #   steps:
+  #     - uses: actions/checkout@v3
       
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
+  #     - name: Download Terraform state
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: ./infrastructure
       
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
-      - run: |
-          terraform apply -auto-approve \
-            -target=azurerm_storage_container.raw \
-            -target=azurerm_storage_container.bronze \
-            -target=azurerm_storage_container.silver \
-            -target=azurerm_storage_container.gold \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+  #     - run: terraform init
+  #     - run: terraform validate
+  #     - run: |
+  #         terraform apply -auto-approve \
+  #           -target=azurerm_storage_container.raw \
+  #           -target=azurerm_storage_container.bronze \
+  #           -target=azurerm_storage_container.silver \
+  #           -target=azurerm_storage_container.gold \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
+  #     - name: Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
