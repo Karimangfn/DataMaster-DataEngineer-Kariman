@@ -9,4 +9,4 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
-CMD ["python", "src/main.py"]
+ENTRYPOINT ["ingest-api"]
