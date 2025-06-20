@@ -1,9 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 from src.domain.exceptions.exceptions import APIIngestionError
+from src.domain.ports.authentication_strategy import AuthenticationStrategy
 from src.domain.ports.ingestion_strategy import APIIngestionStrategy
-from src.infrastructure.logging.logger import get_logger
+from src.infrastructure.logging.logging_setup import get_logger
 
 logger = get_logger(__name__)
 
@@ -11,50 +12,54 @@ logger = get_logger(__name__)
 class RestAPIIngestion(APIIngestionStrategy):
     """Ingests data from a REST API endpoint."""
 
-    def ingest(
-        self,
-        data_source: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None
-    ) -> Any:
+    def __init__(self, url: str, auth_strategy: AuthenticationStrategy):
         """
-        Fetch data from a REST API.
+        Initialize with API URL and auth strategy.
 
         Args:
-            data_source (str): The URL of the REST API.
-            params (Optional[Dict[str, Any]]): Query parameters
-            for the request.
-            headers (Optional[Dict[str, Any]]): Headers for the
-            request.
+            url (str): The API endpoint URL.
+            auth_strategy (AuthenticationStrategy): Authentication strategy
+            instance.
+        """
+        self.url = url
+        self.auth_strategy = auth_strategy
+
+    def ingest(self) -> Any:
+        """
+        Perform the GET request to the API with authentication.
 
         Returns:
-            Any: Raw text response from the API.
+            Any: The API response JSON.
 
         Raises:
-            APIIngestionError: If the request fails due to
-            network or HTTP errors.
+            APIIngestionError: If the HTTP request to the API fails.
         """
+        params = self.auth_strategy.get_query_params()
+        headers = self.auth_strategy.get_headers()
+
         logger.debug(
-            f"Sending GET request to {data_source} "
+            f"Sending GET request to {self.url} "
             f"with params={params} and headers={headers}"
         )
+
         try:
             response = requests.get(
-                data_source,
+                self.url,
                 params=params,
                 headers=headers,
                 verify=False
             )
             response.raise_for_status()
             logger.info(
-                f"Successfully ingested data from {data_source}"
+                f"Successfully ingested data from {self.url}"
             )
             return response.text
         except requests.exceptions.RequestException as e:
             logger.error(
-                f"Request to {data_source} failed: {str(e)}"
+                f"Request to {self.url} failed: {str(e)}",
+                exc_info=True
             )
             raise APIIngestionError(
-                f"Failed to ingest data from API {data_source}: {str(e)}",
-                original_exception=e
+                f"Failed to ingest data from API {self.url}: "
+                f"{str(e)}"
             )

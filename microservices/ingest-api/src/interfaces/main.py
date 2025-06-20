@@ -5,9 +5,11 @@ from src.application.services.api_ingestion_service import APIIngestion
 from src.domain.exceptions.exceptions import (APIIngestionError,
                                               AzureAuthenticationError,
                                               BlobUploadError,
-                                              MissingEnvironmentVariableError)
-from src.infrastructure.ingestion.rest_api_ingestion import RestAPIIngestion
-from src.infrastructure.logging.logger import get_logger
+                                              MissingEnvironmentVariableError,
+                                              UnsupportedAPITypeError)
+from src.infrastructure.config.strategy_registry import (AUTH_STRATEGIES,
+                                                         INGESTION_STRATEGIES)
+from src.infrastructure.logging.logging_setup import get_logger
 from src.infrastructure.storage.azure_blob_uploader import AzureBlobUploader
 
 logger = get_logger(__name__)
@@ -19,10 +21,23 @@ def main():
     and uploads it to Azure Blob Storage.
     """
     try:
+        auth_type = os.getenv("AUTH_TYPE").lower()
+        api_type = os.getenv("API_TYPE").lower()
         api_url = os.getenv("API_URL")
         api_key = os.getenv("API_KEY")
         storage_container = os.getenv("STORAGE_CONTAINER")
         storage_folder = os.getenv("STORAGE_FOLDER")
+
+        logger.info(
+            "Starting ingestion process",
+            extra={
+                "auth_type": auth_type,
+                "api_type": api_type,
+                "api_url": api_url,
+                "storage_container": storage_container,
+                "storage_folder": storage_folder,
+            },
+        )
 
         if not all([api_url, api_key, storage_container, storage_folder]):
             raise MissingEnvironmentVariableError(
@@ -36,9 +51,23 @@ def main():
                 ]
             )
 
-        strategy = RestAPIIngestion()
-        ingestion_service = APIIngestion(api_url, strategy)
-        response = ingestion_service.ingest(params={"key": api_key})
+        auth_cls = AUTH_STRATEGIES.get(auth_type)
+        if not auth_cls:
+            raise UnsupportedAPITypeError(
+                f"Unsupported auth type: {auth_type}"
+            )
+
+        ingestion_cls = INGESTION_STRATEGIES.get(api_type)
+        if not ingestion_cls:
+            raise UnsupportedAPITypeError(
+                f"Unsupported API type: {api_type}"
+            )
+
+        auth_strategy = auth_cls(api_key)
+        ingestion_strategy = ingestion_cls(api_url, auth_strategy)
+
+        ingestion_service = APIIngestion(strategy=ingestion_strategy)
+        response = ingestion_service.ingest()
         data = convert_to_json(response)
 
         blob_uploader = AzureBlobUploader()
@@ -62,7 +91,7 @@ def main():
     ) as e:
         logger.error(f"Ingestion process failed: {str(e)}")
     except Exception as e:
-        logger.exception(f"Unexpected error during ingestion process: {e}")
+        logger.error(f"Unexpected error during ingestion process: {e}")
 
 
 if __name__ == "__main__":

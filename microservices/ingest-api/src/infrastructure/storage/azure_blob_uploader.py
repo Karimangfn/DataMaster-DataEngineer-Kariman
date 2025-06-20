@@ -6,7 +6,7 @@ from azure.storage.blob import BlobServiceClient
 from src.domain.exceptions.exceptions import (AzureAuthenticationError,
                                               BlobUploadError,
                                               MissingEnvironmentVariableError)
-from src.infrastructure.logging.logger import get_logger
+from src.infrastructure.logging.logging_setup import get_logger
 
 logger = get_logger(__name__)
 
@@ -52,9 +52,11 @@ class AzureBlobUploader:
                 f"https://{storage_account}.blob.core.windows.net",
                 credential=self.credential,
             )
-            logger.info("AzureBlobUploader initialized successfully.")
+            logger.info(
+                "AzureBlobUploader initialized successfully."
+            )
         except AzureError as e:
-            logger.exception(
+            logger.error(
                 "Failed to authenticate with BlobServiceClient."
             )
             raise AzureAuthenticationError(e)
@@ -73,6 +75,10 @@ class AzureBlobUploader:
         Raises:
             BlobUploadError: If an error occurs while uploading to Azure.
         """
+        logger.debug(
+            f"Starting upload of blob '{blob_name}' "
+            f"to container '{container_name}'."
+        )
         try:
             blob_client = self.blob_service_client.get_blob_client(
                 container=container_name,
@@ -84,8 +90,10 @@ class AzureBlobUploader:
                 f"{container_name}/{blob_name}"
             )
         except AzureError as e:
-            logger.exception(
+            logger.error(
                 f"Failed to upload blob '{blob_name}' "
                 f"to container '{container_name}'."
             )
-            raise BlobUploadError(f"{container_name}/{blob_name}", e)
+            raise BlobUploadError(
+                f"{container_name}/{blob_name}", e
+            )
