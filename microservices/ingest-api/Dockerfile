@@ -7,4 +7,6 @@ COPY . .
 RUN pip install --upgrade pip \
     && pip install .
 
+ENV PYTHONPATH=/app/src
+
 CMD ["ingest-api"]
