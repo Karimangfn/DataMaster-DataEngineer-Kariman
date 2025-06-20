@@ -1,13 +1,14 @@
-import os
-
 from src.application.helpers.serialization import convert_to_json
 from src.application.services.api_ingestion_service import APIIngestion
+from src.application.validators.env_vars_validator import validate_env_vars
 from src.domain.exceptions.exceptions import (APIIngestionError,
                                               AzureAuthenticationError,
                                               BlobUploadError,
-                                              MissingEnvironmentVariableError)
-from src.infrastructure.ingestion.rest_api_ingestion import RestAPIIngestion
-from src.infrastructure.logging.logger import get_logger
+                                              MissingEnvironmentVariableError,
+                                              UnsupportedAPITypeError)
+from src.infrastructure.config.strategy_registry import (AUTH_STRATEGIES,
+                                                         INGESTION_STRATEGIES)
+from src.infrastructure.logging.logging_setup import get_logger
 from src.infrastructure.storage.azure_blob_uploader import AzureBlobUploader
 
 logger = get_logger(__name__)
@@ -19,26 +20,51 @@ def main():
     and uploads it to Azure Blob Storage.
     """
     try:
-        api_url = os.getenv("API_URL")
-        api_key = os.getenv("API_KEY")
-        storage_container = os.getenv("STORAGE_CONTAINER")
-        storage_folder = os.getenv("STORAGE_FOLDER")
+        required_vars = [
+            "AUTH_TYPE",
+            "API_TYPE",
+            "API_URL",
+            "API_KEY",
+            "STORAGE_CONTAINER",
+            "STORAGE_FOLDER",
+        ]
+        env_vars = validate_env_vars(required_vars)
 
-        if not all([api_url, api_key, storage_container, storage_folder]):
-            raise MissingEnvironmentVariableError(
-                [
-                    var for var, value in {
-                        "API_URL": api_url,
-                        "API_KEY": api_key,
-                        "STORAGE_CONTAINER": storage_container,
-                        "STORAGE_FOLDER": storage_folder
-                    }.items() if not value
-                ]
+        auth_type = env_vars["AUTH_TYPE"].lower()
+        api_type = env_vars["API_TYPE"].lower()
+        api_url = env_vars["API_URL"]
+        api_key = env_vars["API_KEY"]
+        storage_container = env_vars["STORAGE_CONTAINER"]
+        storage_folder = env_vars["STORAGE_FOLDER"]
+
+        logger.info(
+            "Starting ingestion process",
+            extra={
+                "auth_type": auth_type,
+                "api_type": api_type,
+                "api_url": api_url,
+                "storage_container": storage_container,
+                "storage_folder": storage_folder,
+            },
+        )
+
+        auth_cls = AUTH_STRATEGIES.get(auth_type)
+        if not auth_cls:
+            raise UnsupportedAPITypeError(
+                f"Unsupported auth type: {auth_type}"
             )
 
-        strategy = RestAPIIngestion()
-        ingestion_service = APIIngestion(api_url, strategy)
-        response = ingestion_service.ingest(params={"key": api_key})
+        ingestion_cls = INGESTION_STRATEGIES.get(api_type)
+        if not ingestion_cls:
+            raise UnsupportedAPITypeError(
+                f"Unsupported API type: {api_type}"
+            )
+
+        auth_strategy = auth_cls(api_key)
+        ingestion_strategy = ingestion_cls(api_url, auth_strategy)
+        ingestion_service = APIIngestion(strategy=ingestion_strategy)
+
+        response = ingestion_service.ingest()
         data = convert_to_json(response)
 
         blob_uploader = AzureBlobUploader()
@@ -60,9 +86,16 @@ def main():
         AzureAuthenticationError,
         MissingEnvironmentVariableError
     ) as e:
-        logger.error(f"Ingestion process failed: {str(e)}")
+        print(f"Caught exception type: {type(e)} - {e}")
+        logger.error(
+            f"Ingestion process failed: {str(e)}"
+        )
+        raise
     except Exception as e:
-        logger.exception(f"Unexpected error during ingestion process: {e}")
+        logger.error(
+            f"Unexpected error during ingestion process: {e}"
+        )
+        raise
 
 
 if __name__ == "__main__":

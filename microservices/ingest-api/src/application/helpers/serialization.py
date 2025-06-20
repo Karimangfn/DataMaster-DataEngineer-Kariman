@@ -2,6 +2,9 @@ import json
 from typing import Any
 
 from src.domain.exceptions.exceptions import JSONConversionError
+from src.infrastructure.logging.logging_setup import get_logger
+
+logger = get_logger(__name__)
 
 
 def convert_to_json(response_text: str) -> Any:
@@ -18,6 +21,16 @@ def convert_to_json(response_text: str) -> Any:
         JSONConversionError: If the response text cannot be parsed into JSON.
     """
     try:
-        return json.loads(response_text)
+        result = json.loads(response_text)
+        logger.debug(
+            "Successfully converted response text to JSON."
+        )
+        return result
     except json.JSONDecodeError as e:
-        raise JSONConversionError(e)
+        logger.error(
+            "Failed to convert response text to JSON.",
+            exc_info=True
+        )
+        raise JSONConversionError(
+            f"Failed to convert JSON: {str(e)}"
+        )

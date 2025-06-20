@@ -50,7 +50,10 @@ def test_missing_env_vars():
     """
     with pytest.raises(MissingEnvironmentVariableError) as exc:
         AzureBlobUploader()
-    assert "Missing required environment variables" in str(exc.value)
+    missing_vars = ["AZURE_TENANT_ID", "AZURE_CLIENT_ID",
+                    "AZURE_CLIENT_SECRET", "STORAGE_ACCOUNT"]
+    for var in missing_vars:
+        assert var in str(exc.value)
 
 
 @patch("src.infrastructure.storage.azure_blob_uploader.ClientSecretCredential")

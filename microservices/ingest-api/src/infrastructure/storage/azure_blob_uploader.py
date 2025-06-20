@@ -1,12 +1,10 @@
-import os
-
 from azure.core.exceptions import AzureError
 from azure.identity import ClientSecretCredential
 from azure.storage.blob import BlobServiceClient
+from src.application.validators.env_vars_validator import validate_env_vars
 from src.domain.exceptions.exceptions import (AzureAuthenticationError,
-                                              BlobUploadError,
-                                              MissingEnvironmentVariableError)
-from src.infrastructure.logging.logger import get_logger
+                                              BlobUploadError)
+from src.infrastructure.logging.logging_setup import get_logger
 
 logger = get_logger(__name__)
 
@@ -19,43 +17,39 @@ class AzureBlobUploader:
 
     def __init__(self):
         """
-        Initializes the upload service with credentials from environment
-        variables.
-        Raises MissingEnvironmentVariableError if any required variables
-        are missing.
+        Initialize the AzureBlobUploader with credentials
+        and BlobServiceClient.
+
+        Raises:
+            MissingEnvironmentVariableError: If any required environment
+            variable is missing.
+            AzureAuthenticationError: If authentication with Azure fails.
         """
-        tenant_id = os.getenv("AZURE_TENANT_ID")
-        client_id = os.getenv("AZURE_CLIENT_ID")
-        client_secret = os.getenv("AZURE_CLIENT_SECRET")
-        storage_account = os.getenv("STORAGE_ACCOUNT")
-
-        missing_vars = [
-            var_name for var_name, var in {
-                "AZURE_TENANT_ID": tenant_id,
-                "AZURE_CLIENT_ID": client_id,
-                "AZURE_CLIENT_SECRET": client_secret,
-                "STORAGE_ACCOUNT": storage_account,
-            }.items() if not var
+        required_vars = [
+            "AZURE_TENANT_ID",
+            "AZURE_CLIENT_ID",
+            "AZURE_CLIENT_SECRET",
+            "STORAGE_ACCOUNT",
         ]
-
-        if missing_vars:
-            logger.error(
-                f"Missing required environment variables: {missing_vars}"
-            )
-            raise MissingEnvironmentVariableError(missing_vars)
+        env_vars = validate_env_vars(required_vars)
 
         try:
             self.credential = ClientSecretCredential(
-                tenant_id, client_id, client_secret
+                env_vars["AZURE_TENANT_ID"],
+                env_vars["AZURE_CLIENT_ID"],
+                env_vars["AZURE_CLIENT_SECRET"],
             )
             self.blob_service_client = BlobServiceClient(
-                f"https://{storage_account}.blob.core.windows.net",
+                f"https://{env_vars['STORAGE_ACCOUNT']}.blob.core.windows.net",
                 credential=self.credential,
             )
-            logger.info("AzureBlobUploader initialized successfully.")
+            logger.info(
+                "AzureBlobUploader initialized successfully."
+            )
         except AzureError as e:
-            logger.exception(
-                "Failed to authenticate with BlobServiceClient."
+            logger.error(
+                "Failed to authenticate with BlobServiceClient.",
+                exc_info=True
             )
             raise AzureAuthenticationError(e)
 
@@ -73,6 +67,10 @@ class AzureBlobUploader:
         Raises:
             BlobUploadError: If an error occurs while uploading to Azure.
         """
+        logger.debug(
+            f"Starting upload of blob '{blob_name}' "
+            f"to container '{container_name}'."
+        )
         try:
             blob_client = self.blob_service_client.get_blob_client(
                 container=container_name,
@@ -84,8 +82,10 @@ class AzureBlobUploader:
                 f"{container_name}/{blob_name}"
             )
         except AzureError as e:
-            logger.exception(
+            logger.error(
                 f"Failed to upload blob '{blob_name}' "
                 f"to container '{container_name}'."
             )
-            raise BlobUploadError(f"{container_name}/{blob_name}", e)
+            raise BlobUploadError(
+                f"{container_name}/{blob_name}", e
+            )

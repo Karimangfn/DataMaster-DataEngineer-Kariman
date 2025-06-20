@@ -15,8 +15,11 @@ service:
 resources: {}
 
 config:
+  auth:
+    type: "query_param"
   api:
-    url: ""
+    type: "rest"
+    url: "https://my.api.mockaroo.com/offerchannel/client_csv.json"
     key: ""
 
   storage:
