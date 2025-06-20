@@ -7,7 +7,7 @@ pre-commit
 isort
 flake8
 bandit
-pythonjsonlogger
+python-json-logger
 pytest
 pytest-cov
 azure-core
