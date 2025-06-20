@@ -1,4 +1,5 @@
-name: Deploy to AKS
+run-name: AKS Setup
+name: AKS Setup
 
 on:
   workflow_dispatch:
@@ -94,50 +95,3 @@ jobs:
           kubectl delete secret ingest-api-secret --ignore-not-found
           kubectl create secret generic ingest-api-secret \
             --from-literal=API_KEY="${{ secrets.API_KEY }}"
-
-  setup_and_deploy:
-    runs-on: ubuntu-latest
-    needs: [validate_image, create_api_k8s_secret]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
-
-      - name: Get AKS credentials
-        run: |
-          az aks get-credentials \
-            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
-            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
-            --admin
-
-      - name: Find service path
-        id: find_path
-        run: |
-          path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-          version=$(cat "$path/VERSION")
-          echo "version=$version"
-          echo "service_path=$path"
-          echo "service_path=$path" >> $GITHUB_OUTPUT
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4.3.0
-        with:
-          version: 'v3.7.0'
-
-      - name: Deploy to AKS with Helm
-        run: |
-          service_path="${{ steps.find_path.outputs.service_path }}"
-          version="${{ steps.find_path.outputs.version }}"
-          image_name=$(basename "$service_path")
-          full_image="${{ secrets.ACR_NAME }}.azurecr.io/$image_name:$version"
-          echo "Deploying image: $full_image"
-          helm upgrade --install $image_name "$service_path/helm" \
-            --set image.repository=${{ secrets.ACR_NAME }}.azurecr.io/$image_name \
-            --set image.tag=$version \
-            --namespace default \
-            --create-namespace
