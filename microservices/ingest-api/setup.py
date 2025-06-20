@@ -16,12 +16,11 @@ setup(
     version=read_version(),
     author="Kariman",
     description="Microsserviço para ingestão de dados de uma API",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(),
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
-            'ingest-api = interfaces.main:main',
+            'ingest-api = src.interfaces.main:main',
         ],
     },
     classifiers=[
