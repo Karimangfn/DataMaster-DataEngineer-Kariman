@@ -21,7 +21,7 @@ setup(
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
-            'ingest-api = src.interfaces.main:main',
+            'ingest-api = interfaces.main:main',
         ],
     },
     classifiers=[
