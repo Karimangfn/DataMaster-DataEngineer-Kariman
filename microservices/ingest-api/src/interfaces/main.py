@@ -86,9 +86,16 @@ def main():
         AzureAuthenticationError,
         MissingEnvironmentVariableError
     ) as e:
-        logger.error(f"Ingestion process failed: {str(e)}")
+        print(f"Caught exception type: {type(e)} - {e}")
+        logger.error(
+            f"Ingestion process failed: {str(e)}"
+        )
+        raise
     except Exception as e:
-        logger.error(f"Unexpected error during ingestion process: {e}")
+        logger.error(
+            f"Unexpected error during ingestion process: {e}"
+        )
+        raise
 
 
 if __name__ == "__main__":

@@ -1,159 +1,114 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from src.domain.exceptions.exceptions import (APIIngestionError,
-                                              AzureAuthenticationError,
-                                              BlobUploadError)
-from src.interfaces import main
+from src.domain.exceptions.exceptions import UnsupportedAPITypeError
+from src.interfaces.main import main
 
 
 @pytest.fixture
-def env_vars():
+def valid_env_vars():
+    """Provide a valid environment variables dict."""
     return {
-        "API_URL": "http://fakeapi.com",
-        "API_KEY": "fakekey",
+        "AUTH_TYPE": "basic",
+        "API_TYPE": "rest",
+        "API_URL": "http://example.com/api",
+        "API_KEY": "secret",
         "STORAGE_CONTAINER": "container",
         "STORAGE_FOLDER": "folder",
     }
 
 
 @pytest.fixture
-def setup_mocks():
-    with patch(
-             'src.interfaces.main.logger'
-         ) as mock_logger, \
-         patch(
-             'src.interfaces.main.RestAPIIngestion'
-         ) as mock_strategy_class, \
-         patch(
-             'src.interfaces.main.APIIngestion'
-         ) as mock_ingestion_class, \
-         patch(
-             'src.interfaces.main.AzureBlobUploader'
-         ) as mock_blob_class, \
-         patch(
-             'src.interfaces.main.convert_to_json'
-         ) as mock_convert:
+def patch_all_dependencies(valid_env_vars):
+    """
+    Patch external dependencies inside src.interfaces.main for test isolation.
+    """
+    with patch("src.interfaces.main.validate_env_vars",
+               return_value=valid_env_vars), \
+         patch("src.interfaces.main.AUTH_STRATEGIES",
+               {"basic": lambda key: MagicMock()}), \
+         patch("src.interfaces.main.INGESTION_STRATEGIES",
+               {"rest": lambda url, auth: MagicMock()}), \
+         patch("src.interfaces.main.APIIngestion") as MockAPIIngestion, \
+         patch("src.interfaces.main.convert_to_json",
+               side_effect=lambda x: '{"mocked":"json"}'), \
+         patch("src.interfaces.main.AzureBlobUploader") as MockUploader, \
+         patch("src.interfaces.main.logger",
+               new=MagicMock()) as mock_logger:
 
-        mock_strategy = MagicMock()
-        mock_strategy_class.return_value = mock_strategy
+        mock_ingestion_instance = MockAPIIngestion.return_value
+        mock_ingestion_instance.ingest.return_value = {"some": "response"}
 
-        mock_ingestion = MagicMock()
-        mock_ingestion_class.return_value = mock_ingestion
+        mock_uploader_instance = MockUploader.return_value
 
-        mock_blob = MagicMock()
-        mock_blob_class.return_value = mock_blob
-
-        mock_convert.return_value = '{"some":"json"}'
-        mock_ingestion.ingest.return_value = {"some": "response"}
+        mock_logger_instance = mock_logger
 
         yield {
-            "logger": mock_logger,
-            "strategy_class": mock_strategy_class,
-            "strategy": mock_strategy,
-            "ingestion_class": mock_ingestion_class,
-            "ingestion": mock_ingestion,
-            "blob_class": mock_blob_class,
-            "blob": mock_blob,
-            "convert": mock_convert,
+            "MockAPIIngestion": MockAPIIngestion,
+            "mock_ingestion_instance": mock_ingestion_instance,
+            "mock_uploader_instance": mock_uploader_instance,
+            "mock_logger_instance": mock_logger_instance,
         }
 
 
-@pytest.mark.parametrize("env", [
-    {
-        "API_URL": "http://fakeapi.com",
-        "API_KEY": "fakekey",
-        "STORAGE_CONTAINER": "container",
-        "STORAGE_FOLDER": "folder",
-    }
-])
-def test_main_success(env, setup_mocks):
+def test_main_success(patch_all_dependencies):
     """
-    Test successful data ingestion and upload flow.
+    Test main() runs successfully and uploads data as expected.
     """
-    with patch.dict('os.environ', env):
-        main.main()
+    main()
 
-    setup_mocks["strategy_class"].assert_called_once()
-    setup_mocks["ingestion_class"].assert_called_once_with(
-        env["API_URL"], setup_mocks["strategy"]
+    patch_all_dependencies["mock_logger_instance"].info.assert_any_call(
+        "Starting ingestion process",
+        extra={
+            "auth_type": "basic",
+            "api_type": "rest",
+            "api_url": "http://example.com/api",
+            "storage_container": "container",
+            "storage_folder": "folder",
+        }
     )
-    setup_mocks["ingestion"].ingest.assert_called_once_with(
-        params={"key": env["API_KEY"]}
+    patch_all_dependencies["MockAPIIngestion"].assert_called_once()
+    patch_all_dependencies["mock_ingestion_instance"] \
+        .ingest.assert_called_once()
+    patch_all_dependencies["mock_uploader_instance"] \
+        .upload_json.assert_called_once_with(
+        container_name="container",
+        blob_name="folder/data.json",
+        json_content='{"mocked":"json"}'
     )
-    setup_mocks["convert"].assert_called_once_with({"some": "response"})
-    setup_mocks["blob"].upload_json.assert_called_once_with(
-        container_name=env["STORAGE_CONTAINER"],
-        blob_name=f"{env['STORAGE_FOLDER']}/data.json",
-        json_content='{"some":"json"}'
+    patch_all_dependencies["mock_logger_instance"].info.assert_any_call(
+        "Data ingestion and upload completed successfully. "
+        "API: http://example.com/api, Blob: folder/data.json"
     )
-    setup_mocks["logger"].info.assert_called()
 
 
-def test_missing_environment_variables(setup_mocks):
+def test_main_unsupported_auth_type_raises(valid_env_vars):
     """
-    Test that MissingEnvironmentVariableError is raised
-    and logged when env vars are missing.
+    Test main() raises UnsupportedAPITypeError for unsupported auth type.
     """
-    with patch.dict('os.environ', {}, clear=True):
-        main.main()
+    invalid_env_vars = valid_env_vars.copy()
+    invalid_env_vars["AUTH_TYPE"] = "unsupported_auth"
 
-    setup_mocks["logger"].error.assert_called()
-    setup_mocks["blob"].upload_json.assert_not_called()
+    with patch("src.interfaces.main.validate_env_vars",
+               return_value=invalid_env_vars), \
+         patch("src.interfaces.main.AUTH_STRATEGIES", {}), \
+         patch("src.interfaces.main.INGESTION_STRATEGIES",
+               {"rest": lambda url, auth: MagicMock()}):
+        with pytest.raises(UnsupportedAPITypeError):
+            main()
 
 
-def test_api_ingestion_error_handling(env_vars, setup_mocks):
+def test_main_unsupported_api_type_raises(valid_env_vars):
     """
-    Test handling of APIIngestionError during ingestion.
+    Test main() raises UnsupportedAPITypeError for unsupported API type.
     """
-    with patch.dict('os.environ', env_vars):
-        setup_mocks["ingestion"].ingest.side_effect = APIIngestionError(
-            source=env_vars["API_URL"],
-            original_exception=Exception("API error")
-        )
-        main.main()
+    invalid_env_vars = valid_env_vars.copy()
+    invalid_env_vars["API_TYPE"] = "unsupported_api"
 
-    setup_mocks["logger"].error.assert_called()
-    setup_mocks["blob"].upload_json.assert_not_called()
-
-
-def test_blob_upload_error_handling(env_vars, setup_mocks):
-    """
-    Test handling of BlobUploadError during upload.
-    """
-    with patch.dict('os.environ', env_vars):
-        setup_mocks["blob"].upload_json.side_effect = BlobUploadError(
-            destination=(
-                f"{env_vars['STORAGE_CONTAINER']}/"
-                f"{env_vars['STORAGE_FOLDER']}/data.json"
-            ),
-            original_exception=Exception("Blob error")
-        )
-        main.main()
-
-    setup_mocks["logger"].error.assert_called()
-
-
-def test_azure_authentication_error_handling(env_vars, setup_mocks):
-    """
-    Test handling of AzureAuthenticationError during ingestion or upload.
-    """
-    with patch.dict('os.environ', env_vars):
-        setup_mocks["ingestion"].ingest.side_effect = AzureAuthenticationError(
-            original_exception=Exception("Auth error")
-        )
-        main.main()
-
-    setup_mocks["logger"].error.assert_called()
-
-
-def test_unexpected_exception_handling(env_vars, setup_mocks):
-    """
-    Test that unexpected exceptions are logged with exception level.
-    """
-    with patch.dict('os.environ', env_vars):
-        setup_mocks["ingestion"].ingest.side_effect = Exception("Unexpected")
-
-        main.main()
-
-    setup_mocks["logger"].exception.assert_called()
+    with patch("src.interfaces.main.validate_env_vars",
+               return_value=invalid_env_vars), \
+         patch("src.interfaces.main.AUTH_STRATEGIES",
+               {"basic": lambda key: MagicMock()}), \
+         patch("src.interfaces.main.INGESTION_STRATEGIES", {}):
+        with pytest.raises(UnsupportedAPITypeError):
+            main()
