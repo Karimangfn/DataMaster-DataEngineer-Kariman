@@ -13,6 +13,7 @@ jobs:
     outputs:
       service_path: ${{ steps.find_path.outputs.service_path }}
       version: ${{ steps.find_path.outputs.version }}
+      service_name: ${{ steps.find_path.outputs.service_name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,8 +33,10 @@ jobs:
         run: |
           path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
           version=$(cat "$path/VERSION")
+          image_name=$(basename "$path")
           echo "service_path=$path" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
+          echo "service_name=$image_name" >> $GITHUB_OUTPUT
 
       - name: Validate if image exists in ACR
         run: |
@@ -50,6 +53,47 @@ jobs:
             echo "Error: Image $version not found in ACR for $image_name."
             exit 1
           fi
+
+  check_api_key_secret:
+    runs-on: ubuntu-latest
+    needs: validate_image
+    if: needs.validate_image.outputs.service_name == 'ingest-api'
+    steps:
+      - name: Check if API_KEY secret is available
+        run: |
+          if [[ -z "${{ secrets.API_KEY }}" ]]; then
+            echo "ERROR: GitHub secret API_KEY is not set."
+            exit 1
+          else
+            echo "✅ API_KEY is set."
+          fi
+  
+  create_api_k8s_secret:
+    runs-on: ubuntu-latest
+    needs: [validate_image, check_api_key_secret]
+    if: needs.validate_image.outputs.service_name == 'ingest-api'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
+            --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
+            --admin
+
+      - name: Create Kubernetes Secret with API Key
+        run: |
+          echo "Criando ou atualizando secret 'ingest-api-secret'..."
+          kubectl delete secret ingest-api-secret --ignore-not-found
+          kubectl create secret generic ingest-api-secret \
+            --from-literal=API_KEY="${{ secrets.API_KEY }}"
 
   setup_and_deploy:
     runs-on: ubuntu-latest
