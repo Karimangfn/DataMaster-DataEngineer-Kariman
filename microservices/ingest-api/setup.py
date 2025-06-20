@@ -18,6 +18,11 @@ setup(
     description="Microsserviço para ingestão de dados de uma API",
     packages=find_packages(),
     install_requires=read_requirements(),
+    entry_points={
+        'console_scripts': [
+            'ingest-api = src.interfaces.main:main',
+        ],
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
