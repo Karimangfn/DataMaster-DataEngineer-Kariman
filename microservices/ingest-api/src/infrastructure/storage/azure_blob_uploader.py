@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 from azure.core.exceptions import AzureError
 from azure.identity import ClientSecretCredential
@@ -17,39 +18,56 @@ class AzureBlobUploader:
     uploading JSON files to Azure Blob Storage.
     """
 
-    def __init__(self):
+    def _get_env_vars(self) -> Dict[str, str]:
         """
-        Initializes the upload service with credentials from environment
-        variables.
-        Raises MissingEnvironmentVariableError if any required variables
-        are missing.
+        Retrieve and validate required environment variables for
+        Azure authentication.
+
+        Returns:
+            Dict[str, str]: A dictionary containing the required
+            environment variables.
+
+        Raises:
+            MissingEnvironmentVariableError: If any required
+            environment variable is missing.
         """
-        tenant_id = os.getenv("AZURE_TENANT_ID")
-        client_id = os.getenv("AZURE_CLIENT_ID")
-        client_secret = os.getenv("AZURE_CLIENT_SECRET")
-        storage_account = os.getenv("STORAGE_ACCOUNT")
-
-        missing_vars = [
-            var_name for var_name, var in {
-                "AZURE_TENANT_ID": tenant_id,
-                "AZURE_CLIENT_ID": client_id,
-                "AZURE_CLIENT_SECRET": client_secret,
-                "STORAGE_ACCOUNT": storage_account,
-            }.items() if not var
-        ]
-
+        env_vars = {
+            "AZURE_TENANT_ID": os.getenv("AZURE_TENANT_ID"),
+            "AZURE_CLIENT_ID": os.getenv("AZURE_CLIENT_ID"),
+            "AZURE_CLIENT_SECRET": os.getenv("AZURE_CLIENT_SECRET"),
+            "STORAGE_ACCOUNT": os.getenv("STORAGE_ACCOUNT"),
+        }
+        missing_vars = [k for k, v in env_vars.items() if not v]
         if missing_vars:
             logger.error(
                 f"Missing required environment variables: {missing_vars}"
             )
             raise MissingEnvironmentVariableError(missing_vars)
+        return env_vars
+
+    def __init__(self):
+        """
+        Initialize the AzureBlobUploader with credentials
+        and BlobServiceClient.
+
+        Retrieves required environment variables, authenticates using
+        ClientSecretCredential, and initializes the BlobServiceClient.
+
+        Raises:
+            MissingEnvironmentVariableError: If any required environment
+            variable is missing.
+            AzureAuthenticationError: If authentication with Azure fails.
+        """
+        env_vars = self._get_env_vars()
 
         try:
             self.credential = ClientSecretCredential(
-                tenant_id, client_id, client_secret
+                env_vars["AZURE_TENANT_ID"],
+                env_vars["AZURE_CLIENT_ID"],
+                env_vars["AZURE_CLIENT_SECRET"],
             )
             self.blob_service_client = BlobServiceClient(
-                f"https://{storage_account}.blob.core.windows.net",
+                f"https://{env_vars['STORAGE_ACCOUNT']}.blob.core.windows.net",
                 credential=self.credential,
             )
             logger.info(
@@ -57,7 +75,8 @@ class AzureBlobUploader:
             )
         except AzureError as e:
             logger.error(
-                "Failed to authenticate with BlobServiceClient."
+                "Failed to authenticate with BlobServiceClient.",
+                exc_info=True
             )
             raise AzureAuthenticationError(e)
 

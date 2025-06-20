@@ -42,8 +42,9 @@ class APIIngestion:
             return result
         except Exception as e:
             logger.error(
-                f"Failed to ingest using strategy: {e}",
-                exc_info=True
+                f"Failed to ingest using strategy "
+                f"{type(self._strategy).__name__}: "
+                f"{e}", exc_info=True
             )
             raise APIRequestError(
                 type(self.strategy).__name__, e

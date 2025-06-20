@@ -7,16 +7,6 @@ from logging_config import LOGGING_CONFIG
 def setup_logging():
     """
     Configure the Python logging module using the LOGGING_CONFIG dictionary.
-
-    This function applies the logging configuration globally using
-    logging.config.dictConfig. It should be called once at the
-    application startup.
-
-    Args:
-        None
-
-    Returns:
-        None
     """
     logging.config.dictConfig(LOGGING_CONFIG)
 

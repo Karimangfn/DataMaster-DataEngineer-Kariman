@@ -1,4 +1,3 @@
-# src/infrastructure/authentication/api_key_query_param.py
 from typing import Dict
 
 from src.domain.ports.authentication_strategy import AuthenticationStrategy
@@ -16,7 +15,7 @@ class APIKeyQueryParamAuth(AuthenticationStrategy):
         Args:
             key (str): API key to be used in the query string.
         """
-        self.key = key
+        self._key = key
 
     def get_query_params(self) -> Dict[str, str]:
         """
@@ -25,7 +24,7 @@ class APIKeyQueryParamAuth(AuthenticationStrategy):
         Returns:
             Dict[str, str]: Dictionary with the API key.
         """
-        return {"key": self.key}
+        return {"key": self._key}
 
     def get_headers(self) -> Dict[str, str]:
         """

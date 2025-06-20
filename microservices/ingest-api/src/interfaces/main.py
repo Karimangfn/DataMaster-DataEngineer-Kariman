@@ -1,7 +1,6 @@
-import os
-
 from src.application.helpers.serialization import convert_to_json
 from src.application.services.api_ingestion_service import APIIngestion
+from src.application.validators.env_vars_validator import validate_env_vars
 from src.domain.exceptions.exceptions import (APIIngestionError,
                                               AzureAuthenticationError,
                                               BlobUploadError,
@@ -21,12 +20,22 @@ def main():
     and uploads it to Azure Blob Storage.
     """
     try:
-        auth_type = os.getenv("AUTH_TYPE").lower()
-        api_type = os.getenv("API_TYPE").lower()
-        api_url = os.getenv("API_URL")
-        api_key = os.getenv("API_KEY")
-        storage_container = os.getenv("STORAGE_CONTAINER")
-        storage_folder = os.getenv("STORAGE_FOLDER")
+        required_vars = [
+            "AUTH_TYPE",
+            "API_TYPE",
+            "API_URL",
+            "API_KEY",
+            "STORAGE_CONTAINER",
+            "STORAGE_FOLDER",
+        ]
+        env_vars = validate_env_vars(required_vars)
+
+        auth_type = env_vars["AUTH_TYPE"].lower()
+        api_type = env_vars["API_TYPE"].lower()
+        api_url = env_vars["API_URL"]
+        api_key = env_vars["API_KEY"]
+        storage_container = env_vars["STORAGE_CONTAINER"]
+        storage_folder = env_vars["STORAGE_FOLDER"]
 
         logger.info(
             "Starting ingestion process",
@@ -38,18 +47,6 @@ def main():
                 "storage_folder": storage_folder,
             },
         )
-
-        if not all([api_url, api_key, storage_container, storage_folder]):
-            raise MissingEnvironmentVariableError(
-                [
-                    var for var, value in {
-                        "API_URL": api_url,
-                        "API_KEY": api_key,
-                        "STORAGE_CONTAINER": storage_container,
-                        "STORAGE_FOLDER": storage_folder
-                    }.items() if not value
-                ]
-            )
 
         auth_cls = AUTH_STRATEGIES.get(auth_type)
         if not auth_cls:

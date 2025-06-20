@@ -21,8 +21,8 @@ class RestAPIIngestion(APIIngestionStrategy):
             auth_strategy (AuthenticationStrategy): Authentication strategy
             instance.
         """
-        self.url = url
-        self.auth_strategy = auth_strategy
+        self._url = url
+        self._auth_strategy = auth_strategy
 
     def ingest(self) -> Any:
         """
@@ -34,32 +34,32 @@ class RestAPIIngestion(APIIngestionStrategy):
         Raises:
             APIIngestionError: If the HTTP request to the API fails.
         """
-        params = self.auth_strategy.get_query_params()
-        headers = self.auth_strategy.get_headers()
+        params = self._auth_strategy.get_query_params()
+        headers = self._auth_strategy.get_headers()
 
         logger.debug(
-            f"Sending GET request to {self.url} "
+            f"Sending GET request to {self._url} "
             f"with params={params} and headers={headers}"
         )
 
         try:
             response = requests.get(
-                self.url,
+                self._url,
                 params=params,
                 headers=headers,
                 verify=False
             )
             response.raise_for_status()
             logger.info(
-                f"Successfully ingested data from {self.url}"
+                f"Successfully ingested data from {self._url}"
             )
             return response.text
         except requests.exceptions.RequestException as e:
             logger.error(
-                f"Request to {self.url} failed: {str(e)}",
+                f"Request to {self._url} failed: {str(e)}",
                 exc_info=True
             )
             raise APIIngestionError(
-                f"Failed to ingest data from API {self.url}: "
+                f"Failed to ingest data from API {self._url}: "
                 f"{str(e)}"
             )
