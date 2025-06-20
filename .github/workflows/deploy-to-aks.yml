@@ -8,6 +8,49 @@ on:
       - completed
 
 jobs:
+  validate_image:
+    runs-on: ubuntu-latest
+    outputs:
+      service_path: ${{ steps.find_path.outputs.service_path }}
+      version: ${{ steps.find_path.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python (optional, remove se não for usar)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+
+      - name: Find service path and version
+        id: find_path
+        run: |
+          path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
+          version=$(cat "$path/VERSION")
+          echo "service_path=$path" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Validate if image exists in ACR
+        run: |
+          acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
+          version="${{ steps.find_path.outputs.version }}"
+          service_path="${{ steps.find_path.outputs.service_path }}"
+          image_name=$(basename "$service_path")
+
+          echo "Checking if image $acr_name.azurecr.io/$image_name:$version exists..."
+
+          if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
+            echo "Image found. Continuing..."
+          else
+            echo "Error: Image $version not found in ACR for $image_name."
+            exit 1
+          fi
+
   setup_and_deploy:
     runs-on: ubuntu-latest
     steps:
