@@ -20,7 +20,6 @@ config:
   api:
     type: "rest"
     url: "https://my.api.mockaroo.com/offerchannel/client_csv.json"
-    key: ""
 
   storage:
     raw:
