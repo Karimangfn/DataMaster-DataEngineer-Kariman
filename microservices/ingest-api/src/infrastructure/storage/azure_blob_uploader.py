@@ -1,12 +1,9 @@
-import os
-from typing import Dict
-
 from azure.core.exceptions import AzureError
 from azure.identity import ClientSecretCredential
 from azure.storage.blob import BlobServiceClient
+from src.application.validators.env_vars_validator import validate_env_vars
 from src.domain.exceptions.exceptions import (AzureAuthenticationError,
-                                              BlobUploadError,
-                                              MissingEnvironmentVariableError)
+                                              BlobUploadError)
 from src.infrastructure.logging.logging_setup import get_logger
 
 logger = get_logger(__name__)
@@ -18,47 +15,23 @@ class AzureBlobUploader:
     uploading JSON files to Azure Blob Storage.
     """
 
-    def _get_env_vars(self) -> Dict[str, str]:
-        """
-        Retrieve and validate required environment variables for
-        Azure authentication.
-
-        Returns:
-            Dict[str, str]: A dictionary containing the required
-            environment variables.
-
-        Raises:
-            MissingEnvironmentVariableError: If any required
-            environment variable is missing.
-        """
-        env_vars = {
-            "AZURE_TENANT_ID": os.getenv("AZURE_TENANT_ID"),
-            "AZURE_CLIENT_ID": os.getenv("AZURE_CLIENT_ID"),
-            "AZURE_CLIENT_SECRET": os.getenv("AZURE_CLIENT_SECRET"),
-            "STORAGE_ACCOUNT": os.getenv("STORAGE_ACCOUNT"),
-        }
-        missing_vars = [k for k, v in env_vars.items() if not v]
-        if missing_vars:
-            logger.error(
-                f"Missing required environment variables: {missing_vars}"
-            )
-            raise MissingEnvironmentVariableError(missing_vars)
-        return env_vars
-
     def __init__(self):
         """
         Initialize the AzureBlobUploader with credentials
         and BlobServiceClient.
-
-        Retrieves required environment variables, authenticates using
-        ClientSecretCredential, and initializes the BlobServiceClient.
 
         Raises:
             MissingEnvironmentVariableError: If any required environment
             variable is missing.
             AzureAuthenticationError: If authentication with Azure fails.
         """
-        env_vars = self._get_env_vars()
+        required_vars = [
+            "AZURE_TENANT_ID",
+            "AZURE_CLIENT_ID",
+            "AZURE_CLIENT_SECRET",
+            "STORAGE_ACCOUNT",
+        ]
+        env_vars = validate_env_vars(required_vars)
 
         try:
             self.credential = ClientSecretCredential(

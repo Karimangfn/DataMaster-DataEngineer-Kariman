@@ -62,8 +62,8 @@ def main():
 
         auth_strategy = auth_cls(api_key)
         ingestion_strategy = ingestion_cls(api_url, auth_strategy)
-
         ingestion_service = APIIngestion(strategy=ingestion_strategy)
+
         response = ingestion_service.ingest()
         data = convert_to_json(response)
 
