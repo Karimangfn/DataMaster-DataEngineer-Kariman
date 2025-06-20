@@ -16,7 +16,8 @@ setup(
     version=read_version(),
     author="Kariman",
     description="Microsserviço para ingestão de dados de uma API",
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
