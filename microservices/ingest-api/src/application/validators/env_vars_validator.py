@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from src.domain.exceptions.exceptions import MissingEnvironmentVariableError
 from src.infrastructure.logging.logging_setup import get_logger
@@ -7,7 +7,7 @@ from src.infrastructure.logging.logging_setup import get_logger
 logger = get_logger(__name__)
 
 
-def validate_env_vars(required_vars: List[str]) -> Dict[str, str]:
+def validate_env_vars(required_vars: List[str]) -> Dict[str, Optional[str]]:
     """
     Validate the presence of required environment variables.
 
@@ -16,7 +16,8 @@ def validate_env_vars(required_vars: List[str]) -> Dict[str, str]:
         names to validate.
 
     Returns:
-        Dict[str, str]: Dictionary mapping variable names to their values.
+        Dict[str, Optional[str]]: Dictionary mapping variable
+        names to their values.
 
     Raises:
         MissingEnvironmentVariableError: If any required environment
