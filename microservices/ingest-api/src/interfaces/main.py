@@ -96,7 +96,3 @@ def main():
             f"Unexpected error during ingestion process: {e}"
         )
         raise
-
-
-if __name__ == "__main__":
-    main()

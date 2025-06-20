@@ -1,27 +1,20 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: {{ include "ingest-api.fullname" . }}
+  name: {{ include "ingest-api.fullname" . }}-job
   labels:
     {{- include "ingest-api.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      {{- include "ingest-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         {{- include "ingest-api.labels" . | nindent 8 }}
     spec:
+      restartPolicy: Never
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
           env:
             - name: API_KEY
               valueFrom:
