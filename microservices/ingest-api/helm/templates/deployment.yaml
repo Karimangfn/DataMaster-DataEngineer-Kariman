@@ -23,6 +23,10 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: AUTH_TYPE
+              value: {{ .Values.config.auth.type | quote }}
+            - name: API_TYPE
+              value: {{ .Values.config.api.type | quote }}
             - name: API_URL
               value: {{ .Values.config.api.url | quote }}
             - name: API_KEY
@@ -33,7 +37,6 @@ spec:
               value: {{ .Values.config.storage.raw.container | quote }}
             - name: STORAGE_FOLDER
               value: {{ .Values.config.storage.raw.folder | quote }}
-
             - name: AZURE_CLIENT_ID
               value: {{ .Values.config.azure.clientId | quote }}
             - name: AZURE_CLIENT_SECRET
