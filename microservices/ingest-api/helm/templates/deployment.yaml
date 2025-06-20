@@ -23,14 +23,17 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-api-secret
+                  key: API_KEY
             - name: AUTH_TYPE
               value: {{ .Values.config.auth.type | quote }}
             - name: API_TYPE
               value: {{ .Values.config.api.type | quote }}
             - name: API_URL
               value: {{ .Values.config.api.url | quote }}
-            - name: API_KEY
-              value: {{ .Values.config.api.key | quote }}
             - name: STORAGE_ACCOUNT
               value: {{ .Values.config.storage.raw.account | quote }}
             - name: STORAGE_CONTAINER
