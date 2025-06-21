@@ -216,13 +216,6 @@ jobs:
   #           -target=azurerm_container_registry.acr \
   #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
-
   #     - name: Get Container Registry Name
   #       id: tfoutput_acr
   #       run: |
@@ -236,6 +229,13 @@ jobs:
   #         REPO: ${{ github.repository }}
   #       run: |
   #         gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
+
+  #     - name: Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
 
   # keyvault:
   #   name: Creating Key Vault
@@ -314,14 +314,7 @@ jobs:
 
   #         terraform destroy -auto-approve \
   #           -target=azurerm_network_watcher.default \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"          
-
-  #     - name: Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
   #     - name: Get Azure Kubernetes Service Name
   #       id: tfoutput_aks
@@ -336,6 +329,13 @@ jobs:
   #         REPO: ${{ github.repository }}
   #       run: |
   #         gh secret set AKS_NAME --repo $REPO --body "$KUBERNETES_SERVICE"
+
+  #     - name: Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
 
   databricks:
     name: Creating Databricks Workspace
