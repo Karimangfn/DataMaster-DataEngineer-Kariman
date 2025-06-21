@@ -13,7 +13,7 @@ resource "databricks_group_member" "admin" {
   member_id = databricks_service_principal.sp.id
 }
 
-resource "databricks_directory" "dtmaster_folder" {
+resource "databricks_directory" "folder" {
   provider = databricks.this
   path     = "/Repos/dtMaster"
 }
