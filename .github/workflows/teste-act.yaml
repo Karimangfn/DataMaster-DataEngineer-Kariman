@@ -70,4 +70,4 @@ jobs:
             -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
             -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
-            -var="enable=true"
+            -var="enable_databricks=true"
