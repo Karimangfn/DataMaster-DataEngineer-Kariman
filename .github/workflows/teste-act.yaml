@@ -61,7 +61,8 @@ jobs:
 
       - name: Terraform import Databricks Workspace
         run: |
-          terraform import azurerm_databricks_workspace.dbw /subscriptions/d552c32d-a514-40b8-abac-0e4a4722f1e9/resourceGroups/dtmstr-bbab-rg/providers/Microsoft.Databricks/workspaces/dtmstr-bbab-dbw
+          terraform import azurerm_databricks_workspace.dbw /subscriptions/d552c32d-a514-40b8-abac-0e4a4722f1e9/resourceGroups/dtmstr-bbab-rg/providers/Microsoft.Databricks/workspaces/dtmstr-bbab-dbw \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Apply Databricks Repos e Permissões
         run: |
