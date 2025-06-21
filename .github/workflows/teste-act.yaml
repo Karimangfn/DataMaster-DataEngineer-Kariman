@@ -1,0 +1,61 @@
+name: Link Git Repo to Databricks (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_path:
+        description: "Caminho no Databricks (ex: /Repos/dtMaster/service)"
+        required: true
+        default: "/Repos/dtMaster/service"
+      git_branch:
+        description: "Branch do Git"
+        required: true
+        default: "main"
+
+jobs:
+  link_repo:
+    runs-on: ubuntu-latest
+
+    env:
+      REPO_URL: https://github.com/${{ github.repository }}.git
+      REPO_PATH: ${{ github.event.inputs.repo_path }}
+      GIT_BRANCH: ${{ github.event.inputs.git_branch }}
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Obter URL da workspace do Terraform
+        run: |
+          terraform init
+          WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+
+      - name: Gerar token de acesso ao Azure Databricks
+        run: |
+          TOKEN=$(az account get-access-token \
+            --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
+            --query accessToken -o tsv)
+          echo "DATABRICKS_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Criar repo no Databricks via API
+        run: |
+          echo "Criando repo em $REPO_PATH na workspace $WORKSPACE_URL..."
+          
+          curl -X POST "https://${WORKSPACE_URL}/api/2.0/repos" \
+            -H "Authorization: Bearer ${DATABRICKS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"url\": \"${REPO_URL}\",
+              \"provider\": \"gitHub\",
+              \"branch\": \"${GIT_BRANCH}\",
+              \"path\": \"${REPO_PATH}\"
+            }"
