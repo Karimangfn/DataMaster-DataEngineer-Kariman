@@ -18,26 +18,27 @@ variable "client_id" {
   description = "Azure Service Principal Client ID"
   type        = string
   sensitive   = true
-  default     = null
+  default     = ""
 }
 
 variable "client_secret" {
   description = "Azure Service Principal Client Secret"
   type        = string
   sensitive   = true
-  default     = null
+  default     = ""
 }
 
 variable "tenant_id" {
   description = "Azure Tenant ID"
   type        = string
   sensitive   = true
-  default     = null
+  default     = ""
 }
 
 variable "git_repo_url" {
   description = "URL of the Git repository to link with the Databricks workspace"
   type        = string
+  default     = ""
 }
 
 variable "git_repo_branch" {
