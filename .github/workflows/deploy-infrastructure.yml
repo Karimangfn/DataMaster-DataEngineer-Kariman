@@ -378,7 +378,7 @@ jobs:
       - name: Link Git repo in Databricks Workspace
         env:
           REPO_URL: https://github.com/${{ github.repository }}.git
-          REPO_PATH: /Repos/my-linked-repo
+          REPO_PATH: /Repos/dtMaster/service
           GIT_BRANCH: main
         run: |
           WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
