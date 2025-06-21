@@ -59,12 +59,14 @@ jobs:
 
       - run: terraform init
 
+      - name: Set subscription ID env var
+        run: echo "TF_VAR_subscription_id=$(az account show --query id -o tsv)" >> $GITHUB_ENV
+      
       - name: Terraform import Databricks Workspace
         run: |
           RESOURCE_GROUP="dtmstr-bbab-rg"
           WORKSPACE_NAME="dtmstr-bbab-dbw"
-          terraform import azurerm_databricks_workspace.dbw /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME} \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+          terraform import azurerm_databricks_workspace.dbw /subscriptions/${TF_VAR_subscription_id}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME}
 
       - name: Apply Databricks Repos e Permissões
         run: |
