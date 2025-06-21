@@ -375,32 +375,82 @@ jobs:
             -target=azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Link Git repo in Databricks Workspace
-        env:
-          REPO_URL: https://github.com/${{ github.repository }}.git
-          REPO_PATH: /Repos/dtMaster/service
-          GIT_BRANCH: main
-        run: |
-          WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
-      
-          TOKEN=$(az account get-access-token \
-                  --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
-                  --query accessToken -o tsv)
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_repo.repo \
+            -target=module.databricks.databricks_service_principal.sp \
+            -target=module.databricks.databricks_group_member.admin \
+            -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+            -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+            -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+            -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+            -var="enable=true"
 
-          curl -X POST "https://${WORKSPACE_URL}/api/2.0/workspace/mkdirs" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"path":"/Repos/dtMaster"}'
+      # - run: |
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_service_principal.sp \
+      #       -target=module.databricks.databricks_group_member.admin \
+      #       -target=module.databricks.databricks_repo.repo \
+      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+      #       -var="subscription_id=$(az account show --query id -o tsv)" \
+      #       -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+      #       -var="git_repo_branch=main"
+
+      # - name: Create on-behalf token for SPN
+      #   id: create_token
+      #   env:
+      #     AZURE_ACCESS_TOKEN: ${{ steps.login_azure.outputs.access_token }}
+      #     DATABRICKS_WORKSPACE_URL: "https://<workspace-url>"
+      #     CLIENT_ID: $(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+      #   run: |
+      #     response=$(curl -s -X POST \
+      #       -H "Authorization: Bearer $AZURE_ACCESS_TOKEN" \
+      #       -H "Content-Type: application/json" \
+      #       -d "{\"application_id\":\"$CLIENT_ID\",\"comment\":\"Token para terraform\",\"lifetime_seconds\":3600}" \
+      #       $DATABRICKS_WORKSPACE_URL/api/2.0/token-management/on-behalf-of/tokens)
+      #     echo "::set-output name=token::$(echo $response | jq -r '.token_value')"
+
+      # - name: Terraform apply final with token to integrate repo
+      #   env:
+      #     DATABRICKS_TOKEN: ${{ steps.create_token.outputs.token }}
+      #   run: |
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_repo.repo \
+      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+      #       -var="subscription_id=$(az account show --query id -o tsv)" \
+      #       -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+      #       -var="git_repo_branch=main"
+
+      # - name: Link Git repo in Databricks Workspace
+      #   env:
+      #     REPO_URL: https://github.com/${{ github.repository }}.git
+      #     REPO_PATH: /Repos/dtMaster/service
+      #     GIT_BRANCH: main
+      #   run: |
+      #     WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
       
-          curl -X POST "https://${WORKSPACE_URL}/api/2.0/repos" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"url\": \"${REPO_URL}\",
-              \"provider\": \"gitHub\",
-              \"branch\": \"${GIT_BRANCH}\",
-              \"path\": \"${REPO_PATH}\"
-            }"
+      #     TOKEN=$(az account get-access-token \
+      #             --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
+      #             --query accessToken -o tsv)
+
+      #     curl -X POST "https://${WORKSPACE_URL}/api/2.0/workspace/mkdirs" \
+      #       -H "Authorization: Bearer ${TOKEN}" \
+      #       -H "Content-Type: application/json" \
+      #       -d '{"path":"/Repos/dtMaster"}'
+      
+      #     curl -X POST "https://${WORKSPACE_URL}/api/2.0/repos" \
+      #       -H "Authorization: Bearer ${TOKEN}" \
+      #       -H "Content-Type: application/json" \
+      #       -d "{
+      #         \"url\": \"${REPO_URL}\",
+      #         \"provider\": \"gitHub\",
+      #         \"branch\": \"${GIT_BRANCH}\",
+      #         \"path\": \"${REPO_PATH}\"
+      #       }"
 
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
