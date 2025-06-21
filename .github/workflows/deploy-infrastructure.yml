@@ -386,6 +386,11 @@ jobs:
           TOKEN=$(az account get-access-token \
                   --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
                   --query accessToken -o tsv)
+
+          curl -X POST "https://${WORKSPACE_URL}/api/2.0/workspace/mkdirs" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"path":"/Repos/dtMaster"}'
       
           curl -X POST "https://${WORKSPACE_URL}/api/2.0/repos" \
             -H "Authorization: Bearer ${TOKEN}" \
