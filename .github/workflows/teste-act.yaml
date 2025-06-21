@@ -61,10 +61,10 @@ jobs:
 
       - name: Terraform import Databricks Workspace
         run: |
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           RESOURCE_GROUP="dtmstr-bbab-rg"
           WORKSPACE_NAME="dtmstr-bbab-dbw"
-          terraform import azurerm_databricks_workspace.dbw /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME}
+          terraform import azurerm_databricks_workspace.dbw /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME} \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Apply Databricks Repos e Permissões
         run: |
