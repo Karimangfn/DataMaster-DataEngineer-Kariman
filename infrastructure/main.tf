@@ -76,11 +76,18 @@ resource "azurerm_databricks_workspace" "dbw" {
 managed_resource_group_name = "${var.prefix}-${random_id.unique.hex}-dbw-mrg"
 }
 
-resource "databricks_repo" "repo" {
-  url          = var.git_repo_url
-  path         = "/Repos/${basename(var.git_repo_url)}"
-  branch       = var.git_repo_branch
-  provider     = databricks
+module "databricks" {
+  source = "./modules/databricks"
+
+  client_id     = var.client_id
+  client_secret = var.client_secret
+  tenant_id     = var.tenant_id
+
+  git_repo_url     = var.git_repo_url
+  git_repo_branch  = var.git_repo_branch
+  workspace_resource_id = azurerm_databricks_workspace.dbw.id
+
+  enable = var.enable_databricks
 }
 
 resource "azurerm_storage_account" "lake" {
