@@ -12,5 +12,5 @@ resource "databricks_repo" "repo" {
   path   = "/Repos/dtMaster/service"
   branch = var.git_repo_branch
 
-  depends_on = [databricks_directory.dtmaster_folder]
+  depends_on = [databricks_directory.folder]
 }
