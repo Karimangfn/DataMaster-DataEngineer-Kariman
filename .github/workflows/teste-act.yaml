@@ -35,9 +35,7 @@ jobs:
 
       - name: Obter URL da workspace do Terraform
         run: |
-          terraform init
-          WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
-          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "WORKSPACE_URL=adb-1116951545137684.4.azuredatabricks.net" >> $GITHUB_ENV
 
       - name: Gerar token de acesso ao Azure Databricks
         run: |
