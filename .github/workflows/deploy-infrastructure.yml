@@ -375,16 +375,38 @@ jobs:
             -target=azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
+      - name: Get workspace URL and AAD token
+        id: get-databricks-info
+        run: |
+          WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
+          TOKEN=$(az account get-access-token \
+                  --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
+                  --query accessToken -o tsv)
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$TOKEN"
+
+      - name: Create Git Credential on Databricks
+        run: |
+          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "git_provider": "gitHub",
+              "git_username": "'"${{ github.repository_owner }}"'",
+              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+            }'
+
+      - run: |
           terraform apply -auto-approve \
+            -target=module.databricks.databricks_directory.folder \
             -target=module.databricks.databricks_repo.repo \
-            -target=module.databricks.databricks_service_principal.sp \
-            -target=module.databricks.databricks_group_member.admin \
             -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
             -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
             -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
             -var="subscription_id=$(az account show --query id -o tsv)"
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
-            -var="enable=true"
+            -var="enable_databricks=true"
 
       # - run: |
       #     terraform apply -auto-approve \
