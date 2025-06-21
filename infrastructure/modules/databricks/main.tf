@@ -9,7 +9,7 @@ resource "databricks_repo" "repo" {
 }
 
 resource "databricks_service_principal" "sp" {
-  application_id = "<clientId-do-SP-no-Azure-AD>"
+  application_id = var.client_id
   display_name   = "dtMasterSPN"
   allow_cluster_create = true
 }
