@@ -21,36 +21,25 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check and set RUN_ID
-        id: check-run-id
+      - name: Get workspace URL and AAD token
+        id: get-databricks-info
         run: |
-          RUN_ID_PATH="../assets/terraform_state/run_id.txt"
+          WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
+          TOKEN=$(az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query accessToken -o tsv)
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$TOKEN"
 
-          if [ ! -f "$RUN_ID_PATH" ]; then
-            echo "✅ Arquivo run_id.txt não encontrado. Etapa de download será ignorada."
-            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          if [ ! -s "$RUN_ID_PATH" ]; then
-            echo "⚠️ Arquivo run_id.txt está vazio. Etapa de download será ignorada."
-            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          RUN_ID=$(cat "$RUN_ID_PATH")
-          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          echo "SKIP_DOWNLOAD=false" >> "$GITHUB_ENV"
-
-      - name: Download Terraform state
-        if: env.SKIP_DOWNLOAD == 'false'
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
-          run-id: ${{ env.RUN_ID }}
-          github-token: ${{ secrets.GH_PAT_TOKEN }}
+      - name: Create Git Credential on Databricks
+        run: |
+          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "git_provider": "gitHub",
+              "git_username": "'"${{ github.repository_owner }}"'",
+              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+            }'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -61,21 +50,19 @@ jobs:
 
       - name: Set subscription ID env var
         run: echo "TF_VAR_subscription_id=$(az account show --query id -o tsv)" >> $GITHUB_ENV
-      
+
       - name: Terraform import Databricks Workspace
         run: |
           RESOURCE_GROUP="dtmstr-bbab-rg"
           WORKSPACE_NAME="dtmstr-bbab-dbw"
           terraform import azurerm_databricks_workspace.dbw /subscriptions/${TF_VAR_subscription_id}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME}
 
-      - name: Apply Databricks Repos e Permissões
+      - name: Terraform apply
         run: |
           terraform apply -auto-approve \
-            -target=module.databricks.databricks_directory.folder \
-            -target=module.databricks.databricks_repo.repo \
             -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
             -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
             -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -var="subscription_id=${TF_VAR_subscription_id}" \
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
             -var="enable_databricks=true"
