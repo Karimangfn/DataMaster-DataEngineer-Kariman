@@ -31,3 +31,14 @@ variable "tenant_id" {
   type        = string
   sensitive   = true
 }
+
+variable "git_repo_url" {
+  description = "URL do repositório Git para vincular no Databricks"
+  type        = string
+}
+
+variable "git_repo_branch" {
+  description = "Branch do repositório Git"
+  type        = string
+  default     = "main"
+}
