@@ -1,11 +1,11 @@
-name: Configure Databricks Repos
+name: Finalizar Recursos Databricks
 
 on:
-  workflow_dispatch:  # Permite execução manual via GitHub Actions UI
+  workflow_dispatch:
 
 jobs:
-  configure-databricks:
-    name: Configure Databricks SPN and Repos
+  finalize-databricks:
+    name: Databricks Repos & Permissões
     runs-on: ubuntu-latest
 
     defaults:
@@ -21,21 +21,45 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Check and set RUN_ID
+        id: check-run-id
+        run: |
+          RUN_ID_PATH="../assets/terraform_state/run_id.txt"
+
+          if [ ! -f "$RUN_ID_PATH" ]; then
+            echo "✅ Arquivo run_id.txt não encontrado. Etapa de download será ignorada."
+            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          if [ ! -s "$RUN_ID_PATH" ]; then
+            echo "⚠️ Arquivo run_id.txt está vazio. Etapa de download será ignorada."
+            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          RUN_ID=$(cat "$RUN_ID_PATH")
+          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+          echo "SKIP_DOWNLOAD=false" >> "$GITHUB_ENV"
+
       - name: Download Terraform state
+        if: env.SKIP_DOWNLOAD == 'false'
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
+          run-id: ${{ env.RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform Init
-        run: terraform init
+      - run: terraform init
 
-      - name: Terraform Apply - Databricks Modules
+      - name: Apply Databricks Repos e Permissões
         run: |
           terraform apply -auto-approve \
             -target=module.databricks.databricks_repo.repo \
