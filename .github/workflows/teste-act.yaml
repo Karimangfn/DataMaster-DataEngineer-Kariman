@@ -50,7 +50,7 @@ jobs:
           name: terraform-state
           path: ./infrastructure
           run-id: ${{ env.RUN_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_PAT_TOKEN }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
