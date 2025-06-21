@@ -4,6 +4,6 @@ resource "databricks_repo" "repo" {
   provider = databricks.this
 
   url    = var.git_repo_url
-  path   = "/Repos/${basename(var.git_repo_url)}"
+  path   = "/Repos/dtMaster/service"
   branch = var.git_repo_branch
 }
