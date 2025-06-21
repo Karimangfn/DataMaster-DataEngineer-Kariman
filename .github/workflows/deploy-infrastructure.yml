@@ -375,6 +375,28 @@ jobs:
             -target=azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
+      - name: Link Git repo in Databricks Workspace
+        env:
+          REPO_URL: https://github.com/${{ github.repository }}.git
+          REPO_PATH: /Repos/my-linked-repo
+          GIT_BRANCH: main
+        run: |
+          WORKSPACE_URL=$(terraform output -raw databricks_workspace_url)
+      
+          TOKEN=$(az account get-access-token \
+                  --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
+                  --query accessToken -o tsv)
+      
+          curl -X POST "https://${WORKSPACE_URL}/api/2.0/repos" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"url\": \"${REPO_URL}\",
+              \"provider\": \"gitHub\",
+              \"branch\": \"${GIT_BRANCH}\",
+              \"path\": \"${REPO_PATH}\"
+            }"
+
       - name: Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
