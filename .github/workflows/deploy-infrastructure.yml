@@ -396,17 +396,29 @@ jobs:
               "git_username": "'"${{ github.repository_owner }}"'",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
-
-      - run: |
+        
+      - name: Deploy Databricks Job
+        run: |
           terraform apply -auto-approve \
-            -target=module.databricks.databricks_directory.folder \
-            -target=module.databricks.databricks_repo.repo \
+            -target=databricks_job.transform_clean_data_process \
             -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
             -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
             -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
             -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+            -var="git_repo_branch=main" \
             -var="enable_databricks=true"
+
+      # - run: |
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_directory.folder \
+      #       -target=module.databricks.databricks_repo.repo \
+      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+      #       -var="subscription_id=$(az account show --query id -o tsv)" \
+      #       -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+      #       -var="enable_databricks=true"
 
       # - run: |
       #     terraform apply -auto-approve \
