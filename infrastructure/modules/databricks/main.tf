@@ -24,7 +24,7 @@ resource "databricks_job" "transform_clean_data_process" {
 
   git_source {
     url      = var.git_repo_url
-    provider = "github"
+    provider = "gitHub"
     branch   = var.git_repo_branch
   }
 
