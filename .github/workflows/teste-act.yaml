@@ -58,18 +58,30 @@ jobs:
 
       - name: Terraform import Databricks Workspace
         run: |
-          RESOURCE_GROUP="dtmstr-bbab-rg"
-          WORKSPACE_NAME="dtmstr-bbab-dbw"
+          RESOURCE_GROUP="dtmstr-84b9-rg"
+          WORKSPACE_NAME="dtmstr-84b9-dbw"
           terraform import azurerm_databricks_workspace.dbw /subscriptions/${TF_VAR_subscription_id}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME}
 
-      - name: Terraform apply
+      - name: Deploy Databricks Job
         run: |
           terraform apply -auto-approve \
-            -target=module.databricks.databricks_directory.folder \
-            -target=module.databricks.databricks_repo.repo \
+            -target=module.databricks.databricks_job.transform_clean_data_process \
             -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
             -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
             -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-            -var="subscription_id=${TF_VAR_subscription_id}" \
+            -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+            -var="git_repo_branch=main" \
             -var="enable_databricks=true"
+            
+      # - name: Terraform apply
+      #   run: |
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_directory.folder \
+      #       -target=module.databricks.databricks_repo.repo \
+      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+      #       -var="subscription_id=${TF_VAR_subscription_id}" \
+      #       -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+      #       -var="enable_databricks=true"
