@@ -8,6 +8,7 @@ resource "databricks_job" "transform_clean_data_process" {
       num_workers   = 0
       spark_version = "15.4.x-scala2.12"
       node_type_id  = "Standard_F4"
+
       spark_conf = {
         "spark.databricks.cluster.profile" = "singleNode"
         "spark.master"                     = "local[*]"
@@ -25,6 +26,7 @@ resource "databricks_job" "transform_clean_data_process" {
     job_cluster_key = "data_process_cluster"
 
     notebook_task {
+      source        = "GIT"
       notebook_path = "data-processing/bronze/main.ipynb"
 
       git_source {
@@ -44,6 +46,7 @@ resource "databricks_job" "transform_clean_data_process" {
     }
 
     notebook_task {
+      source        = "GIT"
       notebook_path = "data-processing/silver/main.ipynb"
 
       git_source {
@@ -63,6 +66,7 @@ resource "databricks_job" "transform_clean_data_process" {
     }
 
     notebook_task {
+      source        = "GIT"
       notebook_path = "data-processing/gold/main.ipynb"
 
       git_source {
