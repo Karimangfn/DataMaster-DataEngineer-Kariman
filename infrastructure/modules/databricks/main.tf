@@ -1,4 +1,6 @@
 resource "databricks_job" "transform_clean_data_process" {
+  provider = databricks.this
+
   name = "transform-clean-data-process"
 
   job_cluster {
