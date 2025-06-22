@@ -422,7 +422,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{
               "git_provider": "gitHub",
-              "git_username": "'"${{ github.repository_owner }}"'",
+              "git_username": "x-token-auth",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
         
