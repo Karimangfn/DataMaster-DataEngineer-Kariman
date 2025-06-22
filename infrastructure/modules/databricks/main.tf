@@ -35,7 +35,7 @@ resource "databricks_job" "transform_clean_data_process" {
 
     notebook_task {
       source        = "GIT"
-      notebook_path = "data-processing/bronze/main.ipynb"
+      notebook_path = "data-processing/bronze/main"
     }
   }
 
@@ -50,7 +50,7 @@ resource "databricks_job" "transform_clean_data_process" {
 
     notebook_task {
       source        = "GIT"
-      notebook_path = "data-processing/silver/main.ipynb"
+      notebook_path = "data-processing/silver/main"
     }
   }
 
@@ -65,7 +65,7 @@ resource "databricks_job" "transform_clean_data_process" {
 
     notebook_task {
       source        = "GIT"
-      notebook_path = "data-processing/gold/main.ipynb"
+      notebook_path = "data-processing/gold/main"
     }
   }
 }
