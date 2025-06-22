@@ -21,36 +21,6 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check and set RUN_ID
-        id: check-run-id
-        run: |
-          RUN_ID_PATH="../assets/terraform_state/run_id.txt"
-      
-          if [ ! -f "$RUN_ID_PATH" ]; then
-            echo "✅ Arquivo run_id.txt não encontrado. Etapa de download será ignorada."
-            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
-      
-          if [ ! -s "$RUN_ID_PATH" ]; then
-            echo "⚠️ Arquivo run_id.txt está vazio. Etapa de download será ignorada."
-            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
-      
-          RUN_ID=$(cat "$RUN_ID_PATH")
-          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          echo "SKIP_DOWNLOAD=false" >> "$GITHUB_ENV"
-
-      - name: Download Terraform state
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
-          run-id: ${{ env.RUN_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Get workspace URL and AAD token
         id: get-databricks-info
         run: |
