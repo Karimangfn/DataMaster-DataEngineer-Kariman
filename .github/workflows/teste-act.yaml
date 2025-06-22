@@ -53,8 +53,8 @@ jobs:
 
       - name: Terraform import Databricks Workspace
         run: |
-          RESOURCE_GROUP="dtmstr-84b9-rg"
-          WORKSPACE_NAME="dtmstr-84b9-dbw"
+          RESOURCE_GROUP="dtmstr-cd1e-rg"
+          WORKSPACE_NAME="dtmstr-cd1e-dbw"
           terraform import azurerm_databricks_workspace.dbw /subscriptions/${TF_VAR_subscription_id}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME}
 
       - name: Deploy Databricks Job
