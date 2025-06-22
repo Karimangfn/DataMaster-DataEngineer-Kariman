@@ -38,7 +38,7 @@ variable "tenant_id" {
 variable "git_repo_url" {
   description = "URL of the Git repository to link with the Databricks workspace"
   type        = string
-  default     = ""
+  default     = "https://github.com/user/repository.git"
 }
 
 variable "git_repo_branch" {
