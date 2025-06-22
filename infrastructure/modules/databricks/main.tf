@@ -45,11 +45,6 @@ resource "databricks_job" "transform_clean_data_process" {
     notebook_task {
       source        = "GIT"
       notebook_path = "data-processing/silver/main.ipynb"
-
-      git_source {
-        git_url    = var.git_repo_url
-        git_branch = var.git_repo_branch
-      }
     }
   }
 
@@ -65,11 +60,6 @@ resource "databricks_job" "transform_clean_data_process" {
     notebook_task {
       source        = "GIT"
       notebook_path = "data-processing/gold/main.ipynb"
-
-      git_source {
-        git_url    = var.git_repo_url
-        git_branch = var.git_repo_branch
-      }
     }
   }
 }
