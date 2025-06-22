@@ -22,6 +22,12 @@ resource "databricks_job" "transform_clean_data_process" {
     }
   }
 
+  git_source {
+        url      = var.git_repo_url
+        provider = "github"
+        branch   = var.git_repo_branch
+  }
+
   task {
     task_key        = "bronze_layer"
     description     = "Bronze data transformation"
@@ -30,12 +36,6 @@ resource "databricks_job" "transform_clean_data_process" {
     notebook_task {
       source        = "GIT"
       notebook_path = "/data-processing/bronze/main.ipynb"
-
-      git_source {
-        url      = var.git_repo_url
-        provider = "github"
-        branch   = var.git_repo_branch
-      }
     }
   }
 
