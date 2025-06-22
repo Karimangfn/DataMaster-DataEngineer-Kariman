@@ -24,7 +24,7 @@ jobs:
       - name: Get workspace URL and AAD token
         id: get-databricks-info
         run: |
-          WORKSPACE_URL="https://adb-2809444758529154.14.azuredatabricks.net"
+          WORKSPACE_URL="https://adb-1301612733768763.3.azuredatabricks.net"
           TOKEN=$(az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query accessToken -o tsv)
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
@@ -53,8 +53,8 @@ jobs:
 
       - name: Terraform import Databricks Workspace
         run: |
-          RESOURCE_GROUP="dtmstr-cd1e-rg"
-          WORKSPACE_NAME="dtmstr-cd1e-dbw"
+          RESOURCE_GROUP="dtmstr-f587-rg"
+          WORKSPACE_NAME="dtmstr-f587-dbw"
           terraform import azurerm_databricks_workspace.dbw /subscriptions/${TF_VAR_subscription_id}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Databricks/workspaces/${WORKSPACE_NAME}
 
       - name: Deploy Databricks Job
