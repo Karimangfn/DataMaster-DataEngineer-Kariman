@@ -375,11 +375,26 @@ jobs:
             -target=azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
+      # - name: Get workspace URL and AAD token
+      #   id: get-databricks-info
+      #   run: |
+      #     WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
+      #     TOKEN=$(az account get-access-token \
+      #             --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
+      #             --query accessToken -o tsv)
+      #     echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+      #     echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+      #     echo "::add-mask::$TOKEN"
+
       - name: Get workspace URL and AAD token
         id: get-databricks-info
         run: |
           WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
           TOKEN=$(az account get-access-token \
+                  --service-principal \
+                  --username $(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+                  --password $(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+                  --tenant $(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
                   --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
                   --query accessToken -o tsv)
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
