@@ -36,16 +36,45 @@ jobs:
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "::add-mask::$TOKEN"
 
-      - name: Create Git Credential on Databricks
+      # - name: Create Git Credential on Databricks
+      #   run: |
+      #     curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/json" \
+      #       -d '{
+      #         "git_provider": "gitHub",
+      #         "git_username": "'"${{ github.repository_owner }}"'",
+      #         "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+      #       }'
+
+      - name: Create or Update Git Credential on Databricks
         run: |
-          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "git_provider": "gitHub",
-              "git_username": "'"${{ github.repository_owner }}"'",
-              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
-            }'
+          echo "🔍 Buscando credencial Git existente no Databricks..."
+          RESPONSE=$(curl -s -X GET "$WORKSPACE_URL/api/2.0/git-credentials" \
+            -H "Authorization: Bearer $TOKEN")
+
+          CREDENTIAL_ID=$(echo "$RESPONSE" | jq -r '.credentials[0].credential_id // empty')
+
+          if [ -n "$CREDENTIAL_ID" ]; then
+            echo "🔄 Atualizando credencial existente (ID: $CREDENTIAL_ID)..."
+            curl -X PATCH "$WORKSPACE_URL/api/2.0/git-credentials/$CREDENTIAL_ID" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "git_username": "'"${{ github.repository_owner }}"'",
+                "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+              }'
+          else
+            echo "🆕 Nenhuma credencial encontrada. Criando nova..."
+            curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "git_provider": "gitHub",
+                "git_username": "'"${{ github.repository_owner }}"'",
+                "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+              }'
+          fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
