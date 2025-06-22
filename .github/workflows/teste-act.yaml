@@ -24,7 +24,7 @@ jobs:
       - name: Get workspace URL and AAD token
         id: get-databricks-info
         run: |
-          WORKSPACE_URL="https://adb-1301612733768763.3.azuredatabricks.net"
+          WORKSPACE_URL="adb-1611579489218040.0.azuredatabricks.net"
           TOKEN=$(az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query accessToken -o tsv)
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
