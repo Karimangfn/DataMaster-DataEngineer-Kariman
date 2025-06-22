@@ -1,16 +1,74 @@
-resource "databricks_directory" "folder" {
-  provider = databricks.this
-  path     = "/Repos/dtMaster"
-}
+resource "databricks_job" "transform_clean_data_process" {
+  name = "transform-clean-data-process"
 
-resource "databricks_repo" "repo" {
-  count = var.enable ? 1 : 0
+  job_cluster {
+    job_cluster_key = "data_process_cluster"
 
-  provider = databricks.this
+    new_cluster {
+      num_workers   = 0
+      spark_version = "15.4.x-scala2.12"
+      node_type_id  = "Standard_F4"
+      spark_conf = {
+        "spark.databricks.cluster.profile" = "singleNode"
+        "spark.master"                     = "local[*]"
+      }
 
-  url    = var.git_repo_url
-  path   = "/Repos/dtMaster/service"
-  branch = var.git_repo_branch
+      custom_tags = {
+        "ResourceClass" = "SingleNode"
+      }
+    }
+  }
 
-  depends_on = [databricks_directory.folder]
+  task {
+    task_key        = "bronze_layer"
+    description     = "Bronze data transformation"
+    job_cluster_key = "data_process_cluster"
+
+    notebook_task {
+      notebook_path = "data-processing/bronze/main.ipynb"
+
+      git_source {
+        git_url    = var.git_repo_url
+        git_branch = var.git_repo_branch
+      }
+    }
+  }
+
+  task {
+    task_key        = "silver_layer"
+    description     = "Silver data transformation"
+    job_cluster_key = "data_process_cluster"
+
+    depends_on {
+      task_key = "bronze_layer"
+    }
+
+    notebook_task {
+      notebook_path = "data-processing/silver/main.ipynb"
+
+      git_source {
+        git_url    = var.git_repo_url
+        git_branch = var.git_repo_branch
+      }
+    }
+  }
+
+  task {
+    task_key        = "gold_layer"
+    description     = "Gold data transformation"
+    job_cluster_key = "data_process_cluster"
+
+    depends_on {
+      task_key = "silver_layer"
+    }
+
+    notebook_task {
+      notebook_path = "data-processing/gold/main.ipynb"
+
+      git_source {
+        git_url    = var.git_repo_url
+        git_branch = var.git_repo_branch
+      }
+    }
+  }
 }
