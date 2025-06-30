@@ -37,7 +37,7 @@ jobs:
           if [ -z "$services" ]; then
             echo "services_json=[]" >> $GITHUB_OUTPUT
           else
-            json_array=$(printf '%s\n' $services | jq -R . | jq -s -c .)
+            json_array=$(printf '%s\n' $services | jq -R . | jq -s .)
             echo "services_json=$json_array" >> $GITHUB_OUTPUT
           fi
 
@@ -45,10 +45,10 @@ jobs:
     name: Run Pre-commit
     needs: detect_services
     runs-on: ubuntu-latest
-    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
+    if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json || '[]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -71,9 +71,10 @@ jobs:
     name: Run Unit Tests
     needs: precommit
     runs-on: ubuntu-latest
+    if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json || '[]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -96,9 +97,10 @@ jobs:
     name: Run MyPy
     needs: tests
     runs-on: ubuntu-latest
+    if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json || '[]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -121,9 +123,10 @@ jobs:
     name: Validate Docker Image Build
     needs: mypy
     runs-on: ubuntu-latest
+    if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json || '[]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -135,9 +138,10 @@ jobs:
     name: Check Image Version in ACR
     needs: docker-build
     runs-on: ubuntu-latest
+    if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json || '[]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -156,7 +160,7 @@ jobs:
       - name: Check if image version exists in ACR
         run: |
           service_path=${{ matrix.service }}
-          version=$(cat "$service_path/VERSION")
+          version=$(cat $service_path/VERSION)
           image_name=$(basename "$service_path")
           acr_name=${{ secrets.ACR_NAME }}
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
