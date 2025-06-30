@@ -20,12 +20,15 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch develop branch
-        run: git fetch origin develop
+        run: |
+          echo "Fetching develop branch to compare..."
+          git fetch origin develop
+          echo "Fetch complete."
 
       - id: set-services
         run: |
+          echo "Detecting changed files between origin/develop and HEAD..."
           changed_files=$(git diff --name-only origin/develop...HEAD)
-
           echo "Changed files:"
           echo "$changed_files"
 
@@ -35,9 +38,11 @@ jobs:
           echo "$services"
 
           if [ -z "$services" ]; then
+            echo "No services changed."
             echo "services_json=[]" >> $GITHUB_OUTPUT
           else
             json_array=$(echo "$services" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "Services JSON: $json_array"
             echo "services_json=$json_array" >> $GITHUB_OUTPUT
           fi
 
@@ -59,13 +64,27 @@ jobs:
 
       - name: Install dependencies
         run: |
+          echo "Installing dependencies for ${{ matrix.service }}..."
           pip install --upgrade pip
-          pip install -r ${{ matrix.service }}/requirements.txt
-          pip install pre-commit
+          if ! pip install -r ${{ matrix.service }}/requirements.txt; then
+            echo "Failed to install requirements for ${{ matrix.service }}"
+            exit 1
+          fi
+          if ! pip install pre-commit; then
+            echo "Failed to install pre-commit"
+            exit 1
+          fi
+          echo "Dependencies installed successfully."
 
       - name: Run Pre-commit
         working-directory: ${{ matrix.service }}
-        run: make precommit
+        run: |
+          echo "Running pre-commit hooks in ${{ matrix.service }}..."
+          if ! make precommit; then
+            echo "Pre-commit failed in ${{ matrix.service }}"
+            exit 1
+          fi
+          echo "Pre-commit succeeded."
 
   tests:
     name: Run Unit Tests
@@ -85,13 +104,27 @@ jobs:
   
       - name: Install dependencies
         run: |
+          echo "Installing test dependencies for ${{ matrix.service }}..."
           pip install --upgrade pip
-          pip install -r ${{ matrix.service }}/requirements.txt
-          pip install pytest pytest-cov
+          if ! pip install -r ${{ matrix.service }}/requirements.txt; then
+            echo "Failed to install requirements for ${{ matrix.service }}"
+            exit 1
+          fi
+          if ! pip install pytest pytest-cov; then
+            echo "Failed to install pytest packages"
+            exit 1
+          fi
+          echo "Test dependencies installed."
   
       - name: Run Unit Tests
         working-directory: ${{ matrix.service }}
-        run: make test
+        run: |
+          echo "Running unit tests in ${{ matrix.service }}..."
+          if ! make test; then
+            echo "Unit tests failed in ${{ matrix.service }}"
+            exit 1
+          fi
+          echo "Unit tests passed."
 
   mypy:
     name: Run MyPy
@@ -111,13 +144,27 @@ jobs:
 
       - name: Install dependencies
         run: |
+          echo "Installing MyPy dependencies for ${{ matrix.service }}..."
           pip install --upgrade pip
-          pip install -r ${{ matrix.service }}/requirements.txt
-          pip install mypy
+          if ! pip install -r ${{ matrix.service }}/requirements.txt; then
+            echo "Failed to install requirements for ${{ matrix.service }}"
+            exit 1
+          fi
+          if ! pip install mypy; then
+            echo "Failed to install mypy"
+            exit 1
+          fi
+          echo "MyPy dependencies installed."
 
       - name: Run MyPy
         working-directory: ${{ matrix.service }}
-        run: make mypy
+        run: |
+          echo "Running MyPy type checking in ${{ matrix.service }}..."
+          if ! make mypy; then
+            echo "MyPy failed in ${{ matrix.service }}"
+            exit 1
+          fi
+          echo "MyPy succeeded."
 
   docker-build:
     name: Validate Docker Image Build
@@ -132,7 +179,13 @@ jobs:
 
       - name: Docker Build Image
         working-directory: ${{ matrix.service }}
-        run: make docker-build
+        run: |
+          echo "Building Docker image for ${{ matrix.service }}..."
+          if ! make docker-build; then
+            echo "Docker build failed for ${{ matrix.service }}"
+            exit 1
+          fi
+          echo "Docker build succeeded."
 
   check_acr_version:
     name: Check Image Version in ACR
@@ -153,9 +206,12 @@ jobs:
       - name: Check if ACR exists
         run: |
           acr_name=${{ secrets.ACR_NAME }}
+          echo "Checking if ACR '$acr_name' exists..."
           if ! az acr show --name "$acr_name" > /dev/null 2>&1; then
+            echo "ACR '$acr_name' does not exist or is not accessible."
             exit 1
           fi
+          echo "ACR exists."
 
       - name: Check if image version exists in ACR
         run: |
@@ -163,6 +219,9 @@ jobs:
           version=$(cat "$service_path/VERSION")
           image_name=$(basename "$service_path")
           acr_name=${{ secrets.ACR_NAME }}
+          echo "Checking if image $image_name with version $version exists in ACR $acr_name..."
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
+            echo "Image version $version already exists in ACR repository $image_name."
             exit 1
           fi
+          echo "Image version $version not found in ACR repository $image_name."
