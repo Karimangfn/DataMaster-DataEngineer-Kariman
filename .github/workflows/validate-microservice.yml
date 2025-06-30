@@ -1,5 +1,5 @@
-name: Validate Microservice
 run-name: Validate Microservice
+name: Validate Microservice
 
 on:
   pull_request:
@@ -18,12 +18,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Fetch develop branch
         run: git fetch origin develop
+
       - id: set-services
         run: |
           changed_files=$(git diff --name-only origin/develop...HEAD)
+
+          echo "Changed files:"
+          echo "$changed_files"
+
           services=$(echo "$changed_files" | grep '^microservices/' | cut -d/ -f1,2 | sort -u)
+
+          echo "Detected services:"
+          echo "$services"
+
           if [ -z "$services" ]; then
             echo "services_json=[]" >> $GITHUB_OUTPUT
           else
@@ -35,23 +45,24 @@ jobs:
     name: Run Pre-commit
     needs: detect_services
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.detect_services.outputs.services_json).length > 0 }}
+    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r ${{ matrix.service }}/requirements.txt
           pip install pre-commit
+
       - name: Run Pre-commit
         working-directory: ${{ matrix.service }}
         run: make precommit
@@ -60,23 +71,24 @@ jobs:
     name: Run Unit Tests
     needs: precommit
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.detect_services.outputs.services_json).length > 0 }}
+    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r ${{ matrix.service }}/requirements.txt
           pip install pytest pytest-cov
+
       - name: Run Unit Tests
         working-directory: ${{ matrix.service }}
         run: make test
@@ -85,23 +97,24 @@ jobs:
     name: Run MyPy
     needs: tests
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.detect_services.outputs.services_json).length > 0 }}
+    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r ${{ matrix.service }}/requirements.txt
           pip install mypy
+
       - name: Run MyPy
         working-directory: ${{ matrix.service }}
         run: make mypy
@@ -110,14 +123,13 @@ jobs:
     name: Validate Docker Image Build
     needs: mypy
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.detect_services.outputs.services_json).length > 0 }}
+    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - name: Docker Build Image
         working-directory: ${{ matrix.service }}
         run: make docker-build
@@ -126,29 +138,30 @@ jobs:
     name: Check Image Version in ACR
     needs: docker-build
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.detect_services.outputs.services_json).length > 0 }}
+    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Check if ACR exists
         run: |
           acr_name=${{ secrets.ACR_NAME }}
           if ! az acr show --name "$acr_name" > /dev/null 2>&1; then
             exit 1
           fi
+
       - name: Check if image version exists in ACR
         run: |
           service_path=${{ matrix.service }}
-          version=$(cat $service_path/VERSION)
-          image_name=$(basename $service_path)
+          version=$(cat "$service_path/VERSION")
+          image_name=$(basename "$service_path")
           acr_name=${{ secrets.ACR_NAME }}
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
             exit 1
