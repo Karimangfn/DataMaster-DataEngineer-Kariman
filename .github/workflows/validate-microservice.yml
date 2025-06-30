@@ -18,30 +18,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Fetch develop branch
         run: git fetch origin develop
-
       - id: set-services
         run: |
           changed_files=$(git diff --name-only origin/develop...HEAD)
-
-          echo "Changed files:"
-          echo "$changed_files"
-
           services=$(echo "$changed_files" | grep '^microservices/' | cut -d/ -f1,2 | sort -u)
-
-          echo "Detected services:"
-          echo "$services"
-
           if [ -z "$services" ]; then
             echo "services_json=[]" >> $GITHUB_OUTPUT
           else
             json_array=$(echo "$services" | jq -R -s -c 'split("\n") | map(select(length > 0))')
             echo "services_json=$json_array" >> $GITHUB_OUTPUT
-          fi
-        outputs:
-          services_json: ${{ steps.set-services.outputs.services_json }}
 
   precommit:
     name: Run Pre-commit
@@ -53,18 +40,17 @@ jobs:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r ${{ matrix.service }}/requirements.txt
           pip install pre-commit
-
       - name: Run Pre-commit
         working-directory: ${{ matrix.service }}
         run: make precommit
@@ -79,18 +65,17 @@ jobs:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r ${{ matrix.service }}/requirements.txt
           pip install pytest pytest-cov
-
       - name: Run Unit Tests
         working-directory: ${{ matrix.service }}
         run: make test
@@ -105,18 +90,17 @@ jobs:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r ${{ matrix.service }}/requirements.txt
           pip install mypy
-
       - name: Run MyPy
         working-directory: ${{ matrix.service }}
         run: make mypy
@@ -131,7 +115,8 @@ jobs:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - name: Docker Build Image
         working-directory: ${{ matrix.service }}
         run: make docker-build
@@ -146,19 +131,18 @@ jobs:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Check if ACR exists
         run: |
           acr_name=${{ secrets.ACR_NAME }}
           if ! az acr show --name "$acr_name" > /dev/null 2>&1; then
             exit 1
           fi
-
       - name: Check if image version exists in ACR
         run: |
           service_path=${{ matrix.service }}
