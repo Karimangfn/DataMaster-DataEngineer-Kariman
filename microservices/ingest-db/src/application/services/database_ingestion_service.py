@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.domain.exceptions.exceptions import IngestionError
+from src.domain.exceptions.exceptions import DatabaseIngestionError
 from src.domain.ports.ingestion_strategy import DatabaseIngestionStrategy
 from src.infrastructure.logging.logging_setup import get_logger
 
@@ -43,7 +43,10 @@ class DatabaseIngestion:
         except Exception as e:
             logger.error(
                 f"Failed to ingest using strategy "
-                f"{type(self._strategy).__name__}: "
-                f"{e}", exc_info=True
+                f"{type(self._strategy).__name__}: {e}",
+                exc_info=True
             )
-            raise IngestionError(str(e))
+            raise DatabaseIngestionError(
+                strategy_name=type(self._strategy).__name__,
+                original_exception=e
+            )

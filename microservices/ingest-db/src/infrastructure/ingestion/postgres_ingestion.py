@@ -1,5 +1,6 @@
 from typing import Any
 
+from src.domain.exceptions.exceptions import DatabaseIngestionError
 from src.domain.ports.connection_strategy import DatabaseConnectionStrategy
 from src.domain.ports.ingestion_strategy import DatabaseIngestionStrategy
 from src.infrastructure.logging.logging_setup import get_logger
@@ -39,5 +40,11 @@ class PostgresIngestion(DatabaseIngestionStrategy):
                 result = cursor.fetchall()
                 logger.info("Query executed successfully.")
                 return result
+        except Exception as e:
+            logger.error(
+                f"Failed to execute query: {e}",
+                exc_info=True
+            )
+            raise DatabaseIngestionError(str(e))
         finally:
             conn.close()

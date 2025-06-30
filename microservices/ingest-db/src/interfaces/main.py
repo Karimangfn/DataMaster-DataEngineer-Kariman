@@ -1,7 +1,9 @@
 from src.application.services.database_ingestion_service import \
     DatabaseIngestionService
 from src.application.validators.env_vars_validator import validate_env_vars
-from src.domain.exceptions.exceptions import IngestionError
+from src.domain.exceptions.exceptions import (IngestionError,
+                                              MissingEnvironmentVariableError,
+                                              UnsupportedDatabaseTypeError)
 from src.infrastructure.config.strategy_registry import (CONNECTION_STRATEGIES,
                                                          INGESTION_STRATEGIES)
 from src.infrastructure.logging.logging_setup import get_logger
@@ -43,15 +45,19 @@ def main():
         )
         print(data)
 
-    except IngestionError as e:
+    except (
+        IngestionError,
+        MissingEnvironmentVariableError,
+        UnsupportedDatabaseTypeError
+    ) as e:
         logger.error(
-            f"Ingestion error: {str(e)}",
+            f"Ingestion process failed: {str(e)}",
             exc_info=True
         )
         raise
     except Exception as e:
         logger.error(
-            f"Unexpected error during database ingestion: "
-            f"{str(e)}", exc_info=True
+            f"Unexpected error during database ingestion: {str(e)}",
+            exc_info=True
         )
         raise
