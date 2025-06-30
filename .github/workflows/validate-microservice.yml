@@ -13,15 +13,17 @@ jobs:
     name: Detect Modified Microservices
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.set-services.outputs.services }}
+      services_json: ${{ steps.set-services.outputs.services_json }}
     steps:
       - uses: actions/checkout@v4
 
       - id: set-services
         run: |
           services=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
-            | grep -oP 'microservices/[^/]+/' | sort -u | xargs -n1 basename | sort -u | tr '\n' ',' | sed 's/,$//')
-          echo "services=$services" >> "$GITHUB_OUTPUT"
+            | grep -oP 'microservices/[^/]+' | sort -u)
+          json_array=$(printf '%s\n' "$services" | jq -R . | jq -s .)
+          echo "services_json=$json_array" >> $GITHUB_OUTPUT
+        shell: bash
 
   precommit:
     name: Run Pre-commit
@@ -29,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + needs.detect_services.outputs.services.replace(',', '","') + '"]') }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + needs.detect_services.outputs.services.replace(',', '","') + '"]') }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -79,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + needs.detect_services.outputs.services.replace(',', '","') + '"]') }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -104,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + needs.detect_services.outputs.services.replace(',', '","') + '"]') }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -118,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + needs.detect_services.outputs.services.replace(',', '","') + '"]') }}
+        service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -130,12 +132,8 @@ jobs:
       - name: Check if ACR exists
         run: |
           acr_name=${{ secrets.ACR_NAME }}
-          echo "Checking if ACR '$acr_name' exists..."
           if ! az acr show --name "$acr_name" > /dev/null 2>&1; then
-            echo "❌ ACR '$acr_name' does not exist or is not accessible."
             exit 1
-          else
-            echo "✅ ACR '$acr_name' exists and is accessible."
           fi
 
       - name: Check if image version exists in ACR
@@ -144,12 +142,6 @@ jobs:
           version=$(cat $service_path/VERSION)
           image_name=${{ matrix.service }}
           acr_name=${{ secrets.ACR_NAME }}
-
-          echo "Checking if image exists: $acr_name.azurecr.io/$image_name:$version"
-
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
-            echo "❌ Image version already exists in ACR."
             exit 1
-          else
-            echo "✅ Image version does not exist. OK."
           fi
