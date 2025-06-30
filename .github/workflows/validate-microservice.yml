@@ -17,13 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Git
+        run: git fetch origin develop
+
       - id: set-services
         run: |
-          services=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
-            | grep -oP 'microservices/[^/]+' | sort -u)
-          json_array=$(printf '%s\n' "$services" | jq -R . | jq -s .)
-          echo "services_json=$json_array" >> $GITHUB_OUTPUT
-        shell: bash
+          services=$(git diff --name-only origin/develop...HEAD \
+            | grep -oP '^microservices/[^/]+' | sort -u)
+          if [ -z "$services" ]; then
+            echo "services_json=[]" >> $GITHUB_OUTPUT
+          else
+            json_array=$(printf '%s\n' $services | jq -R . | jq -s .)
+            echo "services_json=$json_array" >> $GITHUB_OUTPUT
+          fi
 
   precommit:
     name: Run Pre-commit
