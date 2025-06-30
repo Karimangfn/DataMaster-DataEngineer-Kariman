@@ -1,5 +1,5 @@
 from src.application.helpers.serialization import convert_to_json
-from src.application.services.api_ingestion_service import APIIngestion
+from src.application.services.api_ingestion_service import APIIngestionService
 from src.application.validators.env_vars_validator import validate_env_vars
 from src.domain.exceptions.exceptions import (APIIngestionError,
                                               AzureAuthenticationError,
@@ -62,7 +62,7 @@ def main():
 
         auth_strategy = auth_cls(api_key)
         ingestion_strategy = ingestion_cls(api_url, auth_strategy)
-        ingestion_service = APIIngestion(strategy=ingestion_strategy)
+        ingestion_service = APIIngestionService(strategy=ingestion_strategy)
 
         response = ingestion_service.ingest()
         data = convert_to_json(response)

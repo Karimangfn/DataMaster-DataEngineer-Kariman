@@ -7,7 +7,7 @@ from src.infrastructure.logging.logging_setup import get_logger
 logger = get_logger(__name__)
 
 
-class DatabaseIngestion:
+class DatabaseIngestionService:
     """Context class for database ingestion, using strategy pattern."""
 
     def __init__(self, strategy: DatabaseIngestionStrategy):
@@ -47,6 +47,6 @@ class DatabaseIngestion:
                 exc_info=True
             )
             raise DatabaseIngestionError(
-                strategy_name=type(self._strategy).__name__,
-                original_exception=e
+                f"Ingestion failed using strategy "
+                f"{type(self._strategy).__name__}: {e}"
             )
