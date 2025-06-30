@@ -16,19 +16,19 @@ jobs:
       services_json: ${{ steps.set-services.outputs.services_json }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Ensure base branch is fetched
+      - name: Fetch develop branch
         run: git fetch origin develop
 
       - id: set-services
         run: |
-          # Detect changed files compared to develop
           changed_files=$(git diff --name-only origin/develop...HEAD)
 
           echo "Changed files:"
           echo "$changed_files"
 
-          # Extract unique microservice directories
           services=$(echo "$changed_files" | grep '^microservices/' | cut -d/ -f1,2 | sort -u)
 
           echo "Detected services:"
