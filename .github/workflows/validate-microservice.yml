@@ -17,13 +17,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Git
+      - name: Ensure base branch is fetched
         run: git fetch origin develop
 
       - id: set-services
         run: |
-          services=$(git diff --name-only origin/develop...HEAD \
-            | grep -oP '^microservices/[^/]+' | sort -u)
+          # Detect changed files compared to develop
+          changed_files=$(git diff --name-only origin/develop...HEAD)
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          # Extract unique microservice directories
+          services=$(echo "$changed_files" | grep '^microservices/' | cut -d/ -f1,2 | sort -u)
+
+          echo "Detected services:"
+          echo "$services"
+
           if [ -z "$services" ]; then
             echo "services_json=[]" >> $GITHUB_OUTPUT
           else
