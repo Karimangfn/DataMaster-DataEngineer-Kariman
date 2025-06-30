@@ -37,7 +37,7 @@ jobs:
           if [ -z "$services" ]; then
             echo "services_json=[]" >> $GITHUB_OUTPUT
           else
-            json_array=$(printf '%s\n' $services | jq -R . | jq -s .)
+            json_array=$(printf '%s\n' $services | jq -R . | jq -s -c .)
             echo "services_json=$json_array" >> $GITHUB_OUTPUT
           fi
 
@@ -45,7 +45,7 @@ jobs:
     name: Run Pre-commit
     needs: detect_services
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.detect_services.outputs.services_json).length > 0 }}
+    if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_services.outputs.services_json) }}
@@ -85,11 +85,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r microservices/${{ matrix.service }}/requirements.txt
+          pip install -r ${{ matrix.service }}/requirements.txt
           pip install pytest pytest-cov
 
       - name: Run Unit Tests
-        working-directory: microservices/${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
         run: make test
 
   mypy:
@@ -110,11 +110,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r microservices/${{ matrix.service }}/requirements.txt
+          pip install -r ${{ matrix.service }}/requirements.txt
           pip install mypy
 
       - name: Run MyPy
-        working-directory: microservices/${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
         run: make mypy
 
   docker-build:
@@ -128,7 +128,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Docker Build Image
-        working-directory: microservices/${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
         run: make docker-build
 
   check_acr_version:
@@ -155,9 +155,9 @@ jobs:
 
       - name: Check if image version exists in ACR
         run: |
-          service_path=microservices/${{ matrix.service }}
-          version=$(cat $service_path/VERSION)
-          image_name=${{ matrix.service }}
+          service_path=${{ matrix.service }}
+          version=$(cat "$service_path/VERSION")
+          image_name=$(basename "$service_path")
           acr_name=${{ secrets.ACR_NAME }}
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
             exit 1
