@@ -69,7 +69,7 @@ jobs:
 
   tests:
     name: Run Unit Tests
-    needs: precommit
+    needs: [detect_services, precommit]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
     strategy:
