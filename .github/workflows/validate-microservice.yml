@@ -95,7 +95,7 @@ jobs:
 
   mypy:
     name: Run MyPy
-    needs: tests
+    needs: [detect_services, tests]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
@@ -121,7 +121,7 @@ jobs:
 
   docker-build:
     name: Validate Docker Image Build
-    needs: mypy
+    needs: [detect_services, mypy]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
@@ -136,7 +136,7 @@ jobs:
 
   check_acr_version:
     name: Check Image Version in ACR
-    needs: docker-build
+    needs: [detect_services, docker-build]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
     strategy:
