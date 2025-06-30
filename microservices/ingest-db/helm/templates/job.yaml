@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ingest-db.fullname" . }}-job
+  labels:
+    {{- include "ingest-db.labels" . | nindent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "ingest-db.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DB_TYPE
+              value: {{ .Values.config.db.type | quote }}
+            - name: DB_HOST
+              value: {{ .Values.config.db.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.config.db.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.config.db.name | quote }}
+            - name: DB_USER
+              value: {{ .Values.config.db.user | quote }}
+            - name: DB_SSLMODE
+              value: {{ .Values.config.db.sslmode | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.db.passwordSecretRef.name | quote }}
+                  key: {{ .Values.config.db.passwordSecretRef.key | quote }}
+
+            - name: STORAGE_ACCOUNT
+              value: {{ .Values.config.storage.raw.account | quote }}
+            - name: STORAGE_CONTAINER
+              value: {{ .Values.config.storage.raw.container | quote }}
+            - name: STORAGE_FOLDER
+              value: {{ .Values.config.storage.raw.folder | quote }}
+
+            - name: AZURE_CLIENT_ID
+              value: {{ .Values.config.azure.clientId | quote }}
+            - name: AZURE_CLIENT_SECRET
+              value: {{ .Values.config.azure.clientSecret | quote }}
+            - name: AZURE_SUBSCRIPTION_ID
+              value: {{ .Values.config.azure.subscriptionId | quote }}
+            - name: AZURE_TENANT_ID
+              value: {{ .Values.config.azure.tenantId | quote }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

@@ -1,0 +1,39 @@
+replicaCount: 1
+
+image:
+  repository: ""
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+
+config:
+  db:
+    type: "postgresql"
+    host: "ep-round-wave.neon.tech"
+    port: 5432
+    name: "neondb"
+    user: "neondb_owner"
+    sslmode: "require"
+    passwordSecretRef:
+      name: ingest-db-secret
+      key: DB_PASSWORD
+
+  storage:
+    raw:
+      account: ""
+      container: "raw"
+      folder: "database"
+
+  azure:
+    clientId: ""
+    clientSecret: ""
+    subscriptionId: ""
+    tenantId: ""
