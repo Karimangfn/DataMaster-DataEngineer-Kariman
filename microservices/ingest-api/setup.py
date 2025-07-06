@@ -15,7 +15,7 @@ setup(
     name="Ingest API",
     version=read_version(),
     author="Kariman",
-    description="Microsserviço para ingestão de dados de uma API",
+    description="Microservice for API data ingestion",
     packages=find_packages(),
     install_requires=read_requirements(),
     entry_points={

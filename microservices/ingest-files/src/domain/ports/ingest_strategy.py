@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class IngestStrategy(ABC):
+class IngestionStrategy(ABC):
 
     @abstractmethod
     def ingest(self, file_path: str):
