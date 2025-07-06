@@ -1,6 +1,6 @@
 apiVersion: v2
-name: ingest-api
-description: A Helm chart for API ingestion
+name: ingest-db
+description: A Helm chart for Database ingestion
 
 # A chart can be either an 'application' or a 'library' chart.
 #

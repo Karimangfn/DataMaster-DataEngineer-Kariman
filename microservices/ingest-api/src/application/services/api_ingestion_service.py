@@ -7,7 +7,7 @@ from src.infrastructure.logging.logging_setup import get_logger
 logger = get_logger(__name__)
 
 
-class APIIngestion:
+class APIIngestionService:
     """Context class for API ingestion, using strategy pattern."""
 
     def __init__(self, strategy: APIIngestionStrategy):
@@ -18,7 +18,7 @@ class APIIngestion:
             strategy (APIIngestionStrategy): A concrete ingestion
             strategy implementation.
         """
-        self.strategy = strategy
+        self._strategy = strategy
 
     def ingest(self) -> Any:
         """
@@ -32,10 +32,10 @@ class APIIngestion:
         """
         logger.info(
             f"Starting API ingestion using strategy: "
-            f"{type(self.strategy).__name__}"
+            f"{type(self._strategy).__name__}"
         )
         try:
-            result = self.strategy.ingest()
+            result = self._strategy.ingest()
             logger.info(
                 "API ingestion completed successfully."
             )
@@ -43,9 +43,9 @@ class APIIngestion:
         except Exception as e:
             logger.error(
                 f"Failed to ingest using strategy "
-                f"{type(self.strategy).__name__}: "
+                f"{type(self._strategy).__name__}: "
                 f"{e}", exc_info=True
             )
             raise APIRequestError(
-                type(self.strategy).__name__, e
+                type(self._strategy).__name__, e
             )

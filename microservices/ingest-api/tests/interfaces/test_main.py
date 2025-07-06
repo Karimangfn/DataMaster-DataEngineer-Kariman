@@ -23,20 +23,26 @@ def patch_all_dependencies(valid_env_vars):
     """
     Patch external dependencies inside src.interfaces.main for test isolation.
     """
-    with patch("src.interfaces.main.validate_env_vars",
-               return_value=valid_env_vars), \
-         patch("src.interfaces.main.AUTH_STRATEGIES",
-               {"basic": lambda key: MagicMock()}), \
-         patch("src.interfaces.main.INGESTION_STRATEGIES",
-               {"rest": lambda url, auth: MagicMock()}), \
-         patch("src.interfaces.main.APIIngestion") as MockAPIIngestion, \
-         patch("src.interfaces.main.convert_to_json",
-               side_effect=lambda x: '{"mocked":"json"}'), \
-         patch("src.interfaces.main.AzureBlobUploader") as MockUploader, \
-         patch("src.interfaces.main.logger",
-               new=MagicMock()) as mock_logger:
+    with patch(
+        "src.interfaces.main.validate_env_vars", return_value=valid_env_vars
+    ), patch(
+        "src.interfaces.main.AUTH_STRATEGIES",
+        {"basic": lambda key: MagicMock()},
+    ), patch(
+        "src.interfaces.main.INGESTION_STRATEGIES",
+        {"rest": lambda url, auth: MagicMock()},
+    ), patch(
+        "src.interfaces.main.APIIngestionService"
+    ) as MockAPIIngestionService, patch(
+        "src.interfaces.main.convert_to_json",
+        side_effect=lambda x: '{"mocked":"json"}',
+    ), patch(
+        "src.interfaces.main.AzureBlobUploader"
+    ) as MockUploader, patch(
+        "src.interfaces.main.logger", new=MagicMock()
+    ) as mock_logger:
 
-        mock_ingestion_instance = MockAPIIngestion.return_value
+        mock_ingestion_instance = MockAPIIngestionService.return_value
         mock_ingestion_instance.ingest.return_value = {"some": "response"}
 
         mock_uploader_instance = MockUploader.return_value
@@ -44,7 +50,7 @@ def patch_all_dependencies(valid_env_vars):
         mock_logger_instance = mock_logger
 
         yield {
-            "MockAPIIngestion": MockAPIIngestion,
+            "MockAPIIngestionService": MockAPIIngestionService,
             "mock_ingestion_instance": mock_ingestion_instance,
             "mock_uploader_instance": mock_uploader_instance,
             "mock_logger_instance": mock_logger_instance,
@@ -67,7 +73,7 @@ def test_main_success(patch_all_dependencies):
             "storage_folder": "folder",
         }
     )
-    patch_all_dependencies["MockAPIIngestion"].assert_called_once()
+    patch_all_dependencies["MockAPIIngestionService"].assert_called_once()
     patch_all_dependencies["mock_ingestion_instance"] \
         .ingest.assert_called_once()
     patch_all_dependencies["mock_uploader_instance"] \
