@@ -31,16 +31,26 @@ def main():
         config = load_ingestion_config_from_env()
         service = IngestionService(config)
         service.execute()
-        logger.info("File ingestion completed successfully.")
+        logger.info(
+            "File ingestion completed successfully."
+        )
     except (
         InvalidSourcePathError,
         NotFoundError,
         UnsupportedFileTypeError,
     ) as e:
-        logger.error(f"Configuration error: {e}")
+        logger.error(
+            f"Configuration error: {e}"
+        )
     except BlobUploadError as e:
-        logger.error(f"Blob upload failed: {e}")
+        logger.error(
+            f"Blob upload failed: {e}"
+        )
     except IngestionError as e:
-        logger.error(f"Ingestion process failed: {e}")
+        logger.error(
+            f"Ingestion process failed: {e}"
+        )
     except Exception as e:
-        logger.exception(f"Critical unexpected error during execution: {e}")
+        logger.exception(
+            f"Critical unexpected error during execution: {e}"
+        )

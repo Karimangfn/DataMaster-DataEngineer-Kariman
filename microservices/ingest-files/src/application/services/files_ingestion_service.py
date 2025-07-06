@@ -5,6 +5,9 @@ from src.domain.exceptions.exceptions import (InvalidSourcePathError,
                                               UnsupportedFileTypeError)
 from src.infrastructure.config.strategy_registry import \
     FILE_INGESTION_STRATEGIES
+from src.infrastructure.logging.logging_setup import get_logger
+
+logger = get_logger(__name__)
 
 
 class IngestionService:
@@ -28,18 +31,33 @@ class IngestionService:
         self.config = config
         self.source_path = self.config.get("source", {}).get("folder", "")
 
+        logger.info(
+            f"Initializing IngestionService with source path: "
+            f"{self.source_path}"
+        )
+
         if not isinstance(self.source_path, str):
+            logger.error(
+                f"The field 'source.folder' must be a string. Received: "
+                f"{self.source_path}"
+            )
             raise InvalidSourcePathError(
                 f"The field 'source.folder' must be a string. "
                 f"Received: {self.source_path}"
             )
 
         if not self.source_path or not os.path.isdir(self.source_path):
+            logger.error(
+                f"Invalid or non-existent source path: {self.source_path}"
+            )
             raise InvalidSourcePathError(
                 f"Invalid or non-existent source path: {self.source_path}"
             )
 
         self.strategy = self._get_strategy()
+        logger.info(
+            f"Selected ingestion strategy: {self.strategy.__class__.__name__}"
+        )
 
     def _get_strategy(self):
         """
@@ -58,13 +76,27 @@ class IngestionService:
             f for f in os.listdir(self.source_path)
             if os.path.isfile(os.path.join(self.source_path, f))
         ]
+        logger.debug(
+            f"Files found in source folder: {files}"
+        )
+
         if not files:
+            logger.error(
+                "No files found in the source folder."
+            )
             raise NotFoundError(
                 "No files found in the source folder."
             )
 
         file_extension = self._get_file_extension(files[0])
+        logger.debug(
+            f"Detected file extension: {file_extension}"
+        )
+
         if file_extension not in FILE_INGESTION_STRATEGIES:
+            logger.error(
+                f"Ingestion for file type '{file_extension}' is not supported."
+            )
             raise UnsupportedFileTypeError(
                 f"Ingestion for file type '{file_extension}' is not supported."
             )
@@ -91,10 +123,22 @@ class IngestionService:
         in the source folder.
         """
         files = os.listdir(self.source_path)
-        container = self.config["destination"]["storage"]["raw"]["container"]
+        logger.info(
+            f"Starting ingestion of {len(files)} file(s) from "
+            f"{self.source_path}"
+        )
+
+        container = self.config[
+            "destination"]["storage"]["raw"]["container"]
         destination_prefix = f"{container}/"
 
         for file in files:
             full_source_path = os.path.join(self.source_path, file)
             destination_path = os.path.join(destination_prefix, file)
+            logger.info(
+                f"Ingesting file '{full_source_path}' to '{destination_path}'"
+            )
             self.strategy.ingest(full_source_path, destination_path)
+            logger.info(
+                f"Successfully ingested file '{full_source_path}'"
+            )
