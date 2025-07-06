@@ -1,0 +1,11 @@
+PyYAML
+requests
+setuptools
+urllib3
+auto_mix_prep
+pre-commit
+isort
+flake8
+bandit
+python-json-logger
+pytest
