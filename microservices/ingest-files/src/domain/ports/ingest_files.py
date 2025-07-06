@@ -1,6 +1,8 @@
-import os
 import logging
+import os
+
 from .ingest_files_csv import IngestFilesCSV
+
 
 class IngestFiles:
     def __init__(self, config):

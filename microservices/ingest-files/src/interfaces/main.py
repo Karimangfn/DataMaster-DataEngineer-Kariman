@@ -1,6 +1,7 @@
 import logging
-from src.utils.utils import load_config
+
 from src.services.ingestion_service import IngestionService
+from src.utils.utils import load_config
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

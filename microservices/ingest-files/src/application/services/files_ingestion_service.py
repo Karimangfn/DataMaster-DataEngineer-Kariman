@@ -1,5 +1,7 @@
 import os
+
 from src.strategy.ingest_files import IngestFiles
+
 
 class IngestionService:
     """Gerenciador de ingestão de arquivos"""

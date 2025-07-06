@@ -1,4 +1,5 @@
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobClient, BlobServiceClient, ContainerClient
+
 
 class IngestFilesCSV:
     def __init__(self, config):
