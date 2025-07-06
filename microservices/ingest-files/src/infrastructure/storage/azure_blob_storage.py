@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class AzureBlobUploader:
     """
     Responsible for authenticating with Azure using Client Secret and
-    uploading JSON files to Azure Blob Storage.
+    uploading files to Azure Blob Storage.
     """
 
     def __init__(self):
@@ -22,7 +22,7 @@ class AzureBlobUploader:
 
         Raises:
             MissingEnvironmentVariableError: If any required environment
-            variable is missing.
+                variable is missing.
             AzureAuthenticationError: If authentication with Azure fails.
         """
         required_vars = [
@@ -53,22 +53,25 @@ class AzureBlobUploader:
             )
             raise AzureAuthenticationError(e)
 
-    def upload_json(
-        self, container_name: str, blob_name: str, json_content: str
+    def upload_file(
+        self,
+        container_name: str,
+        blob_name: str,
+        file_path: str
     ) -> None:
         """
-        Uploads a JSON string to Azure Blob Storage.
+        Upload a local file to Azure Blob Storage.
 
         Args:
             container_name (str): Name of the target container.
             blob_name (str): Name of the target blob.
-            json_content (str): JSON content as a string.
+            file_path (str): Local path to the file to upload.
 
         Raises:
             BlobUploadError: If an error occurs while uploading to Azure.
         """
         logger.debug(
-            f"Starting upload of blob '{blob_name}' "
+            f"Starting upload of file '{file_path}' as blob '{blob_name}' "
             f"to container '{container_name}'."
         )
         try:
@@ -76,16 +79,15 @@ class AzureBlobUploader:
                 container=container_name,
                 blob=blob_name,
             )
-            blob_client.upload_blob(json_content, overwrite=True)
+            with open(file_path, "rb") as data:
+                blob_client.upload_blob(data, overwrite=True)
             logger.info(
-                f"Blob uploaded successfully: "
-                f"{container_name}/{blob_name}"
+                f"File uploaded successfully: {container_name}/{blob_name}"
             )
         except AzureError as e:
             logger.error(
-                f"Failed to upload blob '{blob_name}' "
-                f"to container '{container_name}'."
+                f"Failed to upload file '{file_path}' to blob '{blob_name}' "
+                f"in container '{container_name}'.",
+                exc_info=True,
             )
-            raise BlobUploadError(
-                f"{container_name}/{blob_name}", e
-            )
+            raise BlobUploadError(f"{container_name}/{blob_name}", e)

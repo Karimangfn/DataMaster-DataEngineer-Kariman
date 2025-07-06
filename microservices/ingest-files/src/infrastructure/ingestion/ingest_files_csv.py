@@ -1,19 +1,49 @@
-from azure.storage.blob import BlobClient, BlobServiceClient, ContainerClient
+from src.domain.exceptions.exceptions import BlobUploadError
+from src.domain.ports.ingestion_strategy import IngestionStrategy
+from src.infrastructure.storage.azure_blob_storage import AzureBlobUploader
 
 
-class IngestFilesCSV:
-    def __init__(self, config):
+class IngestFilesCSV(IngestionStrategy):
+    """
+    Ingestion strategy for CSV files to Azure Blob Storage using
+    AzureBlobUploader.
+    """
+
+    def __init__(self, config: dict):
+        """
+        Initialize the ingestion strategy with the required configuration.
+
+        Args:
+            config (dict): Configuration dictionary containing
+                destination details.
+        """
         self.config = config
-        self.blob_service_client = BlobServiceClient(account_url=f"https://{self.config['destination']['storage']['raw']['account']}",
-                                                     credential=self.config['azure']['sas_token'])
-        self.container_client = self.blob_service_client.get_container_client(self.config['destination']['storage']['raw']['container'])
+        self.uploader = AzureBlobUploader()
 
-    def ingest(self, source_path: str, destination_path: str):
-        blob_client = self.container_client.get_blob_client(destination_path)
-        
-        with open(source_path, "rb") as data:
-            blob_client.upload_blob(data, overwrite=True)
-        print(f"Arquivo {source_path} movido para {destination_path}")
+        self.account_name = self.config[
+            "destination"]["storage"]["raw"]["account"]
+        self.container = self.config[
+            "destination"]["storage"]["raw"]["container"]
 
-    def move_file(self, source, destination):
-        self.ingest(source, destination)
+    def ingest(self, source_path: str, destination_path: str) -> None:
+        """
+        Upload a CSV file from the local file system to Azure Blob Storage.
+
+        Args:
+            source_path (str): Local path to the source file.
+            destination_path (str): Target path in Azure Blob Storage.
+
+        Raises:
+            BlobUploadError: If the upload to Azure Blob Storage fails.
+        """
+        try:
+            self.uploader.upload_file(
+                self.container,
+                destination_path,
+                source_path,
+            )
+        except BlobUploadError as e:
+            raise BlobUploadError(
+                f"Failed to upload CSV file {source_path} "
+                f"to {destination_path}"
+            ) from e
