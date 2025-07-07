@@ -16,7 +16,7 @@ resources: {}
 
 config:
   source:
-    folder: "/data/source"
+    folder: "/assets/datasets"
 
   destination:
     storage:
