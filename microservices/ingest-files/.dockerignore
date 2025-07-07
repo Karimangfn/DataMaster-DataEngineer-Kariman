@@ -1,0 +1,34 @@
+# Git repository
+.git
+.gitignore
+
+# Editor/IDE settings
+.vscode
+.idea
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local packages
+*.egg-info/
+dist/
+build/
+
+# Environment configuration files
+.env
+*.env
+venv-project
+
+# Tests (if not needed in the container)
+tests/
+test/
+
+# Temporary system files
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db

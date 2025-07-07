@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: ""
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+
+config:
+  source:
+    folder: "/assets/datasets"
+
+  destination:
+    storage:
+      raw:
+        account: ""
+        container: "raw"
+        folder: "files"
+
+  azure:
+    clientId: ""
+    clientSecret: ""
+    subscriptionId: ""
+    tenantId: ""

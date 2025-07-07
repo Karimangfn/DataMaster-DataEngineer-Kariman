@@ -12,15 +12,15 @@ def read_requirements():
 
 
 setup(
-    name="Ingest DB",
+    name="Ingest Files",
     version=read_version(),
     author="Kariman",
-    description="Microservice for database data ingestion",
+    description="Microservice for ingesting data from files",
     packages=find_packages(),
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
-            'ingest-db = src.interfaces.main:main',
+            'ingest-files = src.interfaces.main:main',
         ],
     },
     classifiers=[
