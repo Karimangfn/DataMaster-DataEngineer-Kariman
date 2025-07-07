@@ -9,6 +9,7 @@ flake8
 bandit
 python-json-logger
 pytest
+pytest-cov
 azure-core
 azure-identity
 azure-storage-blob

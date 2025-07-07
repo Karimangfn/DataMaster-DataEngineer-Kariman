@@ -1,7 +1,7 @@
 from src.domain.exceptions.exceptions import BlobUploadError
 from src.domain.ports.ingestion_strategy import IngestionStrategy
 from src.infrastructure.logging.logging_setup import get_logger
-from src.infrastructure.storage.azure_blob_storage import AzureBlobUploader
+from src.infrastructure.storage.azure_blob_uploader import AzureBlobUploader
 
 logger = get_logger(__name__)
 
