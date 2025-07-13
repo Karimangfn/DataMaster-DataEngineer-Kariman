@@ -118,10 +118,22 @@ jobs:
         run: |
           find tmp_status -name "status.json" -exec cat {} + | jq -s '.' > services_status.json
 
-      - name: 📋 Create build summary
+      - name: 📋 Create detailed build summary
         run: |
-          echo "## 🚀 Resumo da Build e Push para ACR" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deploy de microserviços para o Azure Container Registry" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          total=$(jq length services_status.json)
+          to_build=$(jq '[.[] | select(.status == "to_build")] | length' services_status.json)
+          skipped=$(jq '[.[] | select(.status == "skipped")] | length' services_status.json)
+
+          echo "**Serviços detectados:** $total" >> $GITHUB_STEP_SUMMARY
+          echo "**Nova versão para deploy detectada:** $to_build 📤" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📦 Detalhamento por serviço:" >> $GITHUB_STEP_SUMMARY
+          echo "| Serviço | Versão | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
 
           cat services_status.json | jq -c '.[]' | while read service; do
             name=$(echo $service | jq -r '.service')
@@ -129,11 +141,11 @@ jobs:
             status=$(echo $service | jq -r '.status')
 
             if [ "$status" = "skipped" ]; then
-              echo "- $name:$version ✅ Já existe no ACR" >> $GITHUB_STEP_SUMMARY
+              echo "| $name | $version | ⏭️ Já existe a versão no ACR |" >> $GITHUB_STEP_SUMMARY
             elif [ "$status" = "to_build" ]; then
-              echo "- $name:$version 🏗️ Será buildado e enviado" >> $GITHUB_STEP_SUMMARY
+              echo "| $name | $version | 📤 Deploy da nova versão no ACR |" >> $GITHUB_STEP_SUMMARY
             else
-              echo "- $name:$version ⚠️ Status desconhecido" >> $GITHUB_STEP_SUMMARY
+              echo "| $name | $version | ⚠️ Status desconhecido |" >> $GITHUB_STEP_SUMMARY
             fi
           done
 
