@@ -21,13 +21,13 @@ jobs:
       - name: Identify microservices with VERSION file
         id: set-matrix
         run: |
-          all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
-          if [ -z "$all_services" ]; then
-            echo 'matrix=[]' >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
-          echo "matrix=$json_array" >> $GITHUB_OUTPUT
+          files=$(find validate_results -name "result.json")
+          services=()
+          for f in $files; do
+            services+=("$(cat $f)")
+          done
+          json_matrix=$(printf '%s\n' "${services[@]}" | jq -s -c .)
+          echo "matrix=$json_matrix" >> $GITHUB_OUTPUT
 
   validate_image:
     name: Validate Image in ACR
