@@ -56,9 +56,10 @@ jobs:
             echo "Image not found"
             exit 1
           fi
+
       - uses: actions/upload-artifact@v4
         with:
-          name: validate-${{ matrix.service_path }}
+          name: validate-${{ matrix.service_path//\//_ }}
           path: result.json
 
   aggregate_validation_results:
