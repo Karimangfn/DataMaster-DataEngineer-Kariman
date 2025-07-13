@@ -1,5 +1,5 @@
-run-name: AKS Setup
-name: AKS Setup
+name: 🚀 Deploy para AKS
+run-name: Deploy para AKS
 
 on:
   workflow_dispatch:
@@ -9,89 +9,117 @@ on:
       - completed
 
 jobs:
-  validate_image:
+  detect_services:
+    name: 🔍 Detect Microservices
     runs-on: ubuntu-latest
     outputs:
-      service_path: ${{ steps.find_path.outputs.service_path }}
-      version: ${{ steps.find_path.outputs.version }}
-      service_name: ${{ steps.find_path.outputs.service_name }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python (optional, remove se não for usar)
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: 🧠 Identify microservices with VERSION file
+        id: set-matrix
+        run: |
+          echo "🔎 Searching for VERSION files in microservices/"
+          all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
 
-      - name: Login to Azure
+          if [ -z "$all_services" ]; then
+            echo "⚠️ No VERSION files found under microservices/. Exiting."
+            echo 'matrix=[]' >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "📁 Detected services:"
+          echo "$all_services"
+
+          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
+          echo "matrix=$json_array" >> $GITHUB_OUTPUT
+
+  validate_image:
+    name: 🔢 Validar Imagem no ACR
+    needs: detect_services
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
+    outputs:
+      service_name: ${{ steps.extract.outputs.service_name }}
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-      - name: Find service path and version
-        id: find_path
+      - name: 📂 Extract metadata
+        id: extract
         run: |
-          path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
-          version=$(cat "$path/VERSION")
-          image_name=$(basename "$path")
-          echo "service_path=$path" >> $GITHUB_OUTPUT
+          version=$(cat ${{ matrix.service_path }}/VERSION)
+          image_name=$(basename "${{ matrix.service_path }}")
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "service_name=$image_name" >> $GITHUB_OUTPUT
 
-      - name: Validate if image exists in ACR
+      - name: 🔍 Validate image exists in ACR
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
-          version="${{ steps.find_path.outputs.version }}"
-          service_path="${{ steps.find_path.outputs.service_path }}"
-          image_name=$(basename "$service_path")
+          version=$(cat ${{ matrix.service_path }}/VERSION)
+          image_name=$(basename "${{ matrix.service_path }}")
 
-          echo "Checking if image $acr_name.azurecr.io/$image_name:$version exists..."
-
+          echo "Verificando imagem $acr_name.azurecr.io/$image_name:$version"
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
-            echo "Image found. Continuing..."
+            echo "✅ Imagem encontrada."
           else
-            echo "Error: Image $version not found in ACR for $image_name."
+            echo "❌ Erro: imagem não encontrada."
             exit 1
           fi
 
-  check_api_key_secret:
+  create_api_k8s_secret:
+    name: 📁 Criar Secret no AKS
     runs-on: ubuntu-latest
     needs: validate_image
-    if: needs.validate_image.outputs.service_name == 'ingest-api'
+    if: ${{ contains(needs.validate_image.outputs.service_name, 'ingest-api') }}
     steps:
-      - name: Check if API_KEY secret is available
-        run: |
-          if [[ -z "${{ secrets.API_KEY }}" ]]; then
-            echo "ERROR: GitHub secret API_KEY is not set."
-            exit 1
-          else
-            echo "✅ API_KEY is set."
-          fi
-  
-  create_api_k8s_secret:
-    runs-on: ubuntu-latest
-    needs: [validate_image, check_api_key_secret]
-    if: needs.validate_image.outputs.service_name == 'ingest-api'
-    steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Login to Azure
+      - name: 🔐 Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-      - name: Get AKS credentials
+      - name: 💪 Get AKS Credentials
         run: |
           az aks get-credentials \
             --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
             --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
             --admin
 
-      - name: Create Kubernetes Secret with API Key
+      - name: 🔑 Criar ou atualizar secret ingest-api-secret
         run: |
-          echo "Criando ou atualizando secret 'ingest-api-secret'..."
+          if [[ -z "${{ secrets.API_KEY }}" ]]; then
+            echo "❌ ERRO: Secret API_KEY não configurado."
+            exit 1
+          fi
+
           kubectl delete secret ingest-api-secret --ignore-not-found
           kubectl create secret generic ingest-api-secret \
             --from-literal=API_KEY="${{ secrets.API_KEY }}"
+
+  generate_summary:
+    name: 📋 Summary do Deploy
+    runs-on: ubuntu-latest
+    needs: validate_image
+    steps:
+      - name: 📓 Resumo do deploy
+        run: |
+          echo "## 🚀 Resultado do Deploy AKS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📁 Serviço: ${{ needs.validate_image.outputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Versão: ${{ needs.validate_image.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Caminho: ${{ matrix.service_path }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Resultado: ✅ Imagem validada e pronta para deploy." >> $GITHUB_STEP_SUMMARY
