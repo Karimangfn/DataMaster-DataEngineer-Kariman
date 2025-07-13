@@ -100,8 +100,11 @@ jobs:
         id: filter
         if: always()
         run: |
-          touch build_tmp/services_to_build_*.txt
-          cat build_tmp/services_to_build_*.txt 2>/dev/null | sort -u | jq -R . | jq -s -c . > build_tmp/final_matrix.json
+          if [ -f build_tmp/services_to_build.txt ]; then
+            sort -u build_tmp/services_to_build.txt | jq -R . | jq -s -c . > build_tmp/final_matrix.json
+          else
+            echo '[]' > build_tmp/final_matrix.json
+          fi
           echo "filtered_matrix=$(cat build_tmp/final_matrix.json)" >> $GITHUB_OUTPUT
 
   generate_summary:
