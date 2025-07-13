@@ -11,7 +11,7 @@ on:
 
 jobs:
   detect_services:
-    name: 🔍 Detect Changed Microservices
+    name: 🔍 Detect Microservices
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -19,15 +19,22 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🧠 Identify modified microservices
+      - name: 🧠 Identify microservices with VERSION file
         id: set-matrix
         run: |
-          echo "🔎 Searching for changed VERSION files in microservice/"
-          changed_services=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^microservice/.*/VERSION' | xargs -n1 dirname | sort -u)
-          echo "📁 Detected services:"
-          echo "$changed_services"
+          echo "🔎 Searching for VERSION files in microservice/"
+          all_services=$(find microservice -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
 
-          json_array=$(printf '%s\n' $changed_services | jq -R . | jq -s .)
+          if [ -z "$all_services" ]; then
+            echo "⚠️ No VERSION files found under microservice/. Exiting."
+            echo 'matrix=[]' >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "📁 Detected services:"
+          echo "$all_services"
+
+          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s .)
           echo "matrix=$json_array" >> $GITHUB_OUTPUT
         shell: bash
 
