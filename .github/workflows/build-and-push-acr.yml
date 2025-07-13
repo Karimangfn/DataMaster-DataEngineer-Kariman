@@ -68,18 +68,20 @@ jobs:
           image_name=$(basename "${{ matrix.service_path }}")
 
           echo "🔍 Checking if $image_name:$version exists in ACR..."
-          if az acr repository show-tags --name $acr_name --repository $image_name --query "[?contains(@, '$version')]" | grep -q "$version"; then
-            echo "✅ $image_name:$version already exists. Skipping."
-            echo "build_required=false" >> $GITHUB_OUTPUT
-          else
+
+          set +e
+          tags=$(az acr repository show-tags --name $acr_name --repository $image_name --query "[?contains(@, '$version')]" 2>/dev/null)
+          exit_code=$?
+          set -e
+
+          if [[ $exit_code -ne 0 || -z "$tags" || "$tags" == "[]" ]]; then
             echo "🆕 $image_name:$version needs to be built."
             echo "build_required=true" >> $GITHUB_OUTPUT
+            echo "${{ matrix.service_path }}" >> services_to_build.txt
+          else
+            echo "✅ $image_name:$version already exists. Skipping."
+            echo "build_required=false" >> $GITHUB_OUTPUT
           fi
-
-      - name: 💾 Save services that need build
-        if: steps.check.outputs.build_required == 'true'
-        run: |
-          echo "${{ matrix.service_path }}" >> services_to_build.txt
 
       - name: 🧪 Aggregate build list
         id: filter
