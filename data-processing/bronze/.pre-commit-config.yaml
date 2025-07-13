@@ -1,0 +1,31 @@
+default_language_version:
+  python: python3.9
+repos:
+- repo: local
+  hooks:
+  - id: isort
+    name: isort
+    stages: [pre-commit]
+    language: system
+    entry: isort
+    args: [--honor-noqa]
+    types: [python]
+    files: ^data-processing/bronze/
+
+  - id: flake8
+    name: flake8
+    stages: [pre-commit]
+    language: system
+    entry: flake8
+    types: [python]
+    files: ^data-processing/bronze/
+
+  - id: bandit
+    name: bandit
+    stages: [pre-commit]
+    language: system
+    pass_filenames: false
+    entry: bandit
+    args: [--severity-level, medium, --recursive, data-processing/bronze/src]
+    types: [python]
+    files: ^data-processing/bronze/
