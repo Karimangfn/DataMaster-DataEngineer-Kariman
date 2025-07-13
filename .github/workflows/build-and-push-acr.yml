@@ -54,6 +54,8 @@ jobs:
           service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
           VERSION=$(cat $service_path/VERSION)
           echo "VERSION=$VERSION"
+          echo "📦 Serviço detectado: $service_path"
+          echo "🔖 Versão lida: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if image exists in ACR
@@ -93,6 +95,11 @@ jobs:
           service_path=$(git ls-tree -r HEAD --name-only | grep 'VERSION' | head -n 1 | xargs dirname)
           image_name=$(basename "$service_path")
 
+          echo "🔨 Iniciando build do serviço: $image_name"
+          echo "📁 Caminho: $service_path"
+          echo "🏷️ Tag: $version"
+          echo "📤 Imagem: $acr_name.azurecr.io/$image_name:$version"
+          
           echo "Building image: $acr_name.azurecr.io/$image_name:$version"
           docker build -t $acr_name.azurecr.io/$image_name:$version -f $service_path/Dockerfile $service_path/
 
