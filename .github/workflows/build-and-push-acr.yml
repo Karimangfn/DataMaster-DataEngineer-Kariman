@@ -1,6 +1,4 @@
 name: Build and Push to ACR
-run-name: Build and Push to ACR
-
 on:
   workflow_dispatch:
   push:
@@ -37,12 +35,10 @@ jobs:
           json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
           echo "matrix=$json_array" >> $GITHUB_OUTPUT
 
-  filter_to_build:
+  filter_each_service:
     name: 🧪 Filter Services to Build
     runs-on: ubuntu-latest
     needs: detect_services
-    outputs:
-      filtered_matrix: ${{ steps.filter.outputs.filtered_matrix }}
     strategy:
       matrix:
         service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
@@ -59,8 +55,8 @@ jobs:
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
-      
-      - name: 📖 Check ACR and collect to build
+
+      - name: 📖 Read version and check ACR tags
         id: check
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
@@ -88,7 +84,6 @@ jobs:
           echo "safe_name=status_${safe_name}" >> $GITHUB_OUTPUT
 
       - name: 📤 Upload status artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.set-name.outputs.safe_name }}
@@ -96,79 +91,47 @@ jobs:
           if-no-files-found: warn
           compression-level: 6
 
-      - name: 🧪 Aggregate build list
-        id: filter
-        if: always()
-        run: |
-          if [ -f build_tmp/services_to_build.txt ]; then
-            sort -u build_tmp/services_to_build.txt | jq -R . | jq -s -c . > build_tmp/final_matrix.json
-          else
-            echo '[]' > build_tmp/final_matrix.json
-          fi
-          echo "filtered_matrix=$(cat build_tmp/final_matrix.json)" >> $GITHUB_OUTPUT
-
-      - name: Debug final filtered matrix content
-        if: always()
-        run: |
-          cat build_tmp/final_matrix.json
-
-  generate_summary:
-    name: 📋 Generate Build Summary
+  aggregate_filter:
+    name: 🗃️ Aggregate Filtered Services
     runs-on: ubuntu-latest
-    needs: filter_to_build
+    needs: filter_each_service
     steps:
       - name: 📥 Download all status artifacts
         uses: actions/download-artifact@v4
         with:
           path: tmp_status
 
-      - name: 🧩 Merge status files
+      - name: 🧹 Aggregate services_to_build.txt into final_matrix.json
         run: |
-          find tmp_status -name "status.json" -exec cat {} + | jq -s '.' > services_status.json
+          if [ -d tmp_status ]; then
+            find tmp_status -name "services_to_build.txt" -exec cat {} + | sort -u | jq -R . | jq -s -c . > build_tmp/final_matrix.json
+          else
+            mkdir -p build_tmp
+            echo '[]' > build_tmp/final_matrix.json
+          fi
+          cat build_tmp/final_matrix.json
 
-      - name: 📋 Create detailed build summary
-        run: |
-          echo "## 🚀 Deploy de microserviços para o Azure Container Registry" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+      - name: 🚨 Debug filtered matrix
+        run: cat build_tmp/final_matrix.json
 
-          total=$(jq length services_status.json)
-          to_build=$(jq '[.[] | select(.status == "to_build")] | length' services_status.json)
-          skipped=$(jq '[.[] | select(.status == "skipped")] | length' services_status.json)
+      - id: set_output
+        run: echo "filtered_matrix=$(cat build_tmp/final_matrix.json)" >> $GITHUB_OUTPUT
 
-          echo "**Serviços detectados:** $total" >> $GITHUB_STEP_SUMMARY
-          echo "**Nova versão para deploy detectada:** $to_build 📤" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          echo "### 📦 Detalhamento por serviço:" >> $GITHUB_STEP_SUMMARY
-          echo "| Serviço | Versão | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-
-          cat services_status.json | jq -c '.[]' | while read service; do
-            name=$(echo $service | jq -r '.service')
-            version=$(echo $service | jq -r '.version')
-            status=$(echo $service | jq -r '.status')
-
-            if [ "$status" = "skipped" ]; then
-              echo "| $name | $version | ⏭️ Já existe a versão no ACR |" >> $GITHUB_STEP_SUMMARY
-            elif [ "$status" = "to_build" ]; then
-              echo "| $name | $version | 📤 Deploy da nova versão no ACR |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| $name | $version | ⚠️ Status desconhecido |" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
+    outputs:
+      filtered_matrix: ${{ steps.set_output.outputs.filtered_matrix }}
 
   build_and_push:
-    name: 🚀 Build and Push (${{ matrix.service_path }})
+    name: 🚀 Build and Push
     runs-on: ubuntu-latest
-    needs: filter_to_build
-    if: needs.filter_to_build.outputs.filtered_matrix != '[]'
+    needs: aggregate_filter
+    if: needs.aggregate_filter.outputs.filtered_matrix != '[]'
     strategy:
       matrix:
-        service_path: ${{ fromJson(needs.filter_to_build.outputs.filtered_matrix) }}
+        service_path: ${{ fromJson(needs.aggregate_filter.outputs.filtered_matrix) }}
     steps:
       - name: Show current service
         run: echo "Building service ${{ matrix.service_path }}"
-      
+
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
@@ -181,10 +144,6 @@ jobs:
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
-
-      - name: Debug filtered_matrix
-        run: |
-          echo "Filtered matrix: ${{ steps.filter.outputs.filtered_matrix }}"
 
       - name: 📖 Read service version
         id: version
