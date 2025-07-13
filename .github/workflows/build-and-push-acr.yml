@@ -104,7 +104,7 @@ jobs:
           echo "services_status=$(cat services_status.json | jq -c .)" >> $GITHUB_OUTPUT
 
       - name: Upload services_status.json for next job
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: services_status
           path: services_status.json
