@@ -57,9 +57,14 @@ jobs:
             exit 1
           fi
 
+      - id: set-safe-name
+        run: |
+          safe_name=$(echo "${{ matrix.service_path }}" | tr '/' '_')
+          echo "safe_name=$safe_name" >> $GITHUB_OUTPUT
+
       - uses: actions/upload-artifact@v4
         with:
-          name: validate-${{ matrix.service_path//\//_ }}
+          name: validate-${{ steps.set-safe-name.outputs.safe_name }}
           path: result.json
 
   aggregate_validation_results:
@@ -100,6 +105,7 @@ jobs:
 
       - run: |
           if [[ -z "${{ secrets.API_KEY }}" ]]; then
+            echo "API_KEY secret is missing!"
             exit 1
           fi
           kubectl delete secret ingest-api-secret --ignore-not-found
@@ -115,7 +121,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Service Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "${{ needs.aggregate_validation_results.outputs.aggregated_matrix }}" | jq -c '.[]' | while read service; do
+          echo '${{ needs.aggregate_validation_results.outputs.aggregated_matrix }}' | jq -c '.[]' | while read service; do
             name=$(echo $service | jq -r '.service_name')
             version=$(echo $service | jq -r '.version')
             echo "- Service: $name" >> $GITHUB_STEP_SUMMARY
