@@ -76,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: status_part_${{ matrix.service_path }}
+          name: status_part_${{ matrix.service_path//\//_ }}
           path: build_tmp/*
 
   aggregate_status:
