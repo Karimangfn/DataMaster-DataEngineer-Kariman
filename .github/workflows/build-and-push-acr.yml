@@ -59,11 +59,6 @@ jobs:
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
-
-      - name: Debug final filtered matrix content
-        if: always()
-        run: |
-          cat build_tmp/final_matrix.json
       
       - name: 📖 Check ACR and collect to build
         id: check
@@ -111,6 +106,11 @@ jobs:
             echo '[]' > build_tmp/final_matrix.json
           fi
           echo "filtered_matrix=$(cat build_tmp/final_matrix.json)" >> $GITHUB_OUTPUT
+
+      - name: Debug final filtered matrix content
+        if: always()
+        run: |
+          cat build_tmp/final_matrix.json
 
   generate_summary:
     name: 📋 Generate Build Summary
