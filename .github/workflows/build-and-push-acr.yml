@@ -76,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: status_parts
+          name: status_part_${{ matrix.service_path }}
           path: build_tmp/*
 
   aggregate_status:
@@ -86,21 +86,30 @@ jobs:
     outputs:
       filtered_matrix: ${{ steps.aggregate.outputs.filtered_matrix }}
     steps:
-      - name: Download all partial files
+      - name: Download all partial artifacts
+        run: |
+          mkdir -p tmp_parts
+        shell: bash
+
+      - name: List filtered services
+        run: echo "${{ toJson(needs.filter_to_build.matrix) }}"
+        shell: bash
+
+      - name: Download all status_part_* artifacts
         uses: actions/download-artifact@v3
         with:
-          name: status_parts
           path: tmp_parts
 
       - name: Aggregate status and matrix
         id: aggregate
         run: |
           touch tmp_parts/services_to_build.txt
-          build_list=$(sort -u tmp_parts/services_to_build.txt | jq -R . | jq -s -c .)
+          build_list=$(find tmp_parts -name services_to_build.txt -exec cat {} + | sort -u | jq -R . | jq -s -c .)
           echo "filtered_matrix=$build_list" >> $GITHUB_OUTPUT
 
-          if ls tmp_parts/services_status.tmp > /dev/null 2>&1; then
-            jq -s '.' tmp_parts/services_status.tmp > services_status.json
+          status_files=$(find tmp_parts -name services_status.tmp)
+          if [ -n "$status_files" ]; then
+            jq -s '.' $status_files > services_status.json
           else
             echo '[]' > services_status.json
           fi
