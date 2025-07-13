@@ -1,5 +1,5 @@
-name: 🚀 Deploy para AKS
-run-name: Deploy para AKS
+name: 🚀 AKS Setup
+run-name: AKS Setup
 
 on:
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
           echo "matrix=$json_array" >> $GITHUB_OUTPUT
 
   validate_image:
-    name: 🔢 Validar Imagem no ACR
+    name: 🔢 Validate Image in ACR
     needs: detect_services
     runs-on: ubuntu-latest
     strategy:
@@ -69,16 +69,16 @@ jobs:
           version=$(cat ${{ matrix.service_path }}/VERSION)
           image_name=$(basename "${{ matrix.service_path }}")
 
-          echo "Verificando imagem $acr_name.azurecr.io/$image_name:$version"
+          echo "Checking image $acr_name.azurecr.io/$image_name:$version"
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
-            echo "✅ Imagem encontrada."
+            echo "✅ Image found."
           else
-            echo "❌ Erro: imagem não encontrada."
+            echo "❌ Error: image not found."
             exit 1
           fi
 
   create_api_k8s_secret:
-    name: 📁 Criar Secret no AKS
+    name: 📁 Create Secret in AKS
     runs-on: ubuntu-latest
     needs: validate_image
     if: ${{ contains(needs.validate_image.outputs.service_name, 'ingest-api') }}
@@ -98,10 +98,10 @@ jobs:
             --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} \
             --admin
 
-      - name: 🔑 Criar ou atualizar secret ingest-api-secret
+      - name: 🔑 Create or update secret ingest-api-secret
         run: |
           if [[ -z "${{ secrets.API_KEY }}" ]]; then
-            echo "❌ ERRO: Secret API_KEY não configurado."
+            echo "❌ ERROR: API_KEY secret not configured."
             exit 1
           fi
 
@@ -110,16 +110,15 @@ jobs:
             --from-literal=API_KEY="${{ secrets.API_KEY }}"
 
   generate_summary:
-    name: 📋 Summary do Deploy
+    name: 📋 Deployment Summary
     runs-on: ubuntu-latest
     needs: validate_image
     steps:
-      - name: 📓 Resumo do deploy
+      - name: 📓 Deployment summary
         run: |
-          echo "## 🚀 Resultado do Deploy AKS" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 AKS Deployment Result" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo "### 📁 Serviço: ${{ needs.validate_image.outputs.service_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Versão: ${{ needs.validate_image.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Caminho: ${{ matrix.service_path }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Resultado: ✅ Imagem validada e pronta para deploy." >> $GITHUB_STEP_SUMMARY
+          echo "### 📁 Service: ${{ needs.validate_image.outputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ needs.validate_image.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Result: ✅ Image validated and ready for deployment." >> $GITHUB_STEP_SUMMARY
