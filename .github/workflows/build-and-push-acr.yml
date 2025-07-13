@@ -34,7 +34,7 @@ jobs:
           echo "📁 Detected services:"
           echo "$all_services"
 
-          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s .)
+          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
           echo "matrix=$json_array" >> $GITHUB_OUTPUT
         shell: bash
 
