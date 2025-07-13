@@ -11,48 +11,57 @@ on:
 
 jobs:
   detect_services:
-    name: Detect Microservices
+    name: 🔍 Detect Microservices
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Identify microservices with VERSION file
+      - name: 🧠 Identify microservices with VERSION file
         id: set-matrix
         run: |
+          echo "🔎 Searching for VERSION files in microservices/"
           all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
+
           if [ -z "$all_services" ]; then
+            echo "⚠️ No VERSION files found under microservices/. Exiting."
             echo 'matrix=[]' >> $GITHUB_OUTPUT
             exit 0
           fi
+
+          echo "📁 Detected services:"
+          echo "$all_services"
+
           json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
           echo "matrix=$json_array" >> $GITHUB_OUTPUT
 
   filter_to_build:
-    name: Filter Services to Build
+    name: 🧪 Filter Services to Build
     runs-on: ubuntu-latest
     needs: detect_services
+    outputs:
+      filtered_matrix: ${{ steps.filter.outputs.filtered_matrix }}
     strategy:
-      fail-fast: false
       matrix:
         service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-      - name: Login to ACR
+      - name: 🔐 Login to ACR
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
 
-      - name: Check ACR and collect
+      - name: 📖 Check ACR and collect to build
+        id: check
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           version=$(cat ${{ matrix.service_path }}/VERSION)
@@ -67,78 +76,54 @@ jobs:
 
           if [[ $exit_code -ne 0 || -z "$tags" || "$tags" == "[]" ]]; then
             echo "${{ matrix.service_path }}" >> build_tmp/services_to_build.txt
-            echo "{\"service\":\"$image_name\", \"version\":\"$version\", \"status\":\"to_build\"}" >> build_tmp/services_status.tmp
+            echo "{\"service\":\"$image_name\", \"version\":\"$version\", \"status\":\"to_build\"}" > build_tmp/status.json
           else
-            echo "{\"service\":\"$image_name\", \"version\":\"$version\", \"status\":\"skipped\"}" >> build_tmp/services_status.tmp
+            echo "{\"service\":\"$image_name\", \"version\":\"$version\", \"status\":\"skipped\"}" > build_tmp/status.json
           fi
 
-      - name: Upload partial status files
+      - name: 🏷️ Set safe artifact name
+        id: set-name
+        run: |
+          safe_name=$(echo "${{ matrix.service_path }}" | tr '/' '_')
+          echo "safe_name=status_${safe_name}" >> $GITHUB_OUTPUT
+
+      - name: 📤 Upload status artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: status_part_${{ matrix.service_path//\//_ }}
+          name: ${{ steps.set-name.outputs.safe_name }}
           path: build_tmp/*
+          if-no-files-found: warn
+          compression-level: 6
 
-  aggregate_status:
-    name: Aggregate Status
-    runs-on: ubuntu-latest
-    needs: filter_to_build
-    outputs:
-      filtered_matrix: ${{ steps.aggregate.outputs.filtered_matrix }}
-    steps:
-      - name: Download all partial artifacts
+      - name: 🧪 Aggregate build list
+        id: filter
+        if: always()
         run: |
-          mkdir -p tmp_parts
-        shell: bash
-
-      - name: List filtered services
-        run: echo "${{ toJson(needs.filter_to_build.matrix) }}"
-        shell: bash
-
-      - name: Download all status_part_* artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: tmp_parts
-
-      - name: Aggregate status and matrix
-        id: aggregate
-        run: |
-          touch tmp_parts/services_to_build.txt
-          build_list=$(find tmp_parts -name services_to_build.txt -exec cat {} + | sort -u | jq -R . | jq -s -c .)
+          touch build_tmp/services_to_build.txt
+          build_list=$(sort -u build_tmp/services_to_build.txt | jq -R . | jq -s -c .)
           echo "filtered_matrix=$build_list" >> $GITHUB_OUTPUT
 
-          status_files=$(find tmp_parts -name services_status.tmp)
-          if [ -n "$status_files" ]; then
-            jq -s '.' $status_files > services_status.json
-          else
-            echo '[]' > services_status.json
-          fi
-
-      - name: Upload final services_status.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: services_status
-          path: services_status.json
-
   generate_summary:
-    name: Generate Summary
+    name: 📋 Generate Build Summary
     runs-on: ubuntu-latest
-    needs: aggregate_status
+    needs: filter_to_build
     steps:
-      - name: Download services_status.json
+      - name: 📥 Download all status artifacts
         uses: actions/download-artifact@v3
         with:
-          name: services_status
-          path: .
+          path: tmp_status
 
-      - name: Create build summary
+      - name: 🧩 Merge status files
         run: |
-          echo "## Resumo da Build e Push para ACR" >> $GITHUB_STEP_SUMMARY
+          find tmp_status -name "status.json" -exec cat {} + | jq -s '.' > services_status.json
 
-          services_status=$(cat services_status.json)
-          echo "### Serviços detectados:" >> $GITHUB_STEP_SUMMARY
+      - name: 📋 Create build summary
+        run: |
+          echo "## 🚀 Resumo da Build e Push para ACR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo "$services_status" | jq -c '.[]' | while read service; do
+          cat services_status.json | jq -c '.[]' | while read service; do
             name=$(echo $service | jq -r '.service')
             version=$(echo $service | jq -r '.version')
             status=$(echo $service | jq -r '.status')
@@ -153,43 +138,47 @@ jobs:
           done
 
   build_and_push:
-    name: Build and Push (${{ matrix.service_path }})
+    name: 🚀 Build and Push (${{ matrix.service_path }})
     runs-on: ubuntu-latest
-    needs: [aggregate_status, generate_summary]
-    if: needs.aggregate_status.outputs.filtered_matrix != '[]'
+    needs: filter_to_build
+    if: needs.filter_to_build.outputs.filtered_matrix != '[]'
     strategy:
       matrix:
-        service_path: ${{ fromJson(needs.aggregate_status.outputs.filtered_matrix) }}
+        service_path: ${{ fromJson(needs.filter_to_build.outputs.filtered_matrix) }}
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
 
-      - name: Login to ACR
+      - name: 🔐 Login to ACR
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
 
-      - name: Read service version
+      - name: 📖 Read service version
         id: version
         run: |
           version=$(cat ${{ matrix.service_path }}/VERSION)
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Build Docker image
+      - name: 🏗️ Build Docker image
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           version="${{ steps.version.outputs.version }}"
           image_name=$(basename "${{ matrix.service_path }}")
+
+          echo "🏗️ Building $acr_name.azurecr.io/$image_name:$version"
           docker build -t $acr_name.azurecr.io/$image_name:$version -f ${{ matrix.service_path }}/Dockerfile ${{ matrix.service_path }}/
 
-      - name: Push Docker image
+      - name: 📤 Push Docker image
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           version="${{ steps.version.outputs.version }}"
           image_name=$(basename "${{ matrix.service_path }}")
+
+          echo "📤 Pushing $acr_name.azurecr.io/$image_name:$version"
           docker push $acr_name.azurecr.io/$image_name:$version
