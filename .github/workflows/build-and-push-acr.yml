@@ -1,4 +1,5 @@
 name: Build and Push to ACR
+
 on:
   workflow_dispatch:
   push:
@@ -95,6 +96,8 @@ jobs:
     name: 🗃️ Aggregate Filtered Services
     runs-on: ubuntu-latest
     needs: filter_each_service
+    outputs:
+      filtered_matrix: ${{ steps.set_output.outputs.filtered_matrix }}
     steps:
       - name: 📥 Download all status artifacts
         uses: actions/download-artifact@v4
@@ -103,10 +106,10 @@ jobs:
 
       - name: 🧹 Aggregate services_to_build.txt into final_matrix.json
         run: |
+          mkdir -p build_tmp  # ✅ Correção aqui
           if [ -d tmp_status ]; then
             find tmp_status -name "services_to_build.txt" -exec cat {} + | sort -u | jq -R . | jq -s -c . > build_tmp/final_matrix.json
           else
-            mkdir -p build_tmp
             echo '[]' > build_tmp/final_matrix.json
           fi
           cat build_tmp/final_matrix.json
@@ -116,9 +119,6 @@ jobs:
 
       - id: set_output
         run: echo "filtered_matrix=$(cat build_tmp/final_matrix.json)" >> $GITHUB_OUTPUT
-
-    outputs:
-      filtered_matrix: ${{ steps.set_output.outputs.filtered_matrix }}
 
   build_and_push:
     name: 🚀 Build and Push
