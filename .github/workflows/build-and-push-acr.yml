@@ -60,6 +60,11 @@ jobs:
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
 
+      - name: Debug final filtered matrix content
+        if: always()
+        run: |
+          cat build_tmp/final_matrix.json
+      
       - name: 📖 Check ACR and collect to build
         id: check
         run: |
@@ -161,6 +166,9 @@ jobs:
       matrix:
         service_path: ${{ fromJson(needs.filter_to_build.outputs.filtered_matrix) }}
     steps:
+      - name: Show current service
+        run: echo "Building service ${{ matrix.service_path }}"
+      
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
@@ -173,6 +181,10 @@ jobs:
         run: |
           acr_name="${{ github.event.inputs.acr_name || secrets.ACR_NAME }}"
           az acr login --name $acr_name
+
+      - name: Debug filtered_matrix
+        run: |
+          echo "Filtered matrix: ${{ steps.filter.outputs.filtered_matrix }}"
 
       - name: 📖 Read service version
         id: version
