@@ -7,10 +7,10 @@ on:
 
 jobs:
   check-gh-pat:
-    name: Check GH_PAT_TOKEN and permissions
+    name: 🔐 Check GH_PAT_TOKEN and permissions
     runs-on: ubuntu-latest
     steps:
-      - name: Check if GH_PAT_TOKEN is present
+      - name: 🔎 Check if GH_PAT_TOKEN is present
         run: |
           if [ -z "${{ secrets.GH_PAT_TOKEN }}" ]; then
             echo "Error: the GH_PAT_TOKEN secret is not defined in the repository."
@@ -19,7 +19,7 @@ jobs:
             echo "Secret GH_PAT_TOKEN found."
           fi
 
-      - name: Test token permission via API (checks if it can access the current repository)
+      - name: 🔗 Test token permission via API (checks if it can access the current repository)
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           REPO: ${{ github.repository }}
@@ -39,7 +39,7 @@ jobs:
             echo "Valid token with access to the repository."
           fi
 
-      - name: Test if token can access secrets API
+      - name: 🧪 Test if token can access secrets API
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           REPO: ${{ github.repository }}
@@ -60,15 +60,15 @@ jobs:
           fi
 
   check-azure-role-assignments:
-    name: Check Azure Role Assignments
+    name: 📜 Check Azure Role Assignments
     runs-on: ubuntu-latest
     steps:
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check Role Assignments
+      - name: 🔎 Check Role Assignments
         run: |
           set -e
 
@@ -93,7 +93,7 @@ jobs:
           echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
           
   resource-group:
-    name: Creating Resource Group
+    name: 🏗️ Creating Resource Group
     runs-on: ubuntu-latest
     needs: [check-azure-role-assignments, check-gh-pat]
     defaults:
@@ -102,12 +102,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check and set RUN_ID
+      - name: 📁 Check and set RUN_ID
         id: check-run-id
         run: |
           RUN_ID_PATH="../assets/terraform_state/run_id.txt"
@@ -128,7 +128,7 @@ jobs:
           echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
           echo "SKIP_DOWNLOAD=false" >> "$GITHUB_ENV"
       
-      - name: Download Terraform state
+      - name: 📥 Download Terraform state
         if: env.SKIP_DOWNLOAD == 'false'
         continue-on-error: true
         uses: actions/download-artifact@v4
@@ -138,29 +138,29 @@ jobs:
           run-id: ${{ env.RUN_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Terraform
+      - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
 
-      - run: terraform init
-      - run: terraform validate
+      - run: ▶️ terraform init
+      - run: ✅ terraform validate
       - run: | 
           terraform apply -auto-approve \
             -target=azurerm_resource_group.rg \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Upload Terraform state
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-      - name: Save current run ID
+      - name: 💾 Save current run ID
         run: echo "${{ github.run_id }}" > ../assets/terraform_state/run_id.txt
       
-      - name: Commit run ID
+      - name: 💬 Commit run ID
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
@@ -169,13 +169,13 @@ jobs:
           git commit -m "Terraform State run_id"
           git push
 
-      - name: Get Resource Group Name
+      - name: 📦 Get Resource Group Name
         id: tfoutput_rg
         run: |
           RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
 
-      - name: Set RESOURCE_GROUP_NAME secret via gh CLI
+      - name: 🧾 Set RESOURCE_GROUP_NAME secret via gh CLI
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}
@@ -184,7 +184,7 @@ jobs:
           gh secret set RESOURCE_GROUP --repo $REPO --body "$RESOURCE_GROUP_NAME"
 
   acr:
-    name: Creating Container Registry (ACR)
+    name: 🐳 Creating Container Registry (ACR)
     runs-on: ubuntu-latest
     needs: resource-group
     defaults:
@@ -193,36 +193,36 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
+      - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
       
-      - name: Setup Terraform
+      - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
+      - run: ▶️ terraform init
+      - run: ✅ terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_container_registry.acr \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Get Container Registry Name
+      - name: 📦 Get Container Registry Name
         id: tfoutput_acr
         run: |
           CONTAINER_REGISTRY_NAME=$(terraform output -raw container_registry_name)
           echo "CONTAINER_REGISTRY_NAME=$CONTAINER_REGISTRY_NAME" >> $GITHUB_ENV
 
-      - name: Set CONTAINER_REGISTRY_NAME secret via gh CLI
+      - name: 🧾 Set CONTAINER_REGISTRY_NAME secret via gh CLI
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           CONTAINER_REGISTRY_NAME: ${{ env.CONTAINER_REGISTRY_NAME }}
@@ -230,7 +230,7 @@ jobs:
         run: |
           gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
 
-      - name: Upload Terraform state
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
@@ -238,7 +238,7 @@ jobs:
           overwrite: true
 
   # keyvault:
-  #   name: Creating Key Vault
+  #   name: 🔐 Creating Key Vault
   #   runs-on: ubuntu-latest
   #   needs: acr
   #   defaults:
@@ -247,30 +247,30 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v3
       
-  #     - name: Azure Login
+  #     - name: 🔐 Azure Login
   #       uses: azure/login@v1
   #       with:
   #         creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-  #     - name: Download Terraform state
+  #     - name: 📥 Download Terraform state
   #       uses: actions/download-artifact@v4
   #       with:
   #         name: terraform-state
   #         path: ./infrastructure
       
-  #     - name: Setup Terraform
+  #     - name: 🧰 Setup Terraform
   #       uses: hashicorp/setup-terraform@v3
   #       with:
   #         terraform_version: 1.5.7
       
-  #     - run: terraform init
-  #     - run: terraform validate
+  #     - run: ▶️ terraform init
+  #     - run: ✅ terraform validate
   #     - run: |
   #         terraform apply -auto-approve \
   #           -target=azurerm_key_vault.kv \
   #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: Upload Terraform state
+  #     - name: 📤 Upload Terraform state
   #       uses: actions/upload-artifact@v4
   #       with:
   #         name: terraform-state
@@ -278,7 +278,7 @@ jobs:
   #         overwrite: true
           
   aks:
-    name: Creating AKS Cluster
+    name: ☸️ Creating AKS Cluster
     runs-on: ubuntu-latest
     needs: [resource-group, acr]
     defaults:
@@ -287,24 +287,24 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Download Terraform state
+      - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
       
-      - name: Setup Terraform
+      - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
+      - run: ▶️ terraform init
+      - run: ✅ terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_network_watcher.default \
@@ -316,13 +316,13 @@ jobs:
             -target=azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Get Azure Kubernetes Service Name
+      - name: ☁️ Get Azure Kubernetes Service Name
         id: tfoutput_aks
         run: |
           KUBERNETES_SERVICE=$(terraform output -raw kubernetes_cluster_name)
           echo "KUBERNETES_SERVICE=$KUBERNETES_SERVICE" >> $GITHUB_ENV
 
-      - name: Set KUBERNETES_SERVICE secret via gh CLI
+      - name: 🧾 Set KUBERNETES_SERVICE secret via gh CLI
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           KUBERNETES_SERVICE: ${{ env.KUBERNETES_SERVICE }}
@@ -330,7 +330,7 @@ jobs:
         run: |
           gh secret set AKS_NAME --repo $REPO --body "$KUBERNETES_SERVICE"
 
-      - name: Upload Terraform state
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
@@ -338,7 +338,7 @@ jobs:
           overwrite: true
 
   databricks:
-    name: Creating Databricks Workspace
+    name: 🧪 Creating Databricks Workspace
     runs-on: ubuntu-latest
     needs: resource-group
     defaults:
@@ -347,24 +347,24 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
+      - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
       
-      - name: Setup Terraform
+      - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
+      - run: ▶️ terraform init
+      - run: ✅ terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_network_watcher.default \
@@ -375,7 +375,7 @@ jobs:
             -target=azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Get workspace URL and AAD token
+      - name: 🔎 Get workspace URL and AAD token
         id: get-databricks-info
         run: |
           tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
@@ -389,7 +389,7 @@ jobs:
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "::add-mask::$TOKEN"
 
-      - name: Create Git Credential on Databricks
+      - name: 🔧 Create Git Credential on Databricks
         run: |
           curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
             -H "Authorization: Bearer $TOKEN" \
@@ -400,7 +400,7 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
         
-      - name: Deploy Databricks Job
+      - name: 🚀 Deploy Databricks Job
         run: |
           terraform apply -auto-approve \
             -target=module.databricks.databricks_job.data_process \
@@ -411,7 +411,7 @@ jobs:
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
             -var="enable_databricks=true"
 
-      - name: Upload Terraform state
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
@@ -419,7 +419,7 @@ jobs:
           overwrite: true
 
   storage-account:
-    name: Creating Storage Account
+    name: 💾 Creating Storage Account
     runs-on: ubuntu-latest
     needs: databricks
     defaults:
@@ -428,36 +428,36 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
+      - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
       
-      - name: Setup Terraform
+      - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
+      - run: ▶️ terraform init
+      - run: ✅ terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_storage_account.lake \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Get Storage Account Name
+      - name: 📦 Get Storage Account Name
         id: tfoutput_storage
         run: |
           STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
           echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
   
-      - name: Set STORAGE_ACCOUNT secret via gh CLI
+      - name: 🧾 Set STORAGE_ACCOUNT secret via gh CLI
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           STORAGE_ACCOUNT_NAME: ${{ env.STORAGE_ACCOUNT_NAME }}
@@ -465,7 +465,7 @@ jobs:
         run: |
           gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
 
-      - name: Upload Terraform state
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
@@ -473,7 +473,7 @@ jobs:
           overwrite: true
 
   storage-containers:
-    name: Creating Storage Containers
+    name: 📁 Creating Storage Containers
     runs-on: ubuntu-latest
     needs: storage-account
     defaults:
@@ -482,24 +482,24 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download Terraform state
+      - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: ./infrastructure
       
-      - name: Setup Terraform
+      - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
-      - run: terraform validate
+      - run: ▶️ terraform init
+      - run: ✅ terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_storage_container.raw \
@@ -508,7 +508,7 @@ jobs:
             -target=azurerm_storage_container.gold \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: Upload Terraform state
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
