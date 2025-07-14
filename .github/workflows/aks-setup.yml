@@ -117,6 +117,35 @@ jobs:
           kubectl delete secret ingest-api-secret --ignore-not-found
           kubectl create secret generic ingest-api-secret --from-literal=API_KEY="${{ secrets.API_KEY }}"
 
+  setup_cluster:
+    name: Setup AKS Cluster Without Running Jobs
+    runs-on: ubuntu-latest
+    needs: aggregate_validation_results
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.aggregate_validation_results.outputs.aggregated_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+  
+      - uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+  
+      - run: |
+          az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
+  
+      - run: |
+          service_name=$(echo '${{ matrix.service.service_name }}')
+          version=$(echo '${{ matrix.service.version }}')
+          acr_name="${{ secrets.ACR_NAME }}"
+  
+          echo "Setting up service: $service_name with version: $version"
+  
+          helm upgrade --install "$service_name" "charts/$service_name" \
+            --set image.repository="$acr_name.azurecr.io/$service_name" \
+            --set image.tag="$version" \
+            --set job.enabled=false
+
   generate_summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
