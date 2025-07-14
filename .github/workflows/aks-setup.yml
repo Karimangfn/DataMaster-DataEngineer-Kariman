@@ -135,16 +135,26 @@ jobs:
           az aks get-credentials --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
   
       - run: |
+          az_creds='${{ secrets.AZURE_CREDENTIALS }}'
+          tenant_id=$(echo "$az_creds" | jq -r '.tenantId')
+          client_id=$(echo "$az_creds" | jq -r '.clientId')
+          client_secret=$(echo "$az_creds" | jq -r '.clientSecret')
+          storage_account="${{ secrets.STORAGE_ACCOUNT }}"
+
           service_name=$(echo '${{ matrix.service.service_name }}')
           version=$(echo '${{ matrix.service.version }}')
           acr_name="${{ secrets.ACR_NAME }}"
-  
+
           echo "Setting up service: $service_name with version: $version"
-  
+
           helm upgrade --install "$service_name" "microservices/$service_name/helm" \
-                       --set image.repository="$acr_name.azurecr.io/$service_name" \
-                       --set image.tag="$version" \
-                       --set job.enabled=false
+            --set image.repository="$acr_name.azurecr.io/$service_name" \
+            --set image.tag="$version" \
+            --set job.enabled=false \
+            --set azure.tenantId="$tenant_id" \
+            --set azure.clientId="$client_id" \
+            --set azure.clientSecret="$client_secret" \
+            --set azure.storageAccount="$storage_account"
 
   generate_summary:
     name: Deployment Summary
