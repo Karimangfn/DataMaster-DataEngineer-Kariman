@@ -19,7 +19,7 @@ config:
     type: "query_param"
   api:
     type: "rest"
-    url: "https://my.api.mockaroo.com/offerchannel/client_csv.json"
+    url: "https://my.api.mockaroo.com/offerchannel/client_json.json"
 
   storage:
     raw:
