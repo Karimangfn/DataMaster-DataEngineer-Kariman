@@ -1,5 +1,5 @@
-name: AKS Setup and Deploy
 run-name: AKS Setup and Deploy
+name: AKS Setup and Deploy
 
 on:
   workflow_dispatch:
