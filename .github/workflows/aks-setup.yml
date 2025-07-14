@@ -141,10 +141,10 @@ jobs:
   
           echo "Setting up service: $service_name with version: $version"
   
-          helm upgrade --install "$service_name" "charts/$service_name" \
-            --set image.repository="$acr_name.azurecr.io/$service_name" \
-            --set image.tag="$version" \
-            --set job.enabled=false
+          helm upgrade --install "$service_name" "microservices/$service_name/helm" \
+                       --set image.repository="$acr_name.azurecr.io/$service_name" \
+                       --set image.tag="$version" \
+                       --set job.enabled=false
 
   generate_summary:
     name: Deployment Summary
