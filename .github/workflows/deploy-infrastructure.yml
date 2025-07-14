@@ -13,10 +13,10 @@ jobs:
       - name: Check if GH_PAT_TOKEN is present
         run: |
           if [ -z "${{ secrets.GH_PAT_TOKEN }}" ]; then
-            echo "Erro: a secret GH_PAT_TOKEN não está definida no repositório."
+            echo "Error: the GH_PAT_TOKEN secret is not defined in the repository."
             exit 1
           else
-            echo "Secret GH_PAT_TOKEN encontrada."
+            echo "Secret GH_PAT_TOKEN found."
           fi
 
       - name: Test token permission via API (checks if it can access the current repository)
@@ -24,19 +24,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          echo "Testando acesso à API com o GH_PAT_TOKEN..."
+          echo "Testing API access with GH_PAT_TOKEN..."
           HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/$REPO)
 
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "Erro: o token GH_PAT_TOKEN não tem permissão para acessar o repositório $REPO."
-            echo "Resposta da API:"
+            echo "Error: GH_PAT_TOKEN does not have permission to access the repository $REPO."
+            echo "API response:"
             cat response.json
             exit 1
           else
-            echo "Token válido e com acesso ao repositório."
+            echo "Valid token with access to the repository."
           fi
 
       - name: Test if token can access secrets API
@@ -44,19 +44,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          echo "Verificando se o token pode acessar a API de secrets..."
+          echo "Checking if the token can access the secrets API..."
           HTTP_CODE=$(curl -s -o secrets_response.json -w "%{http_code}" \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/$REPO/actions/secrets)
   
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "Erro: o token GH_PAT_TOKEN não tem permissão para acessar a API de secrets no repositório $REPO."
-            echo "Resposta da API:"
+            echo "Error: the GH_PAT_TOKEN token does not have permission to access the secrets API in the repository $REPO."
+            echo "API response:"
             cat secrets_response.json
             exit 1
           else
-            echo "Token tem acesso à API de secrets. Provavelmente pode criar secrets também."
+            echo "Token has access to the secrets API. It can probably create secrets as well."
           fi
 
   check-azure-role-assignments:
