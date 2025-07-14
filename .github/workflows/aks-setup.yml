@@ -145,6 +145,9 @@ jobs:
           version=$(echo '${{ matrix.service.version }}')
           acr_name="${{ secrets.ACR_NAME }}"
 
+          echo "Deleting old job if exists..."
+          kubectl delete job "$service_name-job" --ignore-not-found
+
           echo "Setting up service: $service_name with version: $version"
 
           helm upgrade --install "$service_name" "microservices/$service_name/helm" \
