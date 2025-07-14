@@ -1,5 +1,5 @@
-run-name: Validate Microservice
-name: Validate Microservice
+run-name: 🛠️ Validate Microservice
+name: 🛠️ Validate Microservice
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   detect_services:
-    name: Detect Modified Microservices
+    name: 🔍 Detect Modified Microservices
     runs-on: ubuntu-latest
     outputs:
       services_json: ${{ steps.set-services.outputs.services_json }}
@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch develop branch
+      - name: 📥 Fetch develop branch
         run: |
           echo "Fetching develop branch to compare..."
           git fetch origin develop
@@ -47,7 +47,7 @@ jobs:
           fi
 
   precommit:
-    name: Run Pre-commit
+    name: 🧹 Run Pre-commit
     needs: detect_services
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
@@ -57,12 +57,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           echo "Installing dependencies for ${{ matrix.service }}..."
           pip install --upgrade pip
@@ -76,7 +76,7 @@ jobs:
           fi
           echo "Dependencies installed successfully."
 
-      - name: Run Pre-commit
+      - name: 🧪 Run Pre-commit
         working-directory: ${{ matrix.service }}
         run: |
           echo "Running pre-commit hooks in ${{ matrix.service }}..."
@@ -87,7 +87,7 @@ jobs:
           echo "Pre-commit succeeded."
 
   tests:
-    name: Run Unit Tests
+    name: 🧪 Run Unit Tests
     needs: [detect_services, precommit]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '' && needs.detect_services.outputs.services_json != '[]' }}
@@ -97,12 +97,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
   
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
   
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           echo "Installing test dependencies for ${{ matrix.service }}..."
           pip install --upgrade pip
@@ -116,7 +116,7 @@ jobs:
           fi
           echo "Test dependencies installed."
   
-      - name: Run Unit Tests
+      - name: 🧪 Run Unit Tests
         working-directory: ${{ matrix.service }}
         run: |
           echo "Running unit tests in ${{ matrix.service }}..."
@@ -127,7 +127,7 @@ jobs:
           echo "Unit tests passed."
 
   mypy:
-    name: Run MyPy
+    name: 🔍 Run MyPy
     needs: [detect_services, tests]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
@@ -137,12 +137,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           echo "Installing MyPy dependencies for ${{ matrix.service }}..."
           pip install --upgrade pip
@@ -156,7 +156,7 @@ jobs:
           fi
           echo "MyPy dependencies installed."
 
-      - name: Run MyPy
+      - name: 🔍 Run MyPy
         working-directory: ${{ matrix.service }}
         run: |
           echo "Running MyPy type checking in ${{ matrix.service }}..."
@@ -167,7 +167,7 @@ jobs:
           echo "MyPy succeeded."
 
   docker-build:
-    name: Validate Docker Image Build
+    name: 🐳 Validate Docker Image Build
     needs: [detect_services, mypy]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
@@ -177,7 +177,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Docker Build Image
+      - name: 🐳 Docker Build Image
         working-directory: ${{ matrix.service }}
         run: |
           echo "Building Docker image for ${{ matrix.service }}..."
@@ -188,7 +188,7 @@ jobs:
           echo "Docker build succeeded."
 
   check_acr_version:
-    name: Check Image Version in ACR
+    name: 🔎 Check Image Version in ACR
     needs: [detect_services, docker-build]
     runs-on: ubuntu-latest
     if: ${{ needs.detect_services.outputs.services_json != '[]' }}
@@ -198,12 +198,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check if ACR exists
+      - name: 🔍 Check if ACR exists
         run: |
           acr_name=${{ secrets.ACR_NAME }}
           echo "Checking if ACR '$acr_name' exists..."
@@ -213,7 +213,7 @@ jobs:
           fi
           echo "ACR exists."
 
-      - name: Check if image version exists in ACR
+      - name: 🔍 Check if image version exists in ACR
         run: |
           service_path=${{ matrix.service }}
           version=$(cat "$service_path/VERSION")
