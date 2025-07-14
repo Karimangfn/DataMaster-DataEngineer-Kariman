@@ -123,14 +123,21 @@ jobs:
     needs: aggregate_validation_results
     steps:
       - run: |
-          echo "## AKS Deployment Result" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deploy de microserviços no AKS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Service Summary" >> $GITHUB_STEP_SUMMARY
+  
+          services_json='${{ needs.aggregate_validation_results.outputs.aggregated_matrix }}'
+          total=$(echo "$services_json" | jq length)
+  
+          echo "**Serviços validados:** $total**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '${{ needs.aggregate_validation_results.outputs.aggregated_matrix }}' | jq -c '.[]' | while read service; do
-            name=$(echo $service | jq -r '.service_name')
-            version=$(echo $service | jq -r '.version')
-            echo "- Service: $name" >> $GITHUB_STEP_SUMMARY
-            echo "  - Version: $version" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+  
+          echo "### 📦 Detalhamento por serviço:" >> $GITHUB_STEP_SUMMARY
+          echo "| Serviço | Versão |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+  
+          echo "$services_json" | jq -c '.[]' | while read -r service; do
+            name=$(echo "$service" | jq -r '.service_name')
+            version=$(echo "$service" | jq -r '.version')
+            echo "| $name | $version |" >> $GITHUB_STEP_SUMMARY
           done
