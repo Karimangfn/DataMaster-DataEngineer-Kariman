@@ -148,13 +148,13 @@ jobs:
           echo "Setting up service: $service_name with version: $version"
 
           helm upgrade --install "$service_name" "microservices/$service_name/helm" \
-            --set image.repository="$acr_name.azurecr.io/$service_name" \
-            --set image.tag="$version" \
-            --set job.enabled=false \
-            --set azure.tenantId="$tenant_id" \
-            --set azure.clientId="$client_id" \
-            --set azure.clientSecret="$client_secret" \
-            --set azure.storageAccount="$storage_account"
+                       --set image.repository="$acr_name.azurecr.io/$service_name" \
+                       --set image.tag="$version" \
+                       --set job.enabled=false \
+                       --set config.azure.tenantId="$tenant_id" \
+                       --set config.azure.clientId="$client_id" \
+                       --set config.azure.clientSecret="$client_secret" \
+                       --set config.storage.raw.account="$storage_account"
 
   generate_summary:
     name: Deployment Summary
