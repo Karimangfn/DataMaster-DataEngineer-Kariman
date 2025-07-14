@@ -144,8 +144,8 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - run: ▶️ terraform init
-      - run: ✅ terraform validate
+      - run: terraform init
+      - run: terraform validate
       - run: | 
           terraform apply -auto-approve \
             -target=azurerm_resource_group.rg \
@@ -210,8 +210,8 @@ jobs:
         with:
           terraform_version: 1.5.7
       
-      - run: ▶️ terraform init
-      - run: ✅ terraform validate
+      - run: terraform init
+      - run: terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_container_registry.acr \
@@ -264,8 +264,8 @@ jobs:
   #       with:
   #         terraform_version: 1.5.7
       
-  #     - run: ▶️ terraform init
-  #     - run: ✅ terraform validate
+  #     - run: terraform init
+  #     - run: terraform validate
   #     - run: |
   #         terraform apply -auto-approve \
   #           -target=azurerm_key_vault.kv \
@@ -304,8 +304,8 @@ jobs:
         with:
           terraform_version: 1.5.7
       
-      - run: ▶️ terraform init
-      - run: ✅ terraform validate
+      - run: terraform init
+      - run: terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_network_watcher.default \
@@ -364,8 +364,8 @@ jobs:
         with:
           terraform_version: 1.5.7
       
-      - run: ▶️ terraform init
-      - run: ✅ terraform validate
+      - run: terraform init
+      - run: terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_network_watcher.default \
@@ -445,8 +445,8 @@ jobs:
         with:
           terraform_version: 1.5.7
       
-      - run: ▶️ terraform init
-      - run: ✅ terraform validate
+      - run: terraform init
+      - run: terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_storage_account.lake \
@@ -505,8 +505,8 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure/plan.txt
       
-      - run: ▶️ terraform init
-      - run: ✅ terraform validate
+      - run: terraform init
+      - run: terraform validate
       - run: |
           terraform apply -auto-approve \
             -target=azurerm_storage_container.raw \
@@ -539,7 +539,7 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure
   
-      - name: 🧹 Generate summary of resources to be created
+      - name: 🚀 Generate summary of resources to be created
         run: |
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
