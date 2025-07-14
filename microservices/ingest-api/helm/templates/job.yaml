@@ -1,5 +1,3 @@
-{{- if .Values.job.enabled }}
-
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -45,5 +43,3 @@ spec:
               value: {{ .Values.config.azure.tenantId | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-
-{{- end }}
