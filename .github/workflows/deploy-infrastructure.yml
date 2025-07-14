@@ -341,7 +341,7 @@ jobs:
   databricks:
     name: 🧪 Creating Databricks Workspace
     runs-on: ubuntu-latest
-    needs: resource-group
+    needs: [resource-group, aks]
     defaults:
       run:
         working-directory: ./infrastructure
