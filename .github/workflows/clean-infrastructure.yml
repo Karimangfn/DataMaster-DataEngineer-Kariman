@@ -57,5 +57,25 @@ jobs:
 
       - run: terraform init
       - run: terraform validate
+
+      - name: Terraform destroy plan (save output)
+        id: tf_plan
+        run: |
+          terraform plan -destroy -no-color -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
+
+      - name: Generate summary of resources to be destroyed
+        run: |
+          echo "## 🧹 Resources to be destroyed by Terraform" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Type | Resource Name |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------------|---------------|" >> $GITHUB_STEP_SUMMARY
+
+          grep '^  - ' plan.txt | while read -r line; do
+            resource=$(echo "$line" | sed -E 's/^\s*- ([^ ]+).*/\1/')
+            type=$(echo "$resource" | cut -d'.' -f1)
+            name=$(echo "$resource" | cut -d'.' -f2)
+            echo "| $type | $name |" >> $GITHUB_STEP_SUMMARY
+          done
+
       - run: terraform plan -var="subscription_id=$(az account show --query id -o tsv)"
       - run: terraform destroy -auto-approve -var="subscription_id=$(az account show --query id -o tsv)"
