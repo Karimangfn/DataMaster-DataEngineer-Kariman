@@ -76,21 +76,21 @@ jobs:
           SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
           SCOPE="/subscriptions/$SUBSCRIPTION_ID"
 
-          echo "🔍 Verificando permissões do Service Principal: $CLIENT_ID no escopo $SCOPE..."
+          echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
 
           ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
 
           echo "$ROLES" | grep -q "Contributor" || {
-            echo "❌ Service Principal não tem o papel 'Contributor'"
+            echo "❌ Service Principal does not have the 'Contributor' role"
             exit 1
           }
 
           echo "$ROLES" | grep -q "User Access Administrator" || {
-            echo "❌ Service Principal não tem o papel 'User Access Administrator'"
+            echo "❌ Service Principal does not have the 'User Access Administrator' role"
             exit 1
           }
 
-          echo "✅ Client ID tem os papéis 'Contributor' e 'User Access Administrator'."
+          echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
           
   resource-group:
     name: Creating Resource Group
@@ -113,13 +113,13 @@ jobs:
           RUN_ID_PATH="../assets/terraform_state/run_id.txt"
       
           if [ ! -f "$RUN_ID_PATH" ]; then
-            echo "✅ Arquivo run_id.txt não encontrado. Etapa de download será ignorada."
+            echo "✅ run_id.txt file not found. Download step will be skipped."
             echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
             exit 0
           fi
       
           if [ ! -s "$RUN_ID_PATH" ]; then
-            echo "⚠️ Arquivo run_id.txt está vazio. Etapa de download será ignorada."
+            echo "⚠️ run_id.txt file is empty. Download step will be skipped."
             echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
             exit 0
           fi
