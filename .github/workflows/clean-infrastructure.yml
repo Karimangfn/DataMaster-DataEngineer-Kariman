@@ -27,16 +27,16 @@ jobs:
         run: |
           RUN_ID_PATH="../assets/terraform_state/run_id.txt"
           if [ ! -f "$RUN_ID_PATH" ]; then
-            echo "❌ Arquivo run_id.txt não encontrado em $RUN_ID_PATH!"
-            echo "⚠️ Infraestrutura não criada para exclusão."
-            echo "🛑 Encerrando o workflow."
+            echo "❌ run_id.txt file not found at $RUN_ID_PATH!"
+            echo "⚠️ Infrastructure was not created for deletion."
+            echo "🛑 Stopping the workflow."
             exit 1
           fi
 
           if [ ! -s "$RUN_ID_PATH" ]; then
-            echo "❌ Arquivo run_id.txt está vazio em $RUN_ID_PATH!"
-            echo "⚠️ Infraestrutura não criada para exclusão."
-            echo "🛑 Encerrando o workflow."
+            echo "❌ run_id.txt file is empty at $RUN_ID_PATH!"
+            echo "⚠️ Infrastructure was not created for deletion."
+            echo "🛑 Stopping the workflow."
             exit 1
           fi
 
