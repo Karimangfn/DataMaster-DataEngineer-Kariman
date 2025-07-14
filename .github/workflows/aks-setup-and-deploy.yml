@@ -1,5 +1,5 @@
-name: AKS Setup
-run-name: AKS Setup
+name: AKS Setup and Deploy
+run-name: AKS Setup and Deploy
 
 on:
   workflow_dispatch:
@@ -165,18 +165,18 @@ jobs:
     needs: aggregate_validation_results
     steps:
       - run: |
-          echo "## 🚀 Deploy de microserviços no AKS" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Microservices Deployment on AKS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
           services_json='${{ needs.aggregate_validation_results.outputs.aggregated_matrix }}'
           total=$(echo "$services_json" | jq length)
   
-          echo "**Serviços validados:** $total**" >> $GITHUB_STEP_SUMMARY
+          echo "**Validated services:** $total**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          echo "### 📦 Detalhamento por serviço:" >> $GITHUB_STEP_SUMMARY
-          echo "| Serviço | Versão |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Service Details:" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
   
           echo "$services_json" | jq -c '.[]' | while read -r service; do
             name=$(echo "$service" | jq -r '.service_name')
