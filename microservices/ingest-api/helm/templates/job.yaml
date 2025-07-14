@@ -3,14 +3,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "ingest-files.fullname" . }}-job
+  name: {{ include "ingest-api.fullname" . }}-job
   labels:
-    {{- include "ingest-files.labels" . | nindent 4 }}
+    {{- include "ingest-api.labels" . | nindent 4 }}
 spec:
   template:
     metadata:
       labels:
-        {{- include "ingest-files.labels" . | nindent 8 }}
+        {{- include "ingest-api.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       containers:
@@ -18,14 +18,23 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: SOURCE_FOLDER
-              value: {{ .Values.config.source.folder | quote }}
-
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-api-secret
+                  key: API_KEY
+            - name: AUTH_TYPE
+              value: {{ .Values.config.auth.type | quote }}
+            - name: API_TYPE
+              value: {{ .Values.config.api.type | quote }}
+            - name: API_URL
+              value: {{ .Values.config.api.url | quote }}
             - name: STORAGE_ACCOUNT
-              value: {{ .Values.config.destination.storage.raw.account | quote }}
+              value: {{ .Values.config.storage.raw.account | quote }}
             - name: STORAGE_CONTAINER
-              value: {{ .Values.config.destination.storage.raw.container | quote }}
-
+              value: {{ .Values.config.storage.raw.container | quote }}
+            - name: STORAGE_FOLDER
+              value: {{ .Values.config.storage.raw.folder | quote }}
             - name: AZURE_CLIENT_ID
               value: {{ .Values.config.azure.clientId | quote }}
             - name: AZURE_CLIENT_SECRET
@@ -34,7 +43,7 @@ spec:
               value: {{ .Values.config.azure.subscriptionId | quote }}
             - name: AZURE_TENANT_ID
               value: {{ .Values.config.azure.tenantId | quote }}
-
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
 {{- end }}
