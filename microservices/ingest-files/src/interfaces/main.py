@@ -28,6 +28,7 @@ def main():
         Exception: For any other unexpected errors.
     """
     try:
+        print("")
         config = load_ingestion_config_from_env()
         service = IngestionService(config)
         service.execute()

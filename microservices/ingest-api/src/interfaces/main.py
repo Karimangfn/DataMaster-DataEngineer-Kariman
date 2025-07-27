@@ -20,6 +20,7 @@ def main():
     and uploads it to Azure Blob Storage.
     """
     try:
+        print("")
         required_vars = [
             "AUTH_TYPE",
             "API_TYPE",

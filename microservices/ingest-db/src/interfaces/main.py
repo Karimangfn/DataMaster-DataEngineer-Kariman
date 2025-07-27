@@ -17,6 +17,7 @@ def main():
     using specified connection and query, then outputs the result.
     """
     try:
+        print("")
         required_vars = ["DB_TYPE", "DB_CONN_STRING", "DB_QUERY"]
         env_vars = validate_env_vars(required_vars)
 
