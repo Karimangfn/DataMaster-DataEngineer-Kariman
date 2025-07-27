@@ -601,59 +601,29 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure
   
-      - name: 🔍 Check if plan.txt exists
-        run: |
-          if [ -f ./infrastructure/plan.txt ]; then
-            echo "✅ File ./infrastructure/plan.txt exists."
-          else
-            echo "❌ File ./infrastructure/plan.txt NOT found!"
-            exit 1
-          fi
-  
-      - name: 📏 Show file size of plan.txt
-        run: |
-          filesize=$(stat -c%s ./infrastructure/plan.txt)
-          echo "File size: $filesize bytes"
-          if [ "$filesize" -eq 0 ]; then
-            echo "❌ File is empty!"
-            exit 1
-          fi
-  
-      - name: 📰 Show first 20 lines of plan.txt
-        run: |
-          echo "First 20 lines of plan.txt:"
-          head -n 20 ./infrastructure/plan.txt
-  
-      - name: 🔍 Show all lines matching resource creation pattern
-        run: |
-          echo "Lines matching '^# .*will be created' pattern:"
-          grep '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No matches found"
-  
-      - name: 🔍 Show raw output of sed command on matched lines
-        run: |
-          grep '^\s*# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/' || echo "No sed output"
-  
-      - name: 🔍 Show split type and name with awk on sed output
-        run: |
-          grep '^\s*# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/' | while read -r line; do
-            type=$(echo "$line" | awk '{print $1}')
-            name=$(echo "$line" | awk '{print $2}')
-            echo "Type: $type, Name: $name"
-          done || echo "No awk output"
-  
       - name: 🚀 Generate summary of resources to be created
         run: |
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          if grep '^\s*# .*will be created' ./infrastructure/plan.txt || true; then
+          if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|" >> $GITHUB_STEP_SUMMARY
   
             grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
               resource=$(echo "$line" | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
               type=$(echo "$resource" | awk '{print $1}')
-              name=$(echo "$resource" | awk '{print $2}')
+              id=$(echo "$resource" | awk '{print $2}')
+  
+              type=${type#azurerm_}
+  
+              block=$(sed -n "/+ resource \"$type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
+              name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"(.*)"/\1/')
+  
+              if [ -z "$name" ]; then
+                name="$id"
+              fi
+  
               echo "| $type | $name |" >> $GITHUB_STEP_SUMMARY
             done
           else
