@@ -150,7 +150,7 @@ jobs:
            terraform plan -out=tfplan -no-color \
            -target=azurerm_resource_group.rg \
            -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan > plan.txt
+           terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-txt
@@ -158,7 +158,7 @@ jobs:
           overwrite: true
 
       - name: 📋 Mostrar plan.txt no log
-        run: cat ./infrastructure/plan.txt
+        run: cat ./plan.txt
       
       - run: terraform validate
       - run: | 
@@ -244,7 +244,7 @@ jobs:
            terraform plan -out=tfplan -no-color \
            -target=azurerm_container_registry.acr \
            -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan > plan.txt
+           terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-txt
@@ -252,7 +252,7 @@ jobs:
           overwrite: true
 
       - name: 📋 Mostrar plan.txt no log
-        run: cat ./infrastructure/plan.txt
+        run: cat ./plan.txt
       
       - run: terraform validate
       - run: |
