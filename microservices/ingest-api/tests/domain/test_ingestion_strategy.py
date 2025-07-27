@@ -6,6 +6,10 @@ from src.domain.ports.ingestion_strategy import APIIngestionStrategy
 
 @pytest.fixture
 def dummy_strategy():
+    """
+    Fixture that provides a dummy implementation of APIIngestionStrategy
+    for testing purposes.
+    """
     class DummyStrategy(APIIngestionStrategy):
         def ingest(
             self,
@@ -22,11 +26,19 @@ def dummy_strategy():
 
 
 def test_api_ingestion_strategy_is_abstract():
+    """
+    Test that APIIngestionStrategy cannot be instantiated directly,
+    enforcing its abstract behavior.
+    """
     with pytest.raises(TypeError):
         APIIngestionStrategy()
 
 
 def test_dummy_strategy_ingest(dummy_strategy):
+    """
+    Test that the dummy ingestion strategy returns the correct structure
+    with the given data source, params, and headers.
+    """
     result = dummy_strategy.ingest(
         data_source="http://api.example.com/data",
         params={"key": "value"},
