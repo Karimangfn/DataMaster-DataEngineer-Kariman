@@ -240,11 +240,32 @@ jobs:
     steps:
       - name: 📄 Generate Summary
         run: |
-          echo "### Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Workflow Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Changed services: ${{ needs.detect_services.outputs.services_json }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Precommit: ${{ needs.precommit.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Tests: ${{ needs.tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- MyPy: ${{ needs.mypy.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Docker Build: ${{ needs.docker-build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ACR Check: ${{ needs.check_acr_version.result }}" >> $GITHUB_STEP_SUMMARY
+
+          services_json='${{ needs.detect_services.outputs.services_json }}'
+          if [ "$services_json" != "[]" ]; then
+            echo "#### 🔧 Changed Services" >> $GITHUB_STEP_SUMMARY
+            echo "$services_json" | jq -r '.[]' | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "#### 🔧 Changed Services" >> $GITHUB_STEP_SUMMARY
+            echo "- None" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          format_status() {
+            case "$1" in
+              success) echo "✅ success" ;;
+              failure) echo "❌ failure" ;;
+              skipped) echo "⏭️ skipped" ;;
+              *) echo "❔ $1" ;;
+            esac
+          }
+
+          echo "#### 🧪 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Precommit: $(format_status "${{ needs.precommit.result }}")" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: $(format_status "${{ needs.tests.result }}")" >> $GITHUB_STEP_SUMMARY
+          echo "- MyPy: $(format_status "${{ needs.mypy.result }}")" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Build: $(format_status "${{ needs.docker-build.result }}")" >> $GITHUB_STEP_SUMMARY
+          echo "- ACR Check: $(format_status "${{ needs.check_acr_version.result }}")" >> $GITHUB_STEP_SUMMARY
