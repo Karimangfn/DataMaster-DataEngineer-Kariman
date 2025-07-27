@@ -601,18 +601,11 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure
   
-      - name: 🐞 Debug - show plan.txt content
-        run: |
-          echo "===== Conteúdo do arquivo plan.txt ====="
-          cat ./infrastructure/plan.txt
-          echo "======================================="
-  
       - name: 📊 Generate Terraform Summary
         run: |
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          echo "🐞 Debug - grep para recursos a criar:"
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "Nenhum recurso a criar encontrado"
   
           if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
@@ -620,23 +613,15 @@ jobs:
             echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
   
             grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
-              echo "🐞 Linha identificada para criação: $line"
-  
               resource=$(echo "$line" | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
-              echo "🐞 Resource extraído: $resource"
   
               full_type=$(echo "$resource" | awk '{print $1}')
               id=$(echo "$resource" | awk '{print $2}')
               type=${full_type#azurerm_}
   
-              echo "🐞 full_type: $full_type, id: $id, type: $type"
-  
               block=$(sed -n "/+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-              echo "🐞 Bloco extraído:"
-              echo "$block"
   
               name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"(.*)"/\1/')
-              echo "🐞 Nome extraído: $name"
   
               if [ -z "$name" ]; then
                 name="$id"
@@ -652,31 +637,24 @@ jobs:
           echo "## 🛠️ Resources to be updated by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          echo "🐞 Debug - grep para recursos a atualizar:"
-          grep -n -E '^\s*# .*will be updated(\s| in-place)' ./infrastructure/plan.txt || echo "Nenhum recurso a atualizar encontrado"
+          destroyed_resources=$(grep -E '^\s*# .*will be destroyed' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be destroyed/\1 \2/')
+          created_resources=$(grep -E '^\s*# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
+          recreated_resources=$(comm -12 <(echo "$destroyed_resources" | sort) <(echo "$created_resources" | sort))
+          normal_updated=$(grep -E '^\s*# .*will be updated(\s| in-place)' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be updated.*$/\1 \2/')
+          all_updates=$(echo -e "$normal_updated\n$recreated_resources" | sort -u)
   
-          if grep -E '^\s*# .*will be updated(\s| in-place)' ./infrastructure/plan.txt; then
+          if [ -n "$all_updates" ]; then
             echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
   
-            grep -E '^\s*# .*will be updated(\s| in-place)' ./infrastructure/plan.txt | while read -r line; do
-              echo "🐞 Linha identificada para atualização: $line"
-  
-              resource=$(echo "$line" | sed -E 's/^# ([^ ]+)\.([^ ]+) will be updated/\1 \2/')
-              echo "🐞 Resource extraído: $resource"
-  
+            echo "$all_updates" | while read -r resource; do
               full_type=$(echo "$resource" | awk '{print $1}')
               id=$(echo "$resource" | awk '{print $2}')
               type=${full_type#azurerm_}
   
-              echo "🐞 full_type: $full_type, id: $id, type: $type"
-  
               block=$(sed -n "/resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-              echo "🐞 Bloco extraído:"
-              echo "$block"
   
               name=$(echo "$block" | grep -E '^\s*(~|\+)?\s*name\s*=' | head -n1 | sed -E 's/^[^=]+=\s*"(.*)"/\1/')
-              echo "🐞 Nome extraído: $name"
   
               if [ -z "$name" ]; then
                 name="$id"
