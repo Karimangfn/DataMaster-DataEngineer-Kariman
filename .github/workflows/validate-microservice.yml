@@ -82,9 +82,17 @@ jobs:
           echo "Running pre-commit hooks in ${{ matrix.service }}..."
           if ! make precommit; then
             echo "Pre-commit failed in ${{ matrix.service }}"
+            echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"precommit\", \"status\": \"failure\"}" > status.json
             exit 1
           fi
           echo "Pre-commit succeeded."
+          echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"precommit\", \"status\": \"success\"}" > status.json
+
+      - name: Upload status artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-${{ matrix.service }}-precommit
+          path: status.json
 
   tests:
     name: 🧪 Run Unit Tests
@@ -122,9 +130,17 @@ jobs:
           echo "Running unit tests in ${{ matrix.service }}..."
           if ! make test; then
             echo "Unit tests failed in ${{ matrix.service }}"
+            echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"tests\", \"status\": \"failure\"}" > status.json
             exit 1
           fi
           echo "Unit tests passed."
+          echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"tests\", \"status\": \"success\"}" > status.json
+
+      - name: Upload status artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-${{ matrix.service }}-tests
+          path: status.json
 
   mypy:
     name: 🔍 Run MyPy
@@ -162,9 +178,17 @@ jobs:
           echo "Running MyPy type checking in ${{ matrix.service }}..."
           if ! make mypy; then
             echo "MyPy failed in ${{ matrix.service }}"
+            echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"mypy\", \"status\": \"failure\"}" > status.json
             exit 1
           fi
           echo "MyPy succeeded."
+          echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"mypy\", \"status\": \"success\"}" > status.json
+
+      - name: Upload status artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-${{ matrix.service }}-mypy
+          path: status.json
 
   docker-build:
     name: 🐳 Validate Docker Image Build
@@ -183,9 +207,17 @@ jobs:
           echo "Building Docker image for ${{ matrix.service }}..."
           if ! make docker-build; then
             echo "Docker build failed for ${{ matrix.service }}"
+            echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"docker-build\", \"status\": \"failure\"}" > status.json
             exit 1
           fi
           echo "Docker build succeeded."
+          echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"docker-build\", \"status\": \"success\"}" > status.json
+
+      - name: Upload status artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-${{ matrix.service }}-docker-build
+          path: status.json
 
   check_acr_version:
     name: 🔎 Check Image Version in ACR
@@ -209,6 +241,7 @@ jobs:
           echo "Checking if ACR '$acr_name' exists..."
           if ! az acr show --name "$acr_name" > /dev/null 2>&1; then
             echo "ACR '$acr_name' does not exist or is not accessible."
+            echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"check_acr_version\", \"status\": \"failure\"}" > status.json
             exit 1
           fi
           echo "ACR exists."
@@ -222,6 +255,48 @@ jobs:
           echo "Checking if image $image_name with version $version exists in ACR $acr_name..."
           if az acr repository show-tags --name "$acr_name" --repository "$image_name" --query "[?contains(@, '$version')]" | grep -q "$version"; then
             echo "Image version $version already exists in ACR repository $image_name."
+            echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"check_acr_version\", \"status\": \"failure\"}" > status.json
             exit 1
           fi
           echo "Image version $version not found in ACR repository $image_name."
+          echo "{\"service\": \"${{ matrix.service }}\", \"job\": \"check_acr_version\", \"status\": \"success\"}" > status.json
+
+      - name: Upload status artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-${{ matrix.service }}-check_acr_version
+          path: status.json
+
+  generate_validation_summary:
+    name: 📋 Generate Validation Summary
+    runs-on: ubuntu-latest
+    needs: [precommit, tests, mypy, docker-build, check_acr_version]
+    if: always()
+    steps:
+      - name: Download all status artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: tmp_status
+
+      - name: Aggregate status JSONs
+        run: |
+          jq -s '.' tmp_status/status*.json > all_status.json || echo "[]" > all_status.json
+
+      - name: Generate summary
+        run: |
+          echo "## 🧪 Validation Summary for Microservices" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          total_services=$(jq -r '.[].service' all_status.json | sort -u | wc -l)
+          echo "**Total services validated:** $total_services" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          jq -c '.[]' all_status.json | while read -r entry; do
+            svc=$(echo "$entry" | jq -r '.service')
+            job=$(echo "$entry" | jq -r '.job')
+            status=$(echo "$entry" | jq -r '.status')
+            emoji="❓"
+            if [ "$status" = "success" ]; then emoji="✅"; fi
+            if [ "$status" = "failure" ]; then emoji="❌"; fi
+            echo "| $svc | $job | $emoji |" >> $GITHUB_STEP_SUMMARY
+          done
