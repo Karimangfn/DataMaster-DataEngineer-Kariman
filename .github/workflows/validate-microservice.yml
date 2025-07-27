@@ -227,7 +227,7 @@ jobs:
           echo "Image version $version not found in ACR repository $image_name."
 
   summary:
-    name: 📋 Workflow Summary
+    name: 📋 Workflow
     runs-on: ubuntu-latest
     if: always()
     needs:
