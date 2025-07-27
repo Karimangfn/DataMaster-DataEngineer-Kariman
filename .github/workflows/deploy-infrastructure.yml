@@ -350,7 +350,7 @@ jobs:
   aks:
     name: ☸️ Creating AKS Cluster
     runs-on: ubuntu-latest
-    needs: [resource-group, acr]
+    needs: [resource-group, acr, keyvault]
     defaults:
       run:
         working-directory: ./infrastructure
@@ -692,7 +692,14 @@ jobs:
     name: 📝 Generate Creation and Update Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: acr
+    needs:
+      - resource-group
+      - acr
+      - keyvault
+      - aks
+      - databricks
+      - storage-account
+      - storage-containers
     steps:
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
