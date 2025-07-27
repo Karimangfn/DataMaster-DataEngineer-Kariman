@@ -661,6 +661,11 @@ jobs:
 
               block=$(sed -n "/^\s*-\/\+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
 
+              if [ -z "$block" ]; then
+                echo "⚠️ WARNING: Could not extract block for $full_type.$id"
+                continue
+              fi
+              
               echo "=== DEBUG replace block ==="
               echo "$block"
               echo "=== END DEBUG replace block ==="
