@@ -64,12 +64,7 @@ jobs:
         run: |
           terraform plan -destroy -no-color -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
 
-      - name: Log Terraform destroy plan output (for debug)
-        if: always()
-        run: |
-          echo "====== terraform destroy plan (plan.txt) ======"
-          cat plan.txt
-          echo "==============================================="
+      - run: terraform destroy -auto-approve -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Generate summary of resources to be destroyed
         if: always()
