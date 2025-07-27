@@ -633,11 +633,11 @@ jobs:
           echo "## 🛠️ Resources to be updated by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          if grep -q '^\s*# .*will be updated' ./infrastructure/plan.txt; then
+          if grep -E '^\s*# .*will be updated(\s| in-place)' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
   
-            grep '^\s*# .*will be updated' ./infrastructure/plan.txt | while read -r line; do
+            grep -E '^\s*# .*will be updated(\s| in-place)' ./infrastructure/plan.txt | while read -r line; do
               resource=$(echo "$line" | sed -E 's/^# ([^ ]+)\.([^ ]+) will be updated/\1 \2/')
               full_type=$(echo "$resource" | awk '{print $1}')
               id=$(echo "$resource" | awk '{print $2}')
@@ -655,5 +655,3 @@ jobs:
           else
             echo "_No resources to update._" >> $GITHUB_STEP_SUMMARY
           fi
-
-
