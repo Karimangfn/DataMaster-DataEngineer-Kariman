@@ -650,7 +650,7 @@ jobs:
   
               block=$(sed -n "/-\/\+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
   
-              name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*\"(.*)\"/\1/')
+              name=$(echo "$block" | grep '^[ +-]*name\s*=' | head -n1 | sed -E 's/^[ +-]*name\s*=\s*"(.*)"/\1/')
   
               if [ -z "$name" ]; then
                 name="$id"
