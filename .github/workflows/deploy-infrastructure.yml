@@ -605,6 +605,10 @@ jobs:
         run: |
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "=== DEBUG plan.txt completo ==="
+          cat ./infrastructure/plan.txt
+          echo "=== FIM DEBUG plan.txt completo ==="
   
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "Nenhum recurso a criar encontrado"
   
