@@ -3,7 +3,7 @@ resource "random_id" "unique" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "jhgfdef-rg"
+  name     = "${var.prefix}-${random_id.unique.hex}-rg"
   location = var.location
 }
 
