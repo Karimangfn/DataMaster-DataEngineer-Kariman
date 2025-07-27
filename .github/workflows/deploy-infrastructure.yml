@@ -147,14 +147,18 @@ jobs:
       - run: terraform init
 
       - run: |
-            terraform plan -no-color \
-            -var="subscription_id=$(az account show --query id -o tsv)" \
-            > plan.txt
+          terraform plan -out=tfplan -no-color \
+          -var="subscription_id=$(az account show --query id -o tsv)"
+          terraform show -no-color tfplan > plan.txt
       - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-txt
           path: ./infrastructure/plan.txt
           overwrite: true
+
+      - run: |
+          echo "🔍 Terraform plan content:"
+          cat plan.txt  
       
       - run: terraform validate
       - run: | 
