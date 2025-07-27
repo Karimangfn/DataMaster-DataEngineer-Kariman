@@ -21,6 +21,7 @@ def convert_to_json(response_text: str) -> Any:
         JSONConversionError: If the response text cannot be parsed into JSON.
     """
     try:
+        print("teste")
         result = json.loads(response_text)
         logger.debug(
             "Successfully converted response text to JSON."
