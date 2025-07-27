@@ -156,6 +156,9 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure/plan.txt
           overwrite: true
+
+      - name: 📋 Mostrar plan.txt no log
+        run: cat ./infrastructure/plan.txt
       
       - run: terraform validate
       - run: | 
@@ -247,6 +250,9 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure/plan.txt
           overwrite: true
+
+      - name: 📋 Mostrar plan.txt no log
+        run: cat ./infrastructure/plan.txt
       
       - run: terraform validate
       - run: |
