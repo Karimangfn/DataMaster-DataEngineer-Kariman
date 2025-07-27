@@ -170,6 +170,13 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
+      - name: 📤 Upload Terraform summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: infrastructure/plan.txt
+          overwrite: true
+
       - name: 💾 Save current run ID
         run: echo "${{ github.run_id }}" > ../assets/terraform_state/run_id.txt
       
@@ -215,6 +222,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
+          path: ./infrastructure
+
+      - name: 📥 Download Terraform summary
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-txt
           path: ./infrastructure
       
       - name: 🧰 Setup Terraform
