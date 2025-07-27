@@ -65,6 +65,7 @@ jobs:
           terraform plan -destroy -no-color -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
 
       - name: Generate summary of resources to be destroyed
+        if: always()
         run: |
           echo "## 🧹 Resources to be destroyed by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
