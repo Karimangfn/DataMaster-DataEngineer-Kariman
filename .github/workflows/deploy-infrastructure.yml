@@ -627,15 +627,15 @@ jobs:
       - name: 🔍 Show all lines matching resource creation pattern
         run: |
           echo "Lines matching '^# .*will be created' pattern:"
-          grep '^# .*will be created' ./infrastructure/plan.txt || echo "No matches found"
+          grep '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No matches found"
   
       - name: 🔍 Show raw output of sed command on matched lines
         run: |
-          grep '^# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/' || echo "No sed output"
+          grep '^\s*# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/' || echo "No sed output"
   
       - name: 🔍 Show split type and name with awk on sed output
         run: |
-          grep '^# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/' | while read -r line; do
+          grep '^\s*# .*will be created' ./infrastructure/plan.txt | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/' | while read -r line; do
             type=$(echo "$line" | awk '{print $1}')
             name=$(echo "$line" | awk '{print $2}')
             echo "Type: $type, Name: $name"
@@ -646,11 +646,11 @@ jobs:
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          if grep '^# .*will be created' ./infrastructure/plan.txt || true; then
+          if grep '^\s*# .*will be created' ./infrastructure/plan.txt || true; then
             echo "| Resource Type | Resource Name |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|" >> $GITHUB_STEP_SUMMARY
   
-            grep '^# .*will be created' ./infrastructure/plan.txt | while read -r line; do
+            grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
               resource=$(echo "$line" | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
               type=$(echo "$resource" | awk '{print $1}')
               name=$(echo "$resource" | awk '{print $2}')
