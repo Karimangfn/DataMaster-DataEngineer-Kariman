@@ -3,7 +3,7 @@ resource "random_id" "unique" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = mmm-sdan-rg"
+  name     = mn-sdan-rg"
   location = var.location
 }
 
