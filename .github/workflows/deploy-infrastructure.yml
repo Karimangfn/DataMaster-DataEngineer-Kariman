@@ -621,10 +621,17 @@ jobs:
   
               block=$(sed -n "/+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
   
+              echo "=== DEBUG create block ==="
+              echo "$block"
+              echo "=== END DEBUG create block ==="
+  
               name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*\"(.*)\"/\1/')
+  
+              echo "DEBUG create name extracted: '$name'"
   
               if [ -z "$name" ]; then
                 name="$id"
+                echo "DEBUG create name empty, fallback to id: '$name'"
               fi
   
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
@@ -650,10 +657,17 @@ jobs:
   
               block=$(sed -n "/-\/\+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
   
+              echo "=== DEBUG replace block ==="
+              echo "$block"
+              echo "=== END DEBUG replace block ==="
+  
               name=$(echo "$block" | grep '^[ +-]*name\s*=' | head -n1 | sed -E 's/^[ +-]*name\s*=\s*"(.*)"/\1/')
+  
+              echo "DEBUG replace name extracted: '$name'"
   
               if [ -z "$name" ]; then
                 name="$id"
+                echo "DEBUG replace name empty, fallback to id: '$name'"
               fi
   
               echo "| $type | $name | 🔁 |" >> $GITHUB_STEP_SUMMARY
