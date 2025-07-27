@@ -8,7 +8,9 @@ from src.interfaces.main import main
 
 @pytest.fixture
 def env_vars():
-    """Provide a valid set of environment variables with a valid DSN format."""
+    """
+    Provide a valid set of environment variables with a valid DSN format.
+    """
     return {
         "DB_TYPE": "postgres",
         "DB_CONN_STRING": "user=foo password=bar host=localhost dbname=test",
@@ -33,14 +35,18 @@ def mock_strategies():
 
 @pytest.fixture(autouse=True)
 def patch_print():
-    """Patch built-in print function for all tests."""
+    """
+    Patch built-in print function for all tests.
+    """
     with patch("builtins.print") as mock_print:
         yield mock_print
 
 
 @pytest.fixture
 def patch_service():
-    """Patch DatabaseIngestionService class."""
+    """
+    Patch DatabaseIngestionService class.
+    """
     with patch(
         "src.interfaces.main.DatabaseIngestionService"
     ) as mock_service_cls:
@@ -49,7 +55,9 @@ def patch_service():
 
 @pytest.fixture
 def patch_validate_env_vars(env_vars):
-    """Patch environment variables validator to return valid env vars."""
+    """
+    Patch environment variables validator to return valid env vars.
+    """
     with patch(
         "src.interfaces.main.validate_env_vars"
     ) as mock_validate_env_vars:
@@ -59,7 +67,9 @@ def patch_validate_env_vars(env_vars):
 
 @pytest.fixture
 def patch_strategy_registries(mock_strategies):
-    """Patch connection and ingestion strategy registries with mocks."""
+    """
+    Patch connection and ingestion strategy registries with mocks.
+    """
     mock_conn_cls, mock_ingestion_cls, _ = mock_strategies
     with mock.patch.dict(
         "src.infrastructure.config.strategy_registry.CONNECTION_STRATEGIES",
@@ -77,7 +87,9 @@ def test_main_success(
     patch_service,
     patch_print,
 ):
-    """Test main function success path with valid inputs and strategies."""
+    """
+    Test main function success path with valid inputs and strategies.
+    """
     mock_conn_cls, mock_ingestion_cls = patch_strategy_registries
     mock_service_cls = patch_service
 
@@ -117,7 +129,9 @@ def test_main_missing_env_vars(mock_validate_env_vars):
 
 @patch("src.interfaces.main.validate_env_vars")
 def test_main_unsupported_db_type(mock_validate_env_vars):
-    """Test main function raises ValueError for unsupported database type."""
+    """
+    Test main function raises ValueError for unsupported database type.
+    """
     mock_validate_env_vars.return_value = {
         "DB_TYPE": "unsupported_db",
         "DB_CONN_STRING": "user=foo password=bar host=localhost dbname=test",
