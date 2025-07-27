@@ -149,7 +149,7 @@ jobs:
       - run: |
             terraform plan -no-color \
             -var="subscription_id=$(az account show --query id -o tsv)" \
-            > infrastructure/plan.txt
+            > plan.txt
       - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-txt
