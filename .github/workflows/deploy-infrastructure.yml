@@ -575,6 +575,7 @@ jobs:
   generate-summary:
     name: 📝 Generate Creation Summary
     runs-on: ubuntu-latest
+    if: always()
     needs: acr
     steps:
       - name: 📥 Download Terraform state and plan
