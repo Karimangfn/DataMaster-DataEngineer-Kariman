@@ -644,11 +644,7 @@ jobs:
               type=${full_type#azurerm_}
   
               block=$(sed -n "/~ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-              name=$(echo "$block" | grep '^\s*~ name\s*=' | head -n1 | sed -E 's/^\s*~ name\s*=\s*"(.*)"/\1/')
-  
-              if [ -z "$name" ]; then
-                name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"(.*)"/\1/')
-              fi
+              name=$(echo "$block" | grep -E '^\s*(~|\+)?\s*name\s*=' | head -n1 | sed -E 's/^[^=]+=\s*"(.*)"/\1/')
   
               if [ -z "$name" ]; then
                 name="$id"
@@ -659,4 +655,3 @@ jobs:
           else
             echo "_No resources to update._" >> $GITHUB_STEP_SUMMARY
           fi
-
