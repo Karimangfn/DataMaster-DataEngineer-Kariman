@@ -64,27 +64,32 @@ jobs:
         run: |
           terraform plan -destroy -no-color -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
 
+      - name: Log Terraform destroy plan output (for debug)
+        if: always()
+        run: |
+          echo "====== terraform destroy plan (plan.txt) ======"
+          cat plan.txt
+          echo "==============================================="
+
       - name: Generate summary of resources to be destroyed
         if: always()
         run: |
-          echo "## 🧹 Resources to be destroyed by Terraform" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧹 Terraform Resources to be Destroyed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if grep -q '^  - ' plan.txt; then
-            echo "| Resource Type | Resource Name |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------------|---------------|" >> $GITHUB_STEP_SUMMARY
-          
-            grep '^  - ' plan.txt | while read -r line; do
-              resource=$(echo "$line" | sed -E 's/^\s*- ([^ ]+).*/\1/')
-              if [[ "$resource" == *.* ]]; then
-                type=$(echo "$resource" | cut -d'.' -f1)
-                name=$(echo "$resource" | cut -d'.' -f2-)
-                echo "| $type | $name |" >> $GITHUB_STEP_SUMMARY
-              fi
+      
+          if grep -q '^\s*# .*will be destroyed' plan.txt; then
+            echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
+      
+            grep '^\s*# .*will be destroyed' plan.txt | while read -r line; do
+              resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be destroyed/\1 \2/')
+      
+              full_type=$(echo "$resource" | awk '{print $1}')
+              id=$(echo "$resource" | awk '{print $2}')
+              type=${full_type#azurerm_}
+      
+              echo "| $type | $id | 🧨 |" >> $GITHUB_STEP_SUMMARY
             done
           else
             echo "_No resources to destroy._" >> $GITHUB_STEP_SUMMARY
           fi
-
-      - run: terraform plan -var="subscription_id=$(az account show --query id -o tsv)"
-      - run: terraform destroy -auto-approve -var="subscription_id=$(az account show --query id -o tsv)"
