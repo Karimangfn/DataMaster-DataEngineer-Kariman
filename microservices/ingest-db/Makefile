@@ -1,5 +1,5 @@
 precommit:
-	pre-commit run --all-files
+	pre-commit run --files $$(git ls-files src)
 
 test:
 	pytest --cov=src/ --cov-report=term-missing tests/

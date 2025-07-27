@@ -7,7 +7,9 @@ from src.interfaces.main import main
 
 @pytest.fixture
 def valid_env_vars():
-    """Provide a valid environment variables dict."""
+    """
+    Provide a valid environment variables dict.
+    """
     return {
         "AUTH_TYPE": "basic",
         "API_TYPE": "rest",

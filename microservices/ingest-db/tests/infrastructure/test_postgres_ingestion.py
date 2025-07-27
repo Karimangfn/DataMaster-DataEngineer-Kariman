@@ -7,7 +7,9 @@ from src.infrastructure.ingestion.postgres_ingestion import PostgresIngestion
 
 @pytest.fixture
 def mock_connection():
-    """Fixture that returns a mock PostgreSQL connection and cursor."""
+    """
+    Fixture that returns a mock PostgreSQL connection and cursor.
+    """
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -17,7 +19,9 @@ def mock_connection():
 
 @pytest.fixture
 def mock_conn_strategy(mock_connection):
-    """Fixture that returns a mock connection strategy."""
+    """
+    Fixture that returns a mock connection strategy.
+    """
     mock_strategy = MagicMock()
     mock_strategy.get_connection.return_value = mock_connection[0]
     return mock_strategy
@@ -25,7 +29,9 @@ def mock_conn_strategy(mock_connection):
 
 @pytest.fixture
 def query():
-    """Fixture that returns a sample SQL query."""
+    """
+    Fixture that returns a sample SQL query.
+    """
     return "SELECT * FROM users;"
 
 

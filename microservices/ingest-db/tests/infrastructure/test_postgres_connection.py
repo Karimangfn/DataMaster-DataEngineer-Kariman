@@ -8,7 +8,9 @@ from src.infrastructure.connection.postgres_connection import \
 
 @pytest.fixture
 def valid_connection_string():
-    """Fixture that provides a valid PostgreSQL connection string."""
+    """
+    Fixture that provides a valid PostgreSQL connection string.
+    """
     return "dbname=test user=test password=test host=localhost"
 
 
