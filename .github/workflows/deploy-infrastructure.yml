@@ -676,7 +676,7 @@ jobs:
                 new_name="$id"
               fi
   
-              echo "| $type | $new_name | 🔁 |" >> $GITHUB_STEP_SUMMARY
+              echo "| $type | $new_name | ✅ |" >> $GITHUB_STEP_SUMMARY
             done
           else
             echo "_No resources to update._" >> $GITHUB_STEP_SUMMARY
