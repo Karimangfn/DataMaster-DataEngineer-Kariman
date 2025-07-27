@@ -588,28 +588,45 @@ jobs:
     if: always()
     needs: acr
     steps:
-      - name: 📥 Download Terraform state and plan
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
-  
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
         with:
           name: terraform-plan-txt
-          path: ./
+          path: ./infrastructure
+  
+      - name: 🔍 Check if plan.txt exists
+        run: |
+          if [ -f ./infrastructure/plan.txt ]; then
+            echo "✅ File ./infrastructure/plan.txt exists."
+          else
+            echo "❌ File ./infrastructure/plan.txt NOT found!"
+            exit 1
+          fi
+  
+      - name: 📏 Show file size of plan.txt
+        run: |
+          filesize=$(stat -c%s ./infrastructure/plan.txt)
+          echo "File size: $filesize bytes"
+          if [ "$filesize" -eq 0 ]; then
+            echo "❌ File is empty!"
+            exit 1
+          fi
+  
+      - name: 📰 Show first 20 lines of plan.txt
+        run: |
+          echo "First 20 lines of plan.txt:"
+          head -n 20 ./infrastructure/plan.txt
   
       - name: 🚀 Generate summary of resources to be created
         run: |
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-      
-          if grep -q '^# .*will be created' ./plan.txt; then
+  
+          if grep -q '^# .*will be created' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|" >> $GITHUB_STEP_SUMMARY
-      
-            grep '^# .*will be created' ./plan.txt | while read -r line; do
+  
+            grep '^# .*will be created' ./infrastructure/plan.txt | while read -r line; do
               resource=$(echo "$line" | sed -E 's/^# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
               type=$(echo "$resource" | awk '{print $1}')
               name=$(echo "$resource" | awk '{print $2}')
