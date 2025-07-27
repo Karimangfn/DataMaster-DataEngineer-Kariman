@@ -639,7 +639,7 @@ jobs:
           echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          if grep -q '^# .*will be created' ./infrastructure/plan.txt; then
+          if grep '^# .*will be created' ./infrastructure/plan.txt || true; then
             echo "| Resource Type | Resource Name |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|" >> $GITHUB_STEP_SUMMARY
   
