@@ -145,6 +145,14 @@ jobs:
           terraform_version: 1.5.7
 
       - run: terraform init
+
+      - run: terraform plan -no-color > plan.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
+      
       - run: terraform validate
       - run: | 
           terraform apply -auto-approve \
@@ -211,6 +219,14 @@ jobs:
           terraform_version: 1.5.7
       
       - run: terraform init
+
+      - run: terraform plan -no-color > plan.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
+      
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
@@ -265,6 +281,14 @@ jobs:
   #         terraform_version: 1.5.7
       
   #     - run: terraform init
+
+  #     - run: terraform plan -no-color > plan.txt
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-plan-txt
+  #         path: ./infrastructure/plan.txt
+  #         overwrite: true
+      
   #     - run: terraform validate
   #     - run: |
   #         terraform apply -auto-approve \
@@ -305,6 +329,14 @@ jobs:
   #         terraform_version: 1.5.7
       
   #     - run: terraform init
+
+  #     - run: terraform plan -no-color > plan.txt
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-plan-txt
+  #         path: ./infrastructure/plan.txt
+  #         overwrite: true
+  
   #     - run: terraform validate
   #     - run: |
   #         terraform apply -auto-approve \
@@ -365,6 +397,14 @@ jobs:
   #         terraform_version: 1.5.7
       
   #     - run: terraform init
+
+  #     - run: terraform plan -no-color > plan.txt
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-plan-txt
+  #         path: ./infrastructure/plan.txt
+  #         overwrite: true
+      
   #     - run: terraform validate
   #     - run: |
   #         terraform apply -auto-approve \
@@ -446,6 +486,14 @@ jobs:
   #         terraform_version: 1.5.7
       
   #     - run: terraform init
+
+  #     - run: terraform plan -no-color > plan.txt
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-plan-txt
+  #         path: ./infrastructure/plan.txt
+  #         overwrite: true
+      
   #     - run: terraform validate
   #     - run: |
   #         terraform apply -auto-approve \
@@ -506,6 +554,7 @@ jobs:
   #       with:
   #         name: terraform-plan-txt
   #         path: ./infrastructure/plan.txt
+  #         overwrite: true
       
   #     - run: terraform validate
   #     - run: |
