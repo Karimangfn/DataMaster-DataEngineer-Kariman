@@ -206,70 +206,70 @@ jobs:
         run: |
           gh secret set RESOURCE_GROUP --repo $REPO --body "$RESOURCE_GROUP_NAME"
 
-  acr:
-    name: 🐳 Creating Container Registry (ACR)
-    runs-on: ubuntu-latest
-    needs: resource-group
-    defaults:
-      run:
-        working-directory: ./infrastructure
-    steps:
-      - uses: actions/checkout@v3
+  # acr:
+  #   name: 🐳 Creating Container Registry (ACR)
+  #   runs-on: ubuntu-latest
+  #   needs: resource-group
+  #   defaults:
+  #     run:
+  #       working-directory: ./infrastructure
+  #   steps:
+  #     - uses: actions/checkout@v3
       
-      - name: 🔐 Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: 🔐 Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 📥 Download Terraform state
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
+  #     - name: 📥 Download Terraform state
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: ./infrastructure
       
-      - name: 🧰 Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+  #     - name: 🧰 Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
       
-      - run: terraform init
+  #     - run: terraform init
 
-      - run: |
-            terraform plan -no-color \
-            -var="subscription_id=$(az account show --query id -o tsv)" \
-            > infrastructure/plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
+  #     - run: |
+  #           terraform plan -no-color \
+  #           -var="subscription_id=$(az account show --query id -o tsv)" \
+  #           > infrastructure/plan.txt
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-plan-txt
+  #         path: ./infrastructure/plan.txt
+  #         overwrite: true
       
-      - run: terraform validate
-      - run: |
-          terraform apply -auto-approve \
-            -target=azurerm_container_registry.acr \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+  #     - run: terraform validate
+  #     - run: |
+  #         terraform apply -auto-approve \
+  #           -target=azurerm_container_registry.acr \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - name: 📦 Get Container Registry Name
-        id: tfoutput_acr
-        run: |
-          CONTAINER_REGISTRY_NAME=$(terraform output -raw container_registry_name)
-          echo "CONTAINER_REGISTRY_NAME=$CONTAINER_REGISTRY_NAME" >> $GITHUB_ENV
+  #     - name: 📦 Get Container Registry Name
+  #       id: tfoutput_acr
+  #       run: |
+  #         CONTAINER_REGISTRY_NAME=$(terraform output -raw container_registry_name)
+  #         echo "CONTAINER_REGISTRY_NAME=$CONTAINER_REGISTRY_NAME" >> $GITHUB_ENV
 
-      - name: 🧾 Set CONTAINER_REGISTRY_NAME secret via gh CLI
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
-          CONTAINER_REGISTRY_NAME: ${{ env.CONTAINER_REGISTRY_NAME }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
+  #     - name: 🧾 Set CONTAINER_REGISTRY_NAME secret via gh CLI
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+  #         CONTAINER_REGISTRY_NAME: ${{ env.CONTAINER_REGISTRY_NAME }}
+  #         REPO: ${{ github.repository }}
+  #       run: |
+  #         gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
 
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
+  #     - name: 📤 Upload Terraform state
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-state
+  #         path: infrastructure/terraform.tfstate
+  #         overwrite: true
 
   # keyvault:
   #   name: 🔐 Creating Key Vault
@@ -593,7 +593,7 @@ jobs:
     name: 📝 Generate Creation and Update Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: acr
+    needs: resource-group
     steps:
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
