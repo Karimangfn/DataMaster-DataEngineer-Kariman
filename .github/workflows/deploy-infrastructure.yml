@@ -584,7 +584,7 @@ jobs:
     name: 📝 Generate Creation and Update Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: resource-group
+    needs: acr
     steps:
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
