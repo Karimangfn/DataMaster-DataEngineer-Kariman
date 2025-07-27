@@ -589,107 +589,85 @@ jobs:
   #         path: infrastructure/terraform.tfstate
   #         overwrite: true
 
-  generate-summary:
-    name: 📝 Generate Creation and Update Summary
-    runs-on: ubuntu-latest
-    if: always()
-    needs: resource-group
-    steps:
-      - name: 📄 Download Terraform plan file
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure
-  
-      - name: 📊 Generate Terraform Summary
-        run: |
-          echo "## 🚀 Resources to be created by Terraform" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+generate-summary:
+  name: 📝 Generate Creation and Update Summary
+  runs-on: ubuntu-latest
+  if: always()
+  needs: resource-group
+  steps:
+    - name: 📄 Download Terraform plan file
+      uses: actions/download-artifact@v4
+      with:
+        name: terraform-plan-txt
+        path: ./infrastructure
 
-          echo "=== DEBUG plan.txt completo ==="
-          cat ./infrastructure/plan.txt
-          echo "=== FIM DEBUG plan.txt completo ==="
-  
-          grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "Nenhum recurso a criar encontrado"
-  
-          if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
-            echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
-  
-            grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
-              resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
-  
-              full_type=$(echo "$resource" | awk '{print $1}')
-              id=$(echo "$resource" | awk '{print $2}')
-              type=${full_type#azurerm_}
-  
-              block=$(sed -n "/+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-  
-              echo "=== DEBUG create block ==="
-              echo "$block"
-              echo "=== END DEBUG create block ==="
-  
-              name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*\"(.*)\"/\1/')
-  
-              echo "DEBUG create name extracted: '$name'"
-  
-              if [ -z "$name" ]; then
-                name="$id"
-                echo "DEBUG create name empty, fallback to id: '$name'"
-              fi
-  
-              echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
-            done
-          else
-            echo "_No resources to create._" >> $GITHUB_STEP_SUMMARY
-          fi
-  
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🔁 Resources to be replaced by Terraform" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-  
-          if grep -q '^\s*# .*must be replaced' ./infrastructure/plan.txt; then
-            echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
+    - name: 📊 Generate Terraform
+      run: |
+        echo "## 🚀 Terraform Created Resources" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
 
-            grep '^\s*# .*must be replaced' ./infrastructure/plan.txt | while read -r line; do
-              resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) must be replaced/\1 \2/')
+        grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
 
-              full_type=$(echo "$resource" | awk '{print $1}')
-              id=$(echo "$resource" | awk '{print $2}')
-              type=${full_type#azurerm_}
+        if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
+          echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
 
-              block=$(sed -n "/[-+\/] resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
+          grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
+            resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
 
-              if [ -z "$block" ]; then
-                echo "⚠️ WARNING: Could not extract block for $full_type.$id"
-                continue
-              fi
-              
-              echo "=== DEBUG replace block ==="
-              echo "$block"
-              echo "=== END DEBUG replace block ==="
+            full_type=$(echo "$resource" | awk '{print $1}')
+            id=$(echo "$resource" | awk '{print $2}')
+            type=${full_type#azurerm_}
 
-              # Pega a primeira linha dentro do bloco que tem mudança de valor "~ atributo = "old" -> "new""
-              changed_line=$(echo "$block" | grep -m1 -P '^\s*~ .* = ".*" -> ".*"')
+            block=$(sed -n "/+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
 
-              if [ -n "$changed_line" ]; then
-                # Extrai o valor novo depois do "->"
-                new_name=$(echo "$changed_line" | sed -E 's/.*-> "(.*)".*/\1/')
-              else
-                # Tenta pegar o name dentro do bloco (exemplo: + name = "foo")
-                new_name=$(echo "$block" | grep '^[ +-]*name\s*=' | head -n1 | sed -E 's/^[ +-]*name\s*=\s*"(.*)"/\1/')
-              fi
+            name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*\"(.*)\"/\1/')
 
-              echo "DEBUG replace name extracted: '$new_name'"
+            if [ -z "$name" ]; then
+              name="$id"
+            fi
 
-              if [ -z "$new_name" ]; then
-                new_name="$id"
-                echo "DEBUG replace name empty, fallback to id: '$new_name'"
-              fi
+            echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
+          done
+        else
+          echo "_No resources to create._" >> $GITHUB_STEP_SUMMARY
+        fi
 
-              echo "| $type | $new_name | 🔁 |" >> $GITHUB_STEP_SUMMARY
-            done
-          else
-            echo "_No resources to replace._" >> $GITHUB_STEP_SUMMARY
-          fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 🔁 Terraform Updated Resources" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if grep -q '^\s*# .*must be replaced' ./infrastructure/plan.txt; then
+          echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
+
+          grep '^\s*# .*must be replaced' ./infrastructure/plan.txt | while read -r line; do
+            resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) must be replaced/\1 \2/')
+
+            full_type=$(echo "$resource" | awk '{print $1}')
+            id=$(echo "$resource" | awk '{print $2}')
+            type=${full_type#azurerm_}
+
+            block=$(sed -n "/[-+\/] resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
+
+            if [ -z "$block" ]; then
+              echo "⚠️ WARNING: Could not extract block for $full_type.$id"
+              continue
+            fi
+
+            changed_line=$(echo "$block" | grep -m1 -P '^\s*~ .* = ".*" -> ".*"')
+            if [ -n "$changed_line" ]; then
+              new_name=$(echo "$changed_line" | sed -E 's/.*-> "(.*)".*/\1/')
+            else
+              new_name=$(echo "$block" | grep '^[ +-]*name\s*=' | head -n1 | sed -E 's/^[ +-]*name\s*=\s*"(.*)"/\1/')
+            fi
+
+            if [ -z "$new_name" ]; then
+              new_name="$id"
+            fi
+
+            echo "| $type | $new_name | 🔁 |" >> $GITHUB_STEP_SUMMARY
+          done
+        else
+          echo "_No resources to update._" >> $GITHUB_STEP_SUMMARY
+        fi
