@@ -142,6 +142,29 @@ jobs:
           kubectl delete secret ingest-db-secret --ignore-not-found
           kubectl create secret generic ingest-db-secret --from-literal=DB_KEY="${{ secrets.DB_KEY }}"
 
+  create_git_token_secret:
+    name: Create or Update GitHub Token Secret
+    runs-on: ubuntu-latest
+    needs: aggregate_validation_results
+    if: ${{ contains(needs.aggregate_validation_results.outputs.aggregated_matrix, '"service_name":"ingest-files"') }}
+    steps:
+      - uses: azure/login@v1
+        with:
+          creds: ${{ github.event.inputs.azure_credentials || secrets.AZURE_CREDENTIALS }}
+  
+      - run: |
+          az aks get-credentials \
+          --resource-group ${{ github.event.inputs.resource_group || secrets.RESOURCE_GROUP }} \
+          --name ${{ github.event.inputs.aks_name || secrets.AKS_NAME }} --admin
+  
+      - run: |
+          if [[ -z "${{ secrets.GH_PAT_TOKEN }}" ]]; then
+            echo "GH_PAT_TOKEN secret is missing!"
+            exit 1
+          fi
+          kubectl delete secret source-auth-secret --ignore-not-found
+          kubectl create secret generic source-auth-secret --from-literal=token="${{ secrets.GH_PAT_TOKEN }}"
+
   setup_cluster:
     name: Setup AKS Cluster Without Running Jobs
     runs-on: ubuntu-latest
