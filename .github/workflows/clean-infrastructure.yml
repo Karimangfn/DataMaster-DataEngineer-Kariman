@@ -8,7 +8,7 @@ on:
 
 jobs:
   terraform-destroy:
-    name: Deleting Cloud Infrastructure
+    name: 🗑️ Deleting Cloud Infrastructure
     runs-on: ubuntu-latest
     defaults:
       run:
