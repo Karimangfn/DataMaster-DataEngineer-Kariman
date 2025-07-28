@@ -36,8 +36,8 @@ def patch_all_dependencies(valid_env_vars):
     ), patch(
         "src.interfaces.main.APIIngestionService"
     ) as MockAPIIngestionService, patch(
-        "src.interfaces.main.convert_to_json",
-        side_effect=lambda x: '{"mocked":"json"}',
+        "src.interfaces.main.load_json",
+        side_effect=lambda x: {"mocked": "json"},
     ), patch(
         "src.interfaces.main.AzureBlobUploader"
     ) as MockUploader, patch(
@@ -82,7 +82,7 @@ def test_main_success(patch_all_dependencies):
         .upload_json.assert_called_once_with(
         container_name="container",
         blob_name="folder/data.json",
-        json_content='{"mocked":"json"}'
+        json_content='{"mocked": "json"}'
     )
     patch_all_dependencies["mock_logger_instance"].info.assert_any_call(
         "Data ingestion and upload completed successfully. "
