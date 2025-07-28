@@ -1,5 +1,6 @@
 import json
-from src.application.helpers.serialization import convert_to_json
+
+from src.application.helpers.serialization import load_json
 from src.application.services.api_ingestion_service import APIIngestionService
 from src.application.validators.env_vars_validator import validate_env_vars
 from src.domain.exceptions.exceptions import (APIIngestionError,
@@ -66,8 +67,8 @@ def main():
         ingestion_service = APIIngestionService(strategy=ingestion_strategy)
 
         response = ingestion_service.ingest()
-        data = convert_to_json(response)
-        json_str = json.dumps(data)
+        parsed_data = load_json(response)
+        json_str = json.dumps(parsed_data)
 
         blob_uploader = AzureBlobUploader()
         blob_name = f"{storage_folder}/data.json"

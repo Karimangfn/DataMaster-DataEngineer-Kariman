@@ -7,18 +7,19 @@ from src.infrastructure.logging.logging_setup import get_logger
 logger = get_logger(__name__)
 
 
-def convert_to_json(response_text: str) -> Any:
+def load_json(response_text: str) -> Any:
     """
-    Convert API response text to JSON.
+    Parse a JSON-formatted string into a Python object.
 
     Args:
-        response_text (str): Raw text returned by the API.
+        response_text (str): Raw JSON string returned by the API.
 
     Returns:
-        Any: Parsed JSON content.
+        Any: Python object parsed from the JSON string.
 
     Raises:
-        JSONConversionError: If the response text cannot be parsed into JSON.
+        JSONConversionError: If the input string cannot be parsed
+        as valid JSON.
     """
     try:
         result = json.loads(response_text)
