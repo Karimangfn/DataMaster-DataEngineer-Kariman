@@ -76,7 +76,7 @@ class IngestionService:
             f for f in os.listdir(self.source_path)
             if os.path.isfile(os.path.join(self.source_path, f))
         ]
-        logger.debug(
+        logger.info(
             f"Files found in source folder: {files}"
         )
 
