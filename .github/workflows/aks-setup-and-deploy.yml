@@ -193,6 +193,14 @@ jobs:
           version=$(echo '${{ matrix.service.version }}')
           acr_name="${{ secrets.ACR_NAME }}"
 
+          custom_params=""
+          if [ "$service_name" = "ingest-files" ]; then
+            git_url="https://github.com/${GITHUB_REPOSITORY}.git"
+            custom_params="--set source.git.url=$git_url"
+          fi
+
+          echo "Git URL: $git_url"
+          
           echo "Deleting old job if exists..."
           kubectl delete job "$service_name-job" --ignore-not-found
 
@@ -205,7 +213,8 @@ jobs:
                        --set config.azure.tenantId="$tenant_id" \
                        --set config.azure.clientId="$client_id" \
                        --set config.azure.clientSecret="$client_secret" \
-                       --set config.storage.raw.account="$storage_account"
+                       --set config.storage.raw.account="$storage_account" \
+                       $custom_params
 
   generate_summary:
     name: 📋 Deployment
