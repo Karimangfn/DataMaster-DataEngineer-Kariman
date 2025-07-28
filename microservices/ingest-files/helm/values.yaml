@@ -33,7 +33,7 @@ config:
 source:
   type: git
   git:
-    url: "https://example.com/path/to/repo.git"
+    url: ""
     authSecretName: "source-auth-secret"
     authSecretKey: "token"
     targetPath: "/assets/datasets"
