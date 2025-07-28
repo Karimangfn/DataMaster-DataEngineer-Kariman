@@ -39,8 +39,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: SOURCE_FOLDER
-              value: {{ .Values.config.source.folder | quote }}
+            - name: STORAGE_FOLDER
+              value: {{ .Values.config.storage.raw.folder | quote }}
             - name: STORAGE_ACCOUNT
               value: {{ .Values.config.storage.raw.account | quote }}
             - name: STORAGE_CONTAINER
