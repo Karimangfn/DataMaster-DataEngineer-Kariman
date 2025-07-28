@@ -13,6 +13,25 @@ spec:
         {{- include "ingest-files.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
+
+      initContainers:
+        - name: fetch-source
+          image: alpine/git
+          command:
+            - sh
+            - -c
+            - >
+              {{ .Values.source.git.commandTemplate }}
+          env:
+            - name: AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.source.git.authSecretName }}
+                  key: {{ .Values.source.git.authSecretKey }}
+          volumeMounts:
+            - name: source-data
+              mountPath: {{ .Values.source.git.targetPath }}
+
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -32,7 +51,15 @@ spec:
               value: {{ .Values.config.azure.subscriptionId | quote }}
             - name: AZURE_TENANT_ID
               value: {{ .Values.config.azure.tenantId | quote }}
+          volumeMounts:
+            - name: source-data
+              mountPath: {{ .Values.config.source.folder }}
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
+      volumes:
+        - name: source-data
+          emptyDir: {}
+
 {{/* end */}}
