@@ -15,22 +15,22 @@ spec:
       restartPolicy: Never
 
       initContainers:
-        - name: fetch-source
-          image: alpine/git
-          command:
-            - sh
-            - -c
-            - >
-              {{ .Values.source.git.commandTemplate }}
-          env:
-            - name: AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.source.git.authSecretName }}
-                  key: {{ .Values.source.git.authSecretKey }}
-          volumeMounts:
-            - name: source-data
-              mountPath: {{ .Values.source.git.targetPath }}
+      - name: fetch-source
+        image: alpine/git
+        command:
+          - sh
+          - -c
+          - |
+            git clone --depth={{ .Values.source.git.cloneDepth }} https://$(AUTH_TOKEN)@{{ .Values.source.git.url }} {{ .Values.source.git.targetPath }}
+        env:
+          - name: AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: source-auth-secret
+                key: token
+        volumeMounts:
+          - name: source-data
+            mountPath: /assets/datasets
 
       containers:
         - name: {{ .Chart.Name }}
