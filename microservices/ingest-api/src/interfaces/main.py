@@ -66,13 +66,14 @@ def main():
 
         response = ingestion_service.ingest()
         data = convert_to_json(response)
+        json_str = json.dumps(data)
 
         blob_uploader = AzureBlobUploader()
         blob_name = f"{storage_folder}/data.json"
         blob_uploader.upload_json(
             container_name=storage_container,
             blob_name=blob_name,
-            json_content=data
+            json_content=json_str
         )
 
         logger.info(
