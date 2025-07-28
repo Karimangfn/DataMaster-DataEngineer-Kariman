@@ -79,6 +79,9 @@ class IngestionService:
         logger.info(
             f"Files found in source folder: {files}"
         )
+        logger.error(
+            f"Files found in source folder: {files}"
+        )
 
         if not files:
             logger.error(
