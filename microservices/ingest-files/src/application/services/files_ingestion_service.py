@@ -29,12 +29,8 @@ class IngestionService:
             unsupported.
         """
         self.config = config
-        logger.info(f"Using config: {self.config}")
-        logger.info(f"Using config: {self.config}")
         self.source_path = self.config.get("source", {}).get("folder", "")
 
-        logger.info(f"Using source path: {self.source_path}")
-        logger.error(f"Using source path: {self.source_path}")
         logger.info(
             f"Initializing IngestionService with source path: "
             f"{self.source_path}"
@@ -80,10 +76,8 @@ class IngestionService:
             f for f in os.listdir(self.source_path)
             if os.path.isfile(os.path.join(self.source_path, f))
         ]
+
         logger.info(
-            f"Files found in source folder: {files}"
-        )
-        logger.error(
             f"Files found in source folder: {files}"
         )
 
