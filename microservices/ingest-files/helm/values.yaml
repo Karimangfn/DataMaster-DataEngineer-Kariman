@@ -18,12 +18,11 @@ config:
   source:
     folder: "/assets/datasets"
 
-  destination:
-    storage:
-      raw:
-        account: ""
-        container: "raw"
-        folder: "files"
+  storage:
+    raw:
+      account: ""
+      container: "raw"
+      folder: "files"
 
   azure:
     clientId: ""
