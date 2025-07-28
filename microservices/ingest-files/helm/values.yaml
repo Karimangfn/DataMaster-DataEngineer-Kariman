@@ -39,6 +39,6 @@ source:
     targetPath: "/assets/datasets"
     cloneDepth: 1
     commandTemplate: |-
-      git clone --depth={{ .Values.source.git.cloneDepth }} https://$(AUTH_TOKEN)@{{ .Values.source.git.url }} {{ .Values.source.git.targetPath }} && \
-      mv {{ .Values.source.git.targetPath }}/assets/datasets/* {{ .Values.source.git.targetPath }}/ && \
-      rm -rf {{ .Values.source.git.targetPath }}/assets
+      git clone --depth={{ .Values.source.git.cloneDepth }} https://$(AUTH_TOKEN)@{{ .Values.source.git.url }} /tmp/repo && \
+      mkdir -p /assets/datasets && \
+      cp -r /tmp/repo/assets/datasets/* /assets/datasets/
