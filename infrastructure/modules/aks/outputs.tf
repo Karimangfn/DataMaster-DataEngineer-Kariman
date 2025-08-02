@@ -1,8 +1,10 @@
-output "aks_name" {
-  value = azurerm_kubernetes_cluster.aks.name
+output "kubernetes_cluster_name" {
+  description = "Name of the AKS cluster"
+  value       = azurerm_kubernetes_cluster.aks.name
 }
 
 output "kube_config" {
-  value     = azurerm_kubernetes_cluster.aks.kube_config_raw
-  sensitive = true
+  description = "Raw Kubernetes configuration for the AKS cluster"
+  value       = azurerm_kubernetes_cluster.aks.kube_config_raw
+  sensitive   = true
 }
