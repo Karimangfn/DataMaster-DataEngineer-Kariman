@@ -29,7 +29,7 @@ module "aks" {
   random_id           = module.resource_group.random_id
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
-  acr_id              = module.acr.acr_id
+  acr_id              = module.acr.container_registry_id
 }
 
 resource "azurerm_databricks_workspace" "dbw" {
