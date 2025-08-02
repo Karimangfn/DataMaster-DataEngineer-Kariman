@@ -1,3 +1,11 @@
+resource "azurerm_databricks_workspace" "dbw" {
+  name                        = "${var.prefix}-${var.random_id}-dbw"
+  resource_group_name         = var.resource_group_name
+  location                    = var.location
+  sku                         = "standard"
+  managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
+}
+
 resource "databricks_job" "data_process" {
   provider = databricks.this
 
