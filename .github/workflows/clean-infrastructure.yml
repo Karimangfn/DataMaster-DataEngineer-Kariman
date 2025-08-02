@@ -74,7 +74,7 @@ jobs:
                 echo "✅ $name is managed by Terraform. Will NOT delete via CLI."
               else
                 echo "🗑️ $name is NOT managed by Terraform. Deleting directly via Azure CLI..."
-                az network watcher delete --name "$name" --resource-group "$rg"
+                az resource delete --ids "$id"
               fi
             done
           fi
