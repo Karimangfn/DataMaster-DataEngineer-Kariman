@@ -63,18 +63,28 @@ jobs:
         run: |
           echo "🔎 Fetching existing Network Watchers..."
           nw_list=$(az network watcher list --query "[].{name:name, rg:resourceGroup, id:id}" -o tsv)
-
+      
           if [ -z "$nw_list" ]; then
             echo "✅ No Network Watchers found."
           else
             echo "$nw_list" | while read -r name rg id; do
               echo "🔍 Checking if Network Watcher '$name' (RG: $rg) exists in Terraform state..."
-
+      
               if terraform state list | grep -q "$id"; then
                 echo "✅ $name is managed by Terraform. Will NOT delete via CLI."
               else
                 echo "🗑️ $name is NOT managed by Terraform. Deleting directly via Azure CLI..."
                 az resource delete --ids "$id"
+      
+                echo "🧹 Checking if resource group '$rg' is empty..."
+                rg_resources=$(az resource list --resource-group "$rg" --query "length([])")
+                
+                if [ "$rg_resources" -eq 0 ]; then
+                  echo "🗑️ Resource group '$rg' is now empty. Deleting..."
+                  az group delete --name "$rg" --yes --no-wait
+                else
+                  echo "ℹ️ Resource group '$rg' still has resources. Skipping deletion."
+                fi
               fi
             done
           fi
