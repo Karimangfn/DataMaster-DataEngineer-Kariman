@@ -44,8 +44,6 @@ module "databricks" {
   client_secret         = var.client_secret
   tenant_id             = var.tenant_id
 
-  workspace_resource_id = module.databricks_workspace.databricks_workspace_id
-
   git_repo_url          = var.git_repo_url
   git_repo_branch       = var.git_repo_branch
   enable                = var.enable_databricks
