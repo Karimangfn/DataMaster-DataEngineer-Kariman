@@ -59,7 +59,27 @@ jobs:
       - run: terraform init
       - run: terraform validate
 
-      - name: Terraform destroy plan (save output)
+      - name: 🧹 Conditionally delete Network Watchers not managed by Terraform
+        run: |
+          echo "🔎 Fetching existing Network Watchers..."
+          nw_list=$(az network watcher list --query "[].{name:name, rg:resourceGroup, id:id}" -o tsv)
+
+          if [ -z "$nw_list" ]; then
+            echo "✅ No Network Watchers found."
+          else
+            echo "$nw_list" | while read -r name rg id; do
+              echo "🔍 Checking if Network Watcher '$name' (RG: $rg) exists in Terraform state..."
+
+              if terraform state list | grep -q "$id"; then
+                echo "✅ $name is managed by Terraform. Will NOT delete via CLI."
+              else
+                echo "🗑️ $name is NOT managed by Terraform. Deleting directly via Azure CLI..."
+                az network watcher delete --name "$name" --resource-group "$rg"
+              fi
+            done
+          fi
+
+      - name: Terraform destroy plan
         id: tf_plan
         run: |
           terraform plan -destroy -no-color -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
