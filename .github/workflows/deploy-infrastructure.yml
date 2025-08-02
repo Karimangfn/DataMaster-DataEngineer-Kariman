@@ -282,70 +282,70 @@ jobs:
           path: infrastructure/plan.txt
           overwrite: true
 
-  # keyvault:
-  #   name: 🔐 Creating Key Vault
-  #   runs-on: ubuntu-latest
-  #   needs: acr
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  keyvault:
+    name: 🔐 Creating Key Vault
+    runs-on: ubuntu-latest
+    needs: acr
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
 
-  #     - name: 📥 Download Terraform summary
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform summary
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #          -target=azurerm_key_vault.kv \
-  #          -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - run: |
+           terraform plan -out=tfplan -no-color \
+           -target=azurerm_key_vault.kv \
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=azurerm_key_vault.kv \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: terraform validate
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_key_vault.kv \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
-  #     - name: 📤 Upload Terraform summary
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: infrastructure/plan.txt
-  #         overwrite: true
+      - name: 📤 Upload Terraform summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: infrastructure/plan.txt
+          overwrite: true
           
   aks:
     name: ☸️ Creating AKS Cluster
@@ -432,261 +432,261 @@ jobs:
           path: infrastructure/plan.txt
           overwrite: true
 
-  # databricks:
-  #   name: 🧪 Creating Databricks Workspace
-  #   runs-on: ubuntu-latest
-  #   needs: [resource-group, aks]
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  databricks:
+    name: 🧪 Creating Databricks Workspace
+    runs-on: ubuntu-latest
+    needs: [resource-group, aks]
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
 
-  #     - name: 📥 Download Terraform summary
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform summary
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #          -target=azurerm_databricks_workspace.dbw \
-  #          -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - run: |
+           terraform plan -out=tfplan -no-color \
+           -target=azurerm_databricks_workspace.dbw \
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=azurerm_network_watcher.default \
-  #           -target=azurerm_databricks_workspace.dbw \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: terraform validate
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_network_watcher.default \
+            -target=azurerm_databricks_workspace.dbw \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #         terraform destroy -auto-approve \
-  #           -target=azurerm_network_watcher.default \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+          terraform destroy -auto-approve \
+            -target=azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 🔎 Get workspace URL and AAD token
-  #       id: get-databricks-info
-  #       run: |
-  #         tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
-  #         client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
-  #         client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
-  #         uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
-  #         post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
-  #         TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
-  #         WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
-  #         echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
-  #         echo "TOKEN=$TOKEN" >> $GITHUB_ENV
-  #         echo "::add-mask::$TOKEN"
+      - name: 🔎 Get workspace URL and AAD token
+        id: get-databricks-info
+        run: |
+          tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+          client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
+          post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
+          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
+          WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$TOKEN"
 
-  #     - name: 🔧 Create Git Credential on Databricks
-  #       run: |
-  #         curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
-  #           -H "Authorization: Bearer $TOKEN" \
-  #           -H "Content-Type: application/json" \
-  #           -d '{
-  #             "git_provider": "gitHub",
-  #             "git_username": "x-token-auth",
-  #             "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
-  #           }'
+      - name: 🔧 Create Git Credential on Databricks
+        run: |
+          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "git_provider": "gitHub",
+              "git_username": "x-token-auth",
+              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+            }'
         
-  #     - name: 🚀 Deploy Databricks Job
-  #       run: |
-  #         terraform apply -auto-approve \
-  #           -target=module.databricks.databricks_job.data_process \
-  #           -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
-  #           -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
-  #           -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-  #           -var="subscription_id=$(az account show --query id -o tsv)" \
-  #           -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
-  #           -var="enable_databricks=true"
+      - name: 🚀 Deploy Databricks Job
+        run: |
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_job.data_process \
+            -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+            -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+            -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+            -var="enable_databricks=true"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
-  #     - name: 📤 Upload Terraform summary
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: infrastructure/plan.txt
-  #         overwrite: true
+      - name: 📤 Upload Terraform summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: infrastructure/plan.txt
+          overwrite: true
 
-  # storage-account:
-  #   name: 💾 Creating Storage Account
-  #   runs-on: ubuntu-latest
-  #   needs: aks
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  storage-account:
+    name: 💾 Creating Storage Account
+    runs-on: ubuntu-latest
+    needs: [resource-group, aks]
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
 
-  #     - name: 📥 Download Terraform summary
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform summary
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #          -target=azurerm_storage_account.lake \
-  #          -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - run: |
+           terraform plan -out=tfplan -no-color \
+           -target=azurerm_storage_account.lake \
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=azurerm_storage_account.lake \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: terraform validate
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_storage_account.lake \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 📦 Get Storage Account Name
-  #       id: tfoutput_storage
-  #       run: |
-  #         STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
-  #         echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
+      - name: 📦 Get Storage Account Name
+        id: tfoutput_storage
+        run: |
+          STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
+          echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
   
-  #     - name: 🧾 Set STORAGE_ACCOUNT secret via gh CLI
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
-  #         STORAGE_ACCOUNT_NAME: ${{ env.STORAGE_ACCOUNT_NAME }}
-  #         REPO: ${{ github.repository }}
-  #       run: |
-  #         gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
+      - name: 🧾 Set STORAGE_ACCOUNT secret via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          STORAGE_ACCOUNT_NAME: ${{ env.STORAGE_ACCOUNT_NAME }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
-  #     - name: 📤 Upload Terraform summary
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: infrastructure/plan.txt
-  #         overwrite: true
+      - name: 📤 Upload Terraform summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: infrastructure/plan.txt
+          overwrite: true
 
-  # storage-containers:
-  #   name: 📁 Creating Storage Containers
-  #   runs-on: ubuntu-latest
-  #   needs: storage-account
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  storage-containers:
+    name: 📁 Creating Storage Containers
+    runs-on: ubuntu-latest
+    needs: [resource-group, storage-account]
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
 
-  #     - name: 📥 Download Terraform summary
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform summary
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #           -target=azurerm_storage_container.raw \
-  #           -target=azurerm_storage_container.bronze \
-  #           -target=azurerm_storage_container.silver \
-  #           -target=azurerm_storage_container.gold \
-  #          -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - run: |
+           terraform plan -out=tfplan -no-color \
+            -target=azurerm_storage_container.raw \
+            -target=azurerm_storage_container.bronze \
+            -target=azurerm_storage_container.silver \
+            -target=azurerm_storage_container.gold \
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=azurerm_storage_container.raw \
-  #           -target=azurerm_storage_container.bronze \
-  #           -target=azurerm_storage_container.silver \
-  #           -target=azurerm_storage_container.gold \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: terraform validate
+      - run: |
+          terraform apply -auto-approve \
+            -target=azurerm_storage_container.raw \
+            -target=azurerm_storage_container.bronze \
+            -target=azurerm_storage_container.silver \
+            -target=azurerm_storage_container.gold \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
-  #     - name: 📤 Upload Terraform summary
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: infrastructure/plan.txt
-  #         overwrite: true
+      - name: 📤 Upload Terraform summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: infrastructure/plan.txt
+          overwrite: true
 
   generate-summary:
     name: 📝 Generate Creation and Update Summary
@@ -695,11 +695,11 @@ jobs:
     needs:
       - resource-group
       - acr
-      # - keyvault
+      - keyvault
       - aks
-      # - databricks
-      # - storage-account
-      # - storage-containers
+      - databricks
+      - storage-account
+      - storage-containers
     steps:
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
