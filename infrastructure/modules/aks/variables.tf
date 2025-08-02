@@ -14,6 +14,6 @@ variable "location" {
   type = string
 }
 
-variable "acr_id" {
+variable "container_registry_id" {
   type = string
 }
