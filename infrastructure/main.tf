@@ -32,14 +32,6 @@ module "aks" {
   container_registry_id = module.acr.container_registry_id
 }
 
-resource "azurerm_databricks_workspace" "dbw" {
-  name                        = "${var.prefix}-${module.resource_group.random_id}-dbw"
-  resource_group_name         = module.resource_group.resource_group_name
-  location                    = module.resource_group.resource_group_location
-  sku                         = "standard"
-  managed_resource_group_name = "${var.prefix}-${module.resource_group.random_id}-dbw-mrg"
-}
-
 module "databricks" {
   source = "./modules/databricks"
 
