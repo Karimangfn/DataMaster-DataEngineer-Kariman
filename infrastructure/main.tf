@@ -1,5 +1,3 @@
-data "azurerm_client_config" "current" {}
-
 module "resource_group" {
   source  = "./modules/resource_group"
   prefix  = var.prefix
