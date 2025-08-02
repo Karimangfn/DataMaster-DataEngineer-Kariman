@@ -395,14 +395,9 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            # -target=azurerm_network_watcher.default \
             -target=azurerm_kubernetes_cluster.aks \
             -target=azurerm_role_assignment.aks_acr_pull \
             -var="subscription_id=$(az account show --query id -o tsv)"
-
-          # terraform destroy -auto-approve \
-          #   -target=azurerm_network_watcher.default \
-          #   -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: ☁️ Get Azure Kubernetes Service Name
         id: tfoutput_aks
