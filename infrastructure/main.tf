@@ -24,19 +24,19 @@ module "key_vault" {
 }
 
 module "aks" {
-  source              = "./modules/aks"
-  prefix              = var.prefix
-  random_id           = module.resource_group.random_id
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-  acr_id              = module.acr.container_registry_id
+  source                = "./modules/aks"
+  prefix                = var.prefix
+  random_id             = module.resource_group.random_id
+  resource_group_name   = module.resource_group.resource_group_name
+  location              = module.resource_group.resource_group_location
+  container_registry_id = module.acr.container_registry_id
 }
 
 resource "azurerm_databricks_workspace" "dbw" {
-  name                = "${var.prefix}-${module.resource_group.random_id}-dbw"
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-  sku                 = "standard"
+  name                        = "${var.prefix}-${module.resource_group.random_id}-dbw"
+  resource_group_name         = module.resource_group.resource_group_name
+  location                    = module.resource_group.resource_group_location
+  sku                         = "standard"
   managed_resource_group_name = "${var.prefix}-${module.resource_group.random_id}-dbw-mrg"
 }
 
