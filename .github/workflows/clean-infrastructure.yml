@@ -79,12 +79,17 @@ jobs:
             done
           fi
 
-      - name: Terraform destroy plan
-        id: tf_plan
+      - name: Terraform Destroy
+        id: tf_destroy
         run: |
-          terraform plan -destroy -no-color -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
-
-      - run: terraform destroy -auto-approve -var="subscription_id=$(az account show --query id -o tsv)"
+          terraform plan \
+          -destroy \
+          -no-color \
+          -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
+          
+          terraform destroy \
+          -auto-approve \
+          -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: Generate summary of resources to be destroyed
         if: always()
