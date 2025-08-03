@@ -719,20 +719,20 @@ jobs:
             echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
   
             grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
-              resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be created/\1 \2/')
-  
-              full_type=$(echo "$resource" | awk '{print $1}')
-              id=$(echo "$resource" | awk '{print $2}')
+              full_id=$(echo "$line" | sed -E 's/^\s*# ([^ ]+) will be created/\1/')
+              short_id=$(echo "$full_id" | sed -E 's/^module\.([^.]+)\.//')
+            
+              full_type=$(echo "$short_id" | awk -F'.' '{print $1}')
+              block_name=$(echo "$short_id" | awk -F'.' '{print $2}')
               type=${full_type#azurerm_}
-  
-              block=$(sed -n "/+ resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-  
-              name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*\"(.*)\"/\1/')
-  
+            
+              block=$(sed -n "/+ resource \"$full_type\" \"$block_name\" {/,/^}/p" ./infrastructure/plan.txt)
+              name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"([^"]+)"/\1/')
+            
               if [ -z "$name" ]; then
-                name="$id"
+                name="$block_name"
               fi
-  
+            
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
             done
           else
