@@ -144,7 +144,7 @@ jobs:
                 echo "⚠️ WARNING: Could not extract block for $full_type.$id"
                 name="$id"
               else
-                name=$(echo "$block" | grep '^[ -]*name\s*=' | head -n1 | sed -E 's/^[ -]*name\s*=\s*"(.*)"/\1/')
+                name=$(echo "$block" | grep '^[ ~+-]*name\s*=' | head -n1 | sed -E 's/^[ ~+-]*name\s*=\s*"(.*)".*/\1/' | sed -E 's/ ->.*//')
                 if [ -z "$name" ]; then
                   name="$id"
                 fi
