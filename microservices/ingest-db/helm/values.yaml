@@ -24,7 +24,7 @@ config:
     sslmode: "require"
     passwordSecretRef:
       name: ingest-db-secret
-      key: DB_PASSWORD
+      key: DB_KEY
 
   storage:
     raw:
