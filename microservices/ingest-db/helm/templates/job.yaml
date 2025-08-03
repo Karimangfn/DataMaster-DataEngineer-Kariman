@@ -30,7 +30,7 @@ spec:
               value: {{ .Values.config.db.user | quote }}
             - name: DB_SSLMODE
               value: {{ .Values.config.db.sslmode | quote }}
-            - name: DB_PASSWORD
+            - name: DB_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.config.db.passwordSecretRef.name | quote }}
