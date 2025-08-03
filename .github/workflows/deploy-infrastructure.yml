@@ -575,6 +575,7 @@ jobs:
       - run: |
            terraform plan -out=tfplan -no-color \
            -target=module.storage.azurerm_storage_account.lake \
+           -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
            -var="subscription_id=$(az account show --query id -o tsv)" \
            -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
            terraform show -no-color tfplan >> plan.txt
@@ -588,6 +589,7 @@ jobs:
       - run: |
           terraform apply -auto-approve \
             -target=module.storage.azurerm_storage_account.lake \
+            -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
             -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
 
