@@ -13,3 +13,8 @@ variable "resource_group_name" {
 variable "location" {
   type = string
 }
+
+variable "client_id" {
+  type        = string
+  description = "Client ID of the SPN used in GitHub Actions"
+}
