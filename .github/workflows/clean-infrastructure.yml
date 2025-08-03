@@ -94,6 +94,8 @@ jobs:
           resources=(
             "module.databricks.databricks_job.data_process"
           )
+
+          subscription_id=$(az account show --query id -o tsv)
           
           for res in "${resources[@]}"; do
             echo "Checking resource $res ..."
