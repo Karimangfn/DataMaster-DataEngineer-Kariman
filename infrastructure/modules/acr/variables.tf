@@ -1,5 +1,6 @@
 variable "prefix" {
-  type = string
+  description = "Prefix for all resource names"
+  type        = string
 }
 
 variable "random_id" {
@@ -11,5 +12,6 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  type = string
+  description = "Azure region to deploy resources"
+  type        = string
 }
