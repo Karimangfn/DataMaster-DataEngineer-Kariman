@@ -17,6 +17,8 @@ resources: {}
 config:
   db:
     type: "postgresql"
+    connString: "postgresql://user:pass@host:port/dbname?sslmode=require"
+    query: "SELECT * FROM customers"
 
   storage:
     raw:
