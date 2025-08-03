@@ -138,7 +138,9 @@ jobs:
               id=$(echo "$short_id" | awk '{print $2}')
               type=${full_type#azurerm_}
 
-              if [ "$type" = "random_id" ]; then
+              if [ "$type" = "random_id" ] || 
+                 [ "$type" = "role_assignment" ] || 
+                 [ "$type" = "databricks_job" ]; then
                 continue
               fi
               
