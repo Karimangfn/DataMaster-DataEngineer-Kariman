@@ -22,6 +22,11 @@ spec:
               value: {{ .Values.config.db.type | quote }}
             - name: DB_CONN_STRING
               value: {{ .Values.config.db.connString | quote }}
+            - name: DB_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-db-secret
+                  key: DB_KEY
             - name: DB_QUERY
               value: {{ .Values.config.db.query | quote }}
             - name: STORAGE_ACCOUNT
