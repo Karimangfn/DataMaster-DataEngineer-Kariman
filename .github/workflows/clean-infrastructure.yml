@@ -99,7 +99,7 @@ jobs:
           
           for res in "${resources[@]}"; do
             echo "Checking resource $res ..."
-            if ! terraform plan -target="$res"; then
+            if ! terraform plan -target="$res" -var="subscription_id=$subscription_id"; then
               echo "Resource $res not accessible or does not exist, removing from state"
               terraform state rm "$res" || true
             else
