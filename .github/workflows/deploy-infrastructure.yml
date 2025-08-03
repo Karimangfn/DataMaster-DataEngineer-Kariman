@@ -1,5 +1,5 @@
-run-name: Deploy Infrastructure 
-name: Deploy Infrastructure
+run-name: Deploy Cloud Infrastructure 
+name: Deploy Cloud Infrastructure
 
 permissions: write-all
 
