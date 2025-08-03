@@ -694,12 +694,12 @@ jobs:
     if: always()
     needs:
       - resource-group
-      - acr
-      - keyvault
-      - aks
-      - databricks
-      - storage-account
-      - storage-containers
+      # - acr
+      # - keyvault
+      # - aks
+      # - databricks
+      # - storage-account
+      # - storage-containers
     steps:
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
