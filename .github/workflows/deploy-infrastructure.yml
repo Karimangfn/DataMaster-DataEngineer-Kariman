@@ -148,7 +148,7 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-           -target=azurerm_resource_group.rg \
+           -target=module.resource_group.azurerm_resource_group.rg \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -160,7 +160,7 @@ jobs:
       - run: terraform validate
       - run: | 
           terraform apply -auto-approve \
-            -target=azurerm_resource_group.rg \
+            -target=module.resource_group.azurerm_resource_group.rg \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 📤 Upload Terraform state
@@ -239,7 +239,7 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-           -target=azurerm_container_registry.acr \
+           -target=module.acr.azurerm_container_registry.acr \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -251,7 +251,7 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=azurerm_container_registry.acr \
+            -target=module.acr.azurerm_container_registry.acr \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 📦 Get Container Registry Name
@@ -318,7 +318,7 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-           -target=azurerm_key_vault.kv \
+           -target=module.key_vault.azurerm_key_vault.kv \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -330,7 +330,7 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=azurerm_key_vault.kv \
+            -target=module.key_vault.azurerm_key_vault.kv \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 📤 Upload Terraform state
@@ -383,7 +383,7 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-           -target=azurerm_kubernetes_cluster.aks \
+           -target=module.aks.azurerm_kubernetes_cluster.aks \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -395,13 +395,13 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=azurerm_network_watcher.default \
-            -target=azurerm_kubernetes_cluster.aks \
-            -target=azurerm_role_assignment.aks_acr_pull \
+            -target=module.aks.azurerm_network_watcher.default \
+            -target=module.aks.azurerm_kubernetes_cluster.aks \
+            -target=module.aks.azurerm_role_assignment.aks_acr_pull \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
           terraform destroy -auto-approve \
-            -target=azurerm_network_watcher.default \
+            -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: ☁️ Get Azure Kubernetes Service Name
@@ -468,7 +468,7 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-           -target=azurerm_databricks_workspace.dbw \
+           -target=module.databricks.azurerm_databricks_workspace.dbw \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -480,12 +480,12 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=azurerm_network_watcher.default \
-            -target=azurerm_databricks_workspace.dbw \
+            -target=module.aks.azurerm_network_watcher.default \
+            -target=module.databricks.azurerm_databricks_workspace.dbw \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
           terraform destroy -auto-approve \
-            -target=azurerm_network_watcher.default \
+            -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 🔎 Get workspace URL and AAD token
@@ -574,7 +574,7 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-           -target=azurerm_storage_account.lake \
+           -target=module.storage.azurerm_storage_account.lake \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -586,7 +586,7 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=azurerm_storage_account.lake \
+            -target=module.storage.azurerm_storage_account.lake \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 📦 Get Storage Account Name
@@ -653,10 +653,10 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-            -target=azurerm_storage_container.raw \
-            -target=azurerm_storage_container.bronze \
-            -target=azurerm_storage_container.silver \
-            -target=azurerm_storage_container.gold \
+            -target=module.storage.azurerm_storage_container.raw \
+            -target=module.storage.azurerm_storage_container.bronze \
+            -target=module.storage.azurerm_storage_container.silver \
+            -target=module.storage.azurerm_storage_container.gold \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
@@ -668,10 +668,10 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=azurerm_storage_container.raw \
-            -target=azurerm_storage_container.bronze \
-            -target=azurerm_storage_container.silver \
-            -target=azurerm_storage_container.gold \
+            -target=module.storage.azurerm_storage_container.raw \
+            -target=module.storage.azurerm_storage_container.bronze \
+            -target=module.storage.azurerm_storage_container.silver \
+            -target=module.storage.azurerm_storage_container.gold \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 📤 Upload Terraform state
