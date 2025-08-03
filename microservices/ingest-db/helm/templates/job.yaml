@@ -20,21 +20,18 @@ spec:
           env:
             - name: DB_TYPE
               value: {{ .Values.config.db.type | quote }}
-            - name: DB_HOST
-              value: {{ .Values.config.db.host | quote }}
-            - name: DB_PORT
-              value: {{ .Values.config.db.port | quote }}
-            - name: DB_NAME
-              value: {{ .Values.config.db.name | quote }}
-            - name: DB_USER
-              value: {{ .Values.config.db.user | quote }}
-            - name: DB_SSLMODE
-              value: {{ .Values.config.db.sslmode | quote }}
-            - name: DB_KEY
+
+            - name: DB_CONN_STRING
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.config.db.passwordSecretRef.name | quote }}
-                  key: {{ .Values.config.db.passwordSecretRef.key | quote }}
+                  name: ingest-db-secret
+                  key: DB_CONN_STRING
+
+            - name: DB_QUERY
+              valueFrom:
+                secretKeyRef:
+                  name: ingest-db-secret
+                  key: DB_QUERY
 
             - name: STORAGE_ACCOUNT
               value: {{ .Values.config.storage.raw.account | quote }}
