@@ -89,6 +89,22 @@ jobs:
             done
           fi
 
+      - name: Check Terraform resource existence and fix state
+        run: |
+          resources=(
+            "module.databricks.databricks_job.data_process"
+          )
+          
+          for res in "${resources[@]}"; do
+            echo "Checking resource $res ..."
+            if ! terraform plan -target="$res"; then
+              echo "Resource $res not accessible or does not exist, removing from state"
+              terraform state rm "$res" || true
+            else
+              echo "Resource $res accessible, no action needed."
+            fi
+          done
+
       - name: Terraform Destroy
         id: tf_destroy
         run: |
