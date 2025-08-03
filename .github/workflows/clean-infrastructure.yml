@@ -113,11 +113,13 @@ jobs:
           terraform plan \
           -destroy \
           -no-color \
-          -var="subscription_id=$(az account show --query id -o tsv)" > plan.txt || true
+          -var="subscription_id=$(az account show --query id -o tsv)" \
+          -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" > plan.txt || true
           
           terraform destroy \
           -auto-approve \
-          -var="subscription_id=$(az account show --query id -o tsv)"
+          -var="subscription_id=$(az account show --query id -o tsv)" \
+          -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
 
       - name: Generate summary of resources to be destroyed
         if: always()
