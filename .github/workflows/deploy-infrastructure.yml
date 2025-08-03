@@ -746,32 +746,34 @@ jobs:
           if grep -q '^\s*# .*must be replaced' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
             echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
-  
+          
             grep '^\s*# .*must be replaced' ./infrastructure/plan.txt | while read -r line; do
               resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) must be replaced/\1 \2/')
-  
-              full_type=$(echo "$resource" | awk '{print $1}')
-              id=$(echo "$resource" | awk '{print $2}')
+          
+              short_id=$(echo "$resource" | sed -E 's/^module\.([^.]+)\.//')
+          
+              full_type=$(echo "$short_id" | awk '{print $1}')
+              id=$(echo "$short_id" | awk '{print $2}')
               type=${full_type#azurerm_}
-  
+          
               block=$(sed -n "/[-+\/] resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-  
+          
               if [ -z "$block" ]; then
                 echo "⚠️ WARNING: Could not extract block for $full_type.$id"
                 continue
               fi
-  
+          
               changed_line=$(echo "$block" | grep -m1 -P '^\s*~ .* = ".*" -> ".*"')
               if [ -n "$changed_line" ]; then
                 new_name=$(echo "$changed_line" | sed -E 's/.*-> "(.*)".*/\1/')
               else
                 new_name=$(echo "$block" | grep '^[ +-]*name\s*=' | head -n1 | sed -E 's/^[ +-]*name\s*=\s*"(.*)"/\1/')
               fi
-  
+          
               if [ -z "$new_name" ]; then
                 new_name="$id"
               fi
-  
+          
               echo "| $type | $new_name | ✅ |" >> $GITHUB_STEP_SUMMARY
             done
           else
