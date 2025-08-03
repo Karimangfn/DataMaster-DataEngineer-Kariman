@@ -21,7 +21,12 @@ spec:
             - name: DB_TYPE
               value: {{ .Values.config.db.type | quote }}
             - name: DB_CONN_STRING
-              value: {{ .Values.config.db.connString | quote }}
+              value: >
+                postgresql://{{ .Values.config.db.user }}:$(DB_KEY)
+                @{{ .Values.config.db.host }}:{{ .Values.config.db.port }}
+                /{{ .Values.config.db.dbname }}
+                ?sslmode={{ .Values.config.db.sslmode }}
+                &channel_binding={{ .Values.config.db.channel_binding }}
             - name: DB_KEY
               valueFrom:
                 secretKeyRef:
