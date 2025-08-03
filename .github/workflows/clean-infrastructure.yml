@@ -131,15 +131,15 @@ jobs:
       
             grep '^\s*# .*will be destroyed' plan.txt | while read -r line; do
               resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be destroyed/\1 \2/')
-      
+            
               short_id=$(echo "$resource" | sed -E 's/^module\.([^.]+)\.//')
-      
+            
               full_type=$(echo "$short_id" | awk '{print $1}')
               id=$(echo "$short_id" | awk '{print $2}')
               type=${full_type#azurerm_}
-      
+            
               block=$(sed -n "/- resource \"$full_type\" \"$id\" {/,/^}/p" plan.txt)
-      
+            
               if [ -z "$block" ]; then
                 echo "⚠️ WARNING: Could not extract block for $full_type.$id"
                 name="$id"
@@ -149,7 +149,7 @@ jobs:
                   name="$id"
                 fi
               fi
-      
+            
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
             done
           else
