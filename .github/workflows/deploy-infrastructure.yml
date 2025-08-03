@@ -575,7 +575,8 @@ jobs:
       - run: |
            terraform plan -out=tfplan -no-color \
            -target=module.storage.azurerm_storage_account.lake \
-           -var="subscription_id=$(az account show --query id -o tsv)"
+           -var="subscription_id=$(az account show --query id -o tsv)" \
+           -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
            terraform show -no-color tfplan >> plan.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -587,7 +588,8 @@ jobs:
       - run: |
           terraform apply -auto-approve \
             -target=module.storage.azurerm_storage_account.lake \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
 
       - name: 📦 Get Storage Account Name
         id: tfoutput_storage
