@@ -1,5 +1,5 @@
 data "azuread_service_principal" "github_actions_spn" {
-  application_id = var.client_id
+  filter = "appId eq '${var.client_id}'"
 }
 
 resource "azurerm_storage_account" "lake" {
