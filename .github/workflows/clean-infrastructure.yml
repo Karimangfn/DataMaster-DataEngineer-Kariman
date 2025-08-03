@@ -137,7 +137,11 @@ jobs:
               full_type=$(echo "$short_id" | awk '{print $1}')
               id=$(echo "$short_id" | awk '{print $2}')
               type=${full_type#azurerm_}
-            
+
+              if [ "$type" = "random_id" ]; then
+                continue
+              fi
+              
               block=$(sed -n "/- resource \"$full_type\" \"$id\" {/,/^}/p" plan.txt)
             
               if [ -z "$block" ]; then
