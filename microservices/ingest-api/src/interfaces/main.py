@@ -1,5 +1,6 @@
 import json
 
+from datetime import datetime
 from src.application.helpers.serialization import load_json
 from src.application.services.api_ingestion_service import APIIngestionService
 from src.application.validators.env_vars_validator import validate_env_vars
@@ -71,7 +72,7 @@ def main():
         json_str = json.dumps(parsed_data)
 
         blob_uploader = AzureBlobUploader()
-        blob_name = f"{storage_folder}/data.json"
+        blob_name = f"{storage_folder}/data_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.json"
         blob_uploader.upload_json(
             container_name=storage_container,
             blob_name=blob_name,
