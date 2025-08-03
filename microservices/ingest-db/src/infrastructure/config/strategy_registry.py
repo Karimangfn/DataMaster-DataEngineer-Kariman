@@ -8,10 +8,10 @@ from src.infrastructure.ingestion.postgres_ingestion import PostgresIngestion
 
 # Mapping of supported database connection strategies by type name
 CONNECTION_STRATEGIES: Dict[str, Type[DatabaseConnectionStrategy]] = {
-    "postgres": PostgresConnection
+    "postgresql": PostgresConnection
 }
 
 # Mapping of supported database ingestion strategies by type name
 INGESTION_STRATEGIES: Dict[str, Type[DatabaseIngestionStrategy]] = {
-    "postgres": PostgresIngestion
+    "postgresql": PostgresIngestion
 }
