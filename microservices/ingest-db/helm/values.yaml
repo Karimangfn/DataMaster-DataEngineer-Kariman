@@ -17,14 +17,6 @@ resources: {}
 config:
   db:
     type: "postgresql"
-    host: "ep-round-wave.neon.tech"
-    port: 5432
-    name: "neondb"
-    user: "neondb_owner"
-    sslmode: "require"
-    passwordSecretRef:
-      name: ingest-db-secret
-      key: DB_KEY
 
   storage:
     raw:
