@@ -1,5 +1,6 @@
 import os
 
+from datetime import datetime
 from src.domain.exceptions.exceptions import (InvalidSourcePathError,
                                               NotFoundError,
                                               UnsupportedFileTypeError)
@@ -135,11 +136,17 @@ class IngestionService:
 
         for file in files:
             full_source_path = os.path.join(self.source_path, file)
-            destination_path = os.path.join(destination_prefix, file)
+            filename, ext = os.path.splitext(file)
+            new_filename = f"{filename}_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}{ext}"
+        
+            destination_path = os.path.join(destination_prefix, new_filename)
+        
             logger.info(
                 f"Ingesting file '{full_source_path}' to '{destination_path}'"
             )
+        
             self.strategy.ingest(full_source_path, destination_path)
+        
             logger.info(
                 f"Successfully ingested file '{full_source_path}'"
             )
