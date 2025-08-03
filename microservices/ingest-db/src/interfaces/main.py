@@ -43,8 +43,6 @@ def main():
         logger.info(
             "Database ingestion completed successfully."
         )
-        print(data)
-
     except (
         IngestionError,
         MissingEnvironmentVariableError,
