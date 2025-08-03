@@ -730,7 +730,11 @@ jobs:
               block_name=$(echo "$short_id" | awk -F'.' '{print $2}')
               type=${full_type#azurerm_}
 
-              if [ "$type" = "random_id" ]; then continue; fi
+              if [ "$type" = "random_id" ] || 
+                 [ "$type" = "role_assignment" ] || 
+                 [ "$type" = "databricks_job" ]; then
+                continue
+              fi
             
               block=$(sed -n "/+ resource \"$full_type\" \"$block_name\" {/,/^}/p" ./infrastructure/plan.txt)
               name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"([^"]+)"/\1/')
@@ -762,7 +766,11 @@ jobs:
               id=$(echo "$short_id" | awk '{print $2}')
               type=${full_type#azurerm_}
 
-              if [ "$type" = "random_id" ]; then continue; fi
+              if [ "$type" = "random_id" ] || 
+                 [ "$type" = "role_assignment" ] || 
+                 [ "$type" = "databricks_job" ]; then
+                continue
+              fi
           
               block=$(sed -n "/[-+\/] resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
           
