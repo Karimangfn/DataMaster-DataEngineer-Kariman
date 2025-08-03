@@ -20,26 +20,16 @@ spec:
           env:
             - name: DB_TYPE
               value: {{ .Values.config.db.type | quote }}
-
             - name: DB_CONN_STRING
-              valueFrom:
-                secretKeyRef:
-                  name: ingest-db-secret
-                  key: DB_CONN_STRING
-
+              value: {{ .Values.config.db.connString | quote }}
             - name: DB_QUERY
-              valueFrom:
-                secretKeyRef:
-                  name: ingest-db-secret
-                  key: DB_QUERY
-
+              value: {{ .Values.config.db.query | quote }}
             - name: STORAGE_ACCOUNT
               value: {{ .Values.config.storage.raw.account | quote }}
             - name: STORAGE_CONTAINER
               value: {{ .Values.config.storage.raw.container | quote }}
             - name: STORAGE_FOLDER
               value: {{ .Values.config.storage.raw.folder | quote }}
-
             - name: AZURE_CLIENT_ID
               value: {{ .Values.config.azure.clientId | quote }}
             - name: AZURE_CLIENT_SECRET
