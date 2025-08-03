@@ -4,11 +4,13 @@ variable "prefix" {
 }
 
 variable "random_id" {
-  type = string
+  description = "Unique random suffix to avoid naming collisions"
+  type        = string
 }
 
 variable "resource_group_name" {
-  type = string
+  description = "Name of the Azure Resource Group where resources will be deployed"
+  type        = string
 }
 
 variable "location" {
@@ -17,5 +19,6 @@ variable "location" {
 }
 
 variable "tenant_id" {
-  type = string
+  description = "Azure Tenant ID"
+  type        = string
 }
