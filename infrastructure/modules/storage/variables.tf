@@ -1,20 +1,24 @@
 variable "prefix" {
-  type = string
+  description = "Prefix for all resource names"
+  type        = string
 }
 
 variable "random_id" {
-  type = string
+  description = "Unique random suffix to avoid naming collisions"
+  type        = string
 }
 
 variable "resource_group_name" {
-  type = string
+  description = "Name of the Azure Resource Group where resources will be deployed"
+  type        = string
 }
 
 variable "location" {
-  type = string
+  description = "Azure region to deploy resources"
+  type        = string
 }
 
 variable "client_id" {
-  type        = string
   description = "Client ID of the SPN used in GitHub Actions"
+  type        = string
 }
