@@ -30,6 +30,7 @@ def load_ingestion_config_from_env() -> dict:
                 "raw": {
                     "account": env["STORAGE_ACCOUNT"],
                     "container": env["STORAGE_CONTAINER"],
+                    "folder": env["STORAGE_FOLDER"],
                 }
             }
         },
