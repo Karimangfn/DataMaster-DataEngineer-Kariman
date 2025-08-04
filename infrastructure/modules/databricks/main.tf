@@ -43,7 +43,7 @@ resource "databricks_job" "data_process" {
 
     spark_python_task {
       source      = "GIT"
-      python_file = "data-processing/bronze/src/main"
+      python_file = "data-processing/bronze/src/main.py"
     }
   }
 
@@ -58,7 +58,7 @@ resource "databricks_job" "data_process" {
 
     spark_python_task {
       source      = "GIT"
-      python_file = "data-processing/silver/src/main"
+      python_file = "data-processing/silver/src/main.py"
     }
   }
 
@@ -73,7 +73,7 @@ resource "databricks_job" "data_process" {
 
     spark_python_task {
       source      = "GIT"
-      python_file = "data-processing/gold/src/main"
+      python_file = "data-processing/gold/src/main.py"
     }
   }
 }
