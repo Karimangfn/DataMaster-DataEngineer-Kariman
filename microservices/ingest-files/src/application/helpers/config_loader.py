@@ -15,6 +15,7 @@ def load_ingestion_config_from_env() -> dict:
         "STORAGE_ACCOUNT",
         "STORAGE_CONTAINER",
         "SOURCE_FOLDER",
+        "STORAGE_FOLDER",
     ]
 
     env = validate_env_vars(required_vars)
