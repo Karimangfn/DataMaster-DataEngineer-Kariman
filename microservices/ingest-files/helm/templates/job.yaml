@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "ingest-files.labels" . | quote }}
+        {{- include "ingest-files.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
 
@@ -20,8 +20,7 @@ spec:
           command:
             - sh
             - -c
-            - |
-          {{ .Values.source.git.commandTemplate | indent 6 }}
+            - {{ .Values.source.git.commandTemplate | quote }}
           env:
             - name: AUTH_TOKEN
               valueFrom:
