@@ -14,15 +14,22 @@ spec:
     spec:
       restartPolicy: Never
 
-        env:
-          - name: AUTH_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: source-auth-secret
-                key: token
-        volumeMounts:
-          - name: source-data
-            mountPath: /assets/datasets
+      initContainers:
+        - name: fetch-source
+          image: alpine/git
+          command:
+            - sh
+            - -c
+            - echo "dummy"
+          env:
+            - name: AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: source-auth-secret
+                  key: token
+          volumeMounts:
+            - name: source-data
+              mountPath: /assets/datasets
 
       containers:
         - name: {{ .Chart.Name }}
