@@ -21,7 +21,7 @@ spec:
           - sh
           - -c
           - |
-            {{ .Values.source.git.commandTemplate | indent 8 }}
+            {{ .Values.source.git.commandTemplate}}
         env:
           - name: AUTH_TOKEN
             valueFrom:
