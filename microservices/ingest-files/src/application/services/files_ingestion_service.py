@@ -130,9 +130,9 @@ class IngestionService:
             f"{self.source_path}"
         )
 
-        container = self.config[
-            "destination"]["storage"]["raw"]["container"]
-        destination_prefix = f"{container}/"
+        folder = self.config[
+            "destination"]["storage"]["raw"]["folder"]
+        destination_prefix = f"{folder}/"
 
         for file in files:
             full_source_path = os.path.join(self.source_path, file)
