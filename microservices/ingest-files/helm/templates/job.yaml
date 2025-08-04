@@ -20,7 +20,10 @@ spec:
           command:
             - sh
             - -c
-            - {{ .Values.source.git.commandTemplate | quote }}
+            - |
+              git clone --depth={{ .Values.source.git.cloneDepth }} https://$(AUTH_TOKEN)@{{ .Values.source.git.url }} /tmp/repo && \
+              mkdir -p {{ .Values.source.git.targetPath }} && \
+              cp -r /tmp/repo/assets/datasets/* {{ .Values.source.git.targetPath }}/
           env:
             - name: AUTH_TOKEN
               valueFrom:
