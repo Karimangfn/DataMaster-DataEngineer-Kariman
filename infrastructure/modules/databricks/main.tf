@@ -43,7 +43,7 @@ resource "databricks_job" "data_process" {
 
     notebook_task {
       source        = "GIT"
-      notebook_path = "data-processing/bronze/main"
+      notebook_path = "data-processing/bronze/src/main"
     }
   }
 
@@ -58,7 +58,7 @@ resource "databricks_job" "data_process" {
 
     notebook_task {
       source        = "GIT"
-      notebook_path = "data-processing/silver/main"
+      notebook_path = "data-processing/silver/src/main"
     }
   }
 
@@ -73,7 +73,7 @@ resource "databricks_job" "data_process" {
 
     notebook_task {
       source        = "GIT"
-      notebook_path = "data-processing/gold/main"
+      notebook_path = "data-processing/gold/src/main"
     }
   }
 }
