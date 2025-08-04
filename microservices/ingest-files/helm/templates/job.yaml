@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "ingest-files.labels" . | nindent 8 }}
+        {{- include "ingest-files.labels" . | quote }}
     spec:
       restartPolicy: Never
 
