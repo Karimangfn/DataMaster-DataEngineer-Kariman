@@ -41,9 +41,9 @@ resource "databricks_job" "data_process" {
     description     = "Bronze data transformation"
     job_cluster_key = "data_process_cluster"
 
-    notebook_task {
-      source        = "GIT"
-      notebook_path = "data-processing/bronze/src/main"
+    spark_python_task {
+      source      = "GIT"
+      python_file = "data-processing/bronze/src/main"
     }
   }
 
@@ -56,9 +56,9 @@ resource "databricks_job" "data_process" {
       task_key = "bronze_layer"
     }
 
-    notebook_task {
-      source        = "GIT"
-      notebook_path = "data-processing/silver/src/main"
+    spark_python_task {
+      source      = "GIT"
+      python_file = "data-processing/silver/src/main"
     }
   }
 
@@ -71,9 +71,9 @@ resource "databricks_job" "data_process" {
       task_key = "silver_layer"
     }
 
-    notebook_task {
-      source        = "GIT"
-      notebook_path = "data-processing/gold/src/main"
+    spark_python_task {
+      source      = "GIT"
+      python_file = "data-processing/gold/src/main"
     }
   }
 }
