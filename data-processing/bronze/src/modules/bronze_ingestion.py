@@ -1,4 +1,4 @@
-from src.modules.utils import add_metadata_columns, generate_batch_id
+from modules.utils import add_metadata_columns, generate_batch_id
 
 
 def ingest_bronze_customer_data(spark, config, schema, file_format):
