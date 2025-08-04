@@ -45,6 +45,8 @@ spec:
               value: {{ .Values.config.storage.raw.account | quote }}
             - name: STORAGE_CONTAINER
               value: {{ .Values.config.storage.raw.container | quote }}
+            - name: STORAGE_FOLDER
+              value: {{ .Values.config.storage.raw.folder | quote }}
             - name: SOURCE_FOLDER
               value: {{ .Values.config.source.folder | quote }}
             - name: AZURE_CLIENT_ID
