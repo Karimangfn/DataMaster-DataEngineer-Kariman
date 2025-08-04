@@ -14,14 +14,6 @@ spec:
     spec:
       restartPolicy: Never
 
-      initContainers:
-      - name: fetch-source
-        image: alpine/git
-        command:
-          - sh
-          - -c
-          - |
-            {{ .Values.source.git.commandTemplate}}
         env:
           - name: AUTH_TOKEN
             valueFrom:
