@@ -6,18 +6,6 @@ resource "azurerm_databricks_workspace" "dbw" {
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
 }
 
-resource "databricks_secret_scope" "storage_scope" {
-  provider = databricks.this
-  name     = "storage-secrets"
-}
-
-resource "databricks_secret" "spn_key" {
-  provider     = databricks.this
-  key          = "spn-key"
-  string_value = var.client_secret
-  scope        = databricks_secret_scope.storage_scope.name
-}
-
 locals {
   storage_account = var.storage_account_name
 
@@ -31,7 +19,7 @@ locals {
       "auth.type"              = "OAuth"
       "oauth.provider.type"    = "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
       "oauth2.client.id"       = var.client_id
-      "oauth2.client.secret"   = "{{secrets/${databricks_secret_scope.storage_scope.name}/storage-account-key}}"
+      "oauth2.client.secret"   = var.client_secret
       "oauth2.client.endpoint" = "https://login.microsoftonline.com/${var.tenant_id}/oauth2/token"
     } : "spark.hadoop.fs.azure.account.${local.storage_account}.dfs.core.windows.net.${key}" => value
   }
