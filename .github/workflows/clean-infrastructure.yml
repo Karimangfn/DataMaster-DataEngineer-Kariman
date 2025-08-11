@@ -93,7 +93,6 @@ jobs:
         run: |
           resources=(
             "module.databricks.databricks_job.data_process"
-            "module.databricks.databricks_secret.storage_account_key"
           )
 
           subscription_id=$(az account show --query id -o tsv)
