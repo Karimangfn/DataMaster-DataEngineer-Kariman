@@ -13,6 +13,11 @@ variable "resource_group_name" {
   type        = string
 }
 
+variable "storage_account_name" {
+  type        = string
+  description = "Name of the Azure Storage Account for Jobs"
+}
+
 variable "location" {
   description = "Azure region to deploy resources"
   type        = string
