@@ -51,3 +51,6 @@ def main():
 
     ingest_bronze_customer_data(spark, DATASET_CONFIG, schema, file_format)
     logger.info("Bronze step executed successfully")
+
+if __name__ == "__main__":
+    main()
