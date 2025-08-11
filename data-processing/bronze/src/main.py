@@ -3,13 +3,17 @@ import sys
 import os
 
 try:
-    base_dir = os.path.dirname(os.path.abspath(__file__))  # pega o caminho do main.py
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 except NameError:
-    base_dir = os.getcwd()  # fallback no Databricks notebook
+    base_dir = os.getcwd()
 
-# base_dir já é a pasta src
+print("base_dir:", base_dir)
+print("listdir base_dir:", os.listdir(base_dir))
+
 if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
+
+print("sys.path:", sys.path)
 
 from config.settings import DATASET_CONFIG
 from modules.bronze_ingestion import ingest_bronze_customer_data
