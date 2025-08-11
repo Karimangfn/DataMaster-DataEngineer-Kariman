@@ -2,8 +2,13 @@ import logging
 import sys
 import os
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
+try:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    current_dir = os.getcwd()
+
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 from config.settings import DATASET_CONFIG
 from modules.bronze_ingestion import ingest_bronze_customer_data
