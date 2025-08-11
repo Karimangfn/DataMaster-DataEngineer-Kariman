@@ -12,7 +12,14 @@ from modules.bronze_ingestion import ingest_bronze_customer_data
 from modules.schemas import get_customer_schema
 from utils.utils import detect_format_from_extension
 
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def main():
