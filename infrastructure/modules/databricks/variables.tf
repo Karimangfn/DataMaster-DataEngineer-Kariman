@@ -18,12 +18,6 @@ variable "storage_account_name" {
   description = "Name of the Azure Storage Account for Jobs"
 }
 
-variable "storage_account_key" {
-  description = "Storage Account access key to Databricks secret"
-  type        = string
-  sensitive   = true
-}
-
 variable "location" {
   description = "Azure region to deploy resources"
   type        = string
