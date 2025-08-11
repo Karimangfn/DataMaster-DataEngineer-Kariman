@@ -11,10 +11,10 @@ resource "databricks_secret_scope" "storage_scope" {
   name     = "storage-secrets"
 }
 
-resource "databricks_secret" "storage_account_key" {
+resource "databricks_secret" "spn_key" {
   provider     = databricks.this
-  key          = "storage-account-key"
-  string_value = var.storage_account_key
+  key          = "spn-key"
+  string_value = var.client_secret
   scope        = databricks_secret_scope.storage_scope.name
 }
 
