@@ -18,7 +18,7 @@ print("sys.path:", sys.path)
 from config.settings import DATASET_CONFIG
 from modules.bronze_ingestion import ingest_bronze_customer_data
 from modules.schemas import get_customer_schema
-from modules.utils import detect_format_from_extension
+from utils.utils import detect_format_from_extension
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
