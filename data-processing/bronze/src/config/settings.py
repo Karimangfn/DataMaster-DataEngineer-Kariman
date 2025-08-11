@@ -1,19 +1,23 @@
-"""
-Dataset configuration for the Bronze Layer data ingestion pipeline.
-"""
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--storage-account', required=True, help='Storage Account Name')
+args = parser.parse_args()
+
+storage_account = args.storage_account
 
 DATASET_CONFIG = {
     "name": "customer_data",
     "input_path": (
-        "abfss://raw@<storage>.dfs.core.windows.net/"
-        "customer_data/"
+        f"abfss://raw@{storage_account}.dfs.core.windows.net/"
+        "api/"
     ),
     "output_path": (
-        "abfss://bronze@<storage>.dfs.core.windows.net/"
+        f"abfss://bronze@{storage_account}.dfs.core.windows.net/"
         "customer_data/"
     ),
     "checkpoint_path": (
-        "abfss://checkpoints@<storage>.dfs.core.windows.net/"
-        "bronze/customer_data/"
+        f"abfss://bronze@{storage_account}.dfs.core.windows.net/"
+        "checkpoints/"
     )
 }
