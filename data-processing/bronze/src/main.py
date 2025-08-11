@@ -2,12 +2,19 @@ import logging
 import sys
 import os
 
-sys.path.append('opt/app/src/')
+try:
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # quando __file__ existir
+except NameError:
+    base_dir = os.getcwd()  # fallback no Databricks interactive
 
-from src.config.settings import DATASET_CONFIG
-from src.modules.bronze_ingestion import ingest_bronze_customer_data
-from src.modules.schemas import get_customer_schema
-from src.modules.utils import detect_format_from_extension
+src_dir = os.path.join(base_dir)  # se o main.py já está dentro de src
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+from config.settings import DATASET_CONFIG
+from modules.bronze_ingestion import ingest_bronze_customer_data
+from modules.schemas import get_customer_schema
+from modules.utils import detect_format_from_extension
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
