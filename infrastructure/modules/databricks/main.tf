@@ -6,6 +6,37 @@ resource "azurerm_databricks_workspace" "dbw" {
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
 }
 
+resource "databricks_secret_scope" "storage_scope" {
+  provider = databricks.this
+  name     = "storage-secrets"
+}
+
+resource "databricks_secret" "storage_account_key" {
+  provider     = databricks.this
+  key          = "storage-account-key"
+  string_value = var.storage_account_key
+  scope        = databricks_secret_scope.storage_scope.name
+}
+
+locals {
+  storage_account = var.storage_account_name
+
+  base_spark_conf = {
+    "spark.databricks.cluster.profile" = "singleNode"
+    "spark.master"                     = "local[*]"
+  }
+
+  dynamic_spark_conf = {
+    for key, value in {
+      "auth.type"              = "OAuth"
+      "oauth.provider.type"    = "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
+      "oauth2.client.id"       = var.client_id
+      "oauth2.client.secret"   = "{{secrets/${databricks_secret_scope.storage_scope.name}/storage-account-key}}"
+      "oauth2.client.endpoint" = "https://login.microsoftonline.com/${var.tenant_id}/oauth2/token"
+    } : "spark.hadoop.fs.azure.account.${local.storage_account}.dfs.core.windows.net.${key}" => value
+  }
+}
+
 resource "databricks_job" "data_process" {
   provider = databricks.this
 
@@ -19,10 +50,10 @@ resource "databricks_job" "data_process" {
       spark_version = "15.4.x-scala2.12"
       node_type_id  = "Standard_F4"
 
-      spark_conf = {
-        "spark.databricks.cluster.profile" = "singleNode"
-        "spark.master"                     = "local[*]"
-      }
+      spark_conf = merge(
+        local.base_spark_conf,
+        local.dynamic_spark_conf
+      )
 
       custom_tags = {
         "ResourceClass" = "SingleNode"
