@@ -1,3 +1,6 @@
+import logging
+import sys
+
 from pyspark.sql import SparkSession
 from modules.utils import (
     clean_and_cast_columns,
@@ -5,6 +8,15 @@ from modules.utils import (
     mask_sensitive_data,
     add_high_value_flag,
 )
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def transform_silver(spark: SparkSession, bronze_path: str, silver_path: str) -> None:
     """
@@ -20,9 +32,24 @@ def transform_silver(spark: SparkSession, bronze_path: str, silver_path: str) ->
     Returns:
         None
     """
-    df = spark.read.format("delta").load(bronze_path)
-    df = clean_and_cast_columns(df)
-    df = deduplicate(df)
-    df = mask_sensitive_data(df)
-    df = add_high_value_flag(df)
-    df.write.format("delta").mode("append").save(silver_path)
+    try:
+        logger.info(f"Reading data from Bronze path: {bronze_path}")
+        df = spark.read.format("delta").load(bronze_path)
+        
+        logger.info("Cleaning and casting columns...")
+        df = clean_and_cast_columns(df)
+        
+        logger.info("Deduplicating records...")
+        df = deduplicate(df)
+        
+        logger.info("Masking sensitive data...")
+        df = mask_sensitive_data(df)
+        
+        logger.info("Adding high value purchase flag...")
+        df = add_high_value_flag(df)
+    
+        logger.info(f"Writing transformed data to Silver path: {silver_path}")
+        df.write.format("delta").mode("append").save(silver_path)
+    except Exception as e:
+        logger.error(f"Error during Silver transformation: {e}")
+        raise
