@@ -33,7 +33,7 @@ def main():
 
     transform_gold(spark, silver_path, gold_path)
 
-    logging.info("Gold transformation pipeline completed successfully.")
+    logger.info("Gold transformation pipeline completed successfully.")
 
 if __name__ == "__main__":
     main()
