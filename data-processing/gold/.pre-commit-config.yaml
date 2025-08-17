@@ -17,6 +17,7 @@ repos:
     stages: [pre-commit]
     language: system
     entry: flake8
+    args: [--config=./data-processing/gold/.flake8]
     types: [python]
     files: ^data-processing/gold/
 

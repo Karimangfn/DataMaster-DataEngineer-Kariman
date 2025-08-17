@@ -12,6 +12,15 @@ repos:
     types: [python]
     files: ^data-processing/bronze/
 
+  - id: flake8
+    name: flake8
+    stages: [pre-commit]
+    language: system
+    entry: flake8
+    args: [--config=./data-processing/bronze/.flake8]
+    types: [python]
+    files: ^data-processing/bronze/
+
   - id: bandit
     name: bandit
     stages: [pre-commit]

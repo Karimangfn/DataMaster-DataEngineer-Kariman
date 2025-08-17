@@ -1,0 +1,7 @@
+pre-commit
+isort
+flake8
+bandit
+pytest
+pytest-cov
+pyspark
