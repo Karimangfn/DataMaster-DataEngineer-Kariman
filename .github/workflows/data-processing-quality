@@ -1,0 +1,139 @@
+run-name: Validate Data Processing
+name: Validate Data Processing
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'data-processing/**'
+
+jobs:
+  detect_changes:
+    name: 🔍 Detect Modified Files
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📥 Fetch develop branch
+        run: git fetch origin develop
+
+      - id: check
+        run: |
+          echo "Detecting changes in data-processing..."
+          changed_files=$(git diff --name-only origin/develop...HEAD | grep '^data-processing/' || true)
+          echo "Changed files: $changed_files"
+          
+          if [ -z "$changed_files" ]; then
+            echo "No data-processing changes detected."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Data-processing changes detected."
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+  precommit:
+    name: 🧹 Run Pre-commit
+    needs: detect_changes
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r data-processing/requirements.txt
+          pip install pre-commit
+
+      - name: 🧪 Run Pre-commit
+        working-directory: data-processing
+        run: make precommit
+
+  tests:
+    name: 🧪 Run Unit Tests
+    needs: [detect_changes, precommit]
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r data-processing/requirements.txt
+          pip install pytest pytest-cov
+
+      - name: 🧪 Run Tests
+        working-directory: data-processing
+        run: make test
+
+  mypy:
+    name: 🔍 Run MyPy
+    needs: [detect_changes, tests]
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r data-processing/requirements.txt
+          pip install mypy
+
+      - name: 🔍 Run MyPy
+        working-directory: data-processing
+        run: make mypy
+
+  summary:
+    name: 📋 Workflow Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - detect_changes
+      - precommit
+      - tests
+      - mypy
+    steps:
+      - name: 📄 Generate Summary
+        run: |
+          echo "### 📋 Data Processing Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.detect_changes.outputs.changed }}" == "true" ]; then
+            echo "#### 🔧 Changed Path" >> $GITHUB_STEP_SUMMARY
+            echo "- data-processing" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "#### 🔧 Changed Path" >> $GITHUB_STEP_SUMMARY
+            echo "- None" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          format_status() {
+            case "$1" in
+              success) echo "✅ success" ;;
+              failure) echo "❌ failure" ;;
+              skipped) echo "⏭️ skipped" ;;
+              *) echo "❔ $1" ;;
+            esac
+          }
+
+          echo "#### 🧪 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Precommit: $(format_status "${{ needs.precommit.result }}")" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: $(format_status "${{ needs.tests.result }}")" >> $GITHUB_STEP_SUMMARY
+          echo "- MyPy: $(format_status "${{ needs.mypy.result }}")" >> $GITHUB_STEP_SUMMARY
