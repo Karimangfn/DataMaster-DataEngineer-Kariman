@@ -5,7 +5,7 @@ from pyspark.sql.functions import current_timestamp, input_file_name, lit
 
 def generate_batch_id():
     """
-    Generates a unique UUID to represent a batch ID used for 
+    Generates a unique UUID to represent a batch ID used for
     tracking data ingestion into the raw/bronze layer.
 
     Returns:

@@ -1,4 +1,4 @@
-from pyspark.sql.types import *
+from pyspark.sql.types import StringType, StructField, StructType
 
 
 def get_customer_schema():

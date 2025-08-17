@@ -1,7 +1,11 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--storage-account', required=True, help='Storage Account Name')
+parser.add_argument(
+    '--storage-account',
+    required=True,
+    help='Storage Account Name'
+)
 args = parser.parse_args()
 
 storage_account = args.storage_account
