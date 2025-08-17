@@ -34,6 +34,7 @@ def ingest_bronze_customer_data(spark, config, schema, file_format):
         df.writeStream
           .format("delta")
           .outputMode("append")
+          .trigger(once=True)
           .option("checkpointLocation", config["checkpoint_path"])
           .start(config["output_path"])
     )
