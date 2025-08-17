@@ -15,14 +15,13 @@ locals {
   }
 
   dynamic_spark_conf = {
-    for key, value in {
-      "auth.type"              = "OAuth"
-      "oauth.provider.type"    = "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
-      "oauth2.client.id"       = var.client_id
-      "oauth2.client.secret"   = var.client_secret
-      "oauth2.client.endpoint" = "https://login.microsoftonline.com/${var.tenant_id}/oauth2/token"
-    } : "spark.hadoop.fs.azure.account.${local.storage_account}.dfs.core.windows.net.${key}" => value
-  }
+  for key, value in {
+    "auth.type"              = "OAuth"
+    "oauth.provider.type"    = "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
+    "oauth2.client.id"       = var.client_id
+    "oauth2.client.secret"   = var.client_secret
+    "oauth2.client.endpoint" = "https://login.microsoftonline.com/${var.tenant_id}/oauth2/v2.0/token"
+  } : "spark.hadoop.fs.azure.account.${key}.${local.storage_account}.dfs.core.windows.net" => value
 }
 
 resource "databricks_job" "data_process" {
