@@ -15,6 +15,7 @@ from src.infrastructure.logging.logging_setup import get_logger
 from src.infrastructure.storage.azure_blob_uploader import AzureBlobUploader
 
 logger = get_logger(__name__)
+# Teste
 
 
 def main():
