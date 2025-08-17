@@ -6,7 +6,7 @@ repos:
   - id: isort
     name: isort
     stages: [pre-commit]
-    language: system
+    language: python
     entry: isort
     args: [--honor-noqa]
     types: [python]
@@ -15,16 +15,16 @@ repos:
   - id: flake8
     name: flake8
     stages: [pre-commit]
-    language: system
+    language: python
     entry: flake8
     args: [--config=./data-processing/bronze/.flake8]
     types: [python]
     files: ^data-processing/bronze/
-
+  
   - id: bandit
     name: bandit
     stages: [pre-commit]
-    language: system
+    language: python
     pass_filenames: false
     entry: bandit
     args: [--severity-level, medium, --recursive, data-processing/bronze/src]

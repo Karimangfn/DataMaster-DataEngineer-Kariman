@@ -1,6 +1,6 @@
 import logging
-import sys
 import os
+import sys
 
 base_dir = os.getcwd()
 
@@ -25,14 +25,14 @@ def main():
     Reads streaming data from Bronze, processes it, and writes to Silver.
     """
     logger.info("Starting Silver pipeline execution")
-    
+
     bronze_path = DATASET_CONFIG["bronze_path"]
     silver_path = DATASET_CONFIG["silver_path"]
-    checkpoint_path = DATASET_CONFIG["silver_checkpoint_path"]
 
     transform_silver(spark, bronze_path, silver_path)
 
     logging.info("Silver transformation pipeline completed successfully.")
+
 
 if __name__ == "__main__":
     main()
