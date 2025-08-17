@@ -1,5 +1,5 @@
-run-name: Validate Microservice
-name: Validate Microservice
+run-name: Microservice Quality
+name: Microservice Quality
 
 on:
   pull_request:
