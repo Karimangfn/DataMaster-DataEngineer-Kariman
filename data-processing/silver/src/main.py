@@ -32,6 +32,7 @@ def main():
 
     transform_silver(spark, bronze_path, silver_path)
 
+    logging.info("Silver transformation pipeline completed successfully.")
 
 if __name__ == "__main__":
     main()
