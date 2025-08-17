@@ -1,4 +1,16 @@
-from src.utils.utils import add_purchase_month_column, aggregate_purchase_metrics
+import logging
+import sys
+
+from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 def transform_gold(spark, silver_path, gold_path):
     """
@@ -14,7 +26,18 @@ def transform_gold(spark, silver_path, gold_path):
     Returns:
         None
     """
-    df = spark.read.format("delta").load(silver_path)
-    df = add_purchase_month_column(df)
-    df_agg = aggregate_purchase_metrics(df, ["store_location", "purchase_month"])
-    df_agg.write.format("delta").mode("overwrite").save(gold_path)
+    try:
+        logger.info(f"Reading data from Silver path: {silver_path}")
+        df = spark.read.format("delta").load(silver_path)
+    
+        logger.info("Adding purchase_month column...")
+        df = add_purchase_month_column(df)
+        
+        logger.info("Aggregating purchase metrics by store_location and purchase_month...")
+        df_agg = aggregate_purchase_metrics(df, ["store_location", "purchase_month"])
+       
+        logger.info(f"Writing aggregated data to Gold path: {gold_path}")
+        df_agg.write.format("delta").mode("overwrite").save(gold_path)
+    except Exception as e:
+        logger.error(f"Error during Gold transformation: {e}")
+        raise
