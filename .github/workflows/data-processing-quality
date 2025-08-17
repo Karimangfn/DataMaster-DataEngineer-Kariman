@@ -1,5 +1,5 @@
-run-name: Validate Data Processing
-name: Validate Data Processing
+run-name: Data Processing Quality
+name: Data Processing Quality
 
 on:
   pull_request:
