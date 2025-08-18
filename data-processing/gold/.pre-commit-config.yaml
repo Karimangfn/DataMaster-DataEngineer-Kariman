@@ -8,24 +8,24 @@ repos:
     stages: [pre-commit]
     language: system
     entry: isort
-    args: [--honor-noqa]
+    args: [data-processing/gold/src, --honor-noqa]
     types: [python]
-    files: ^data-processing/gold/src/
+    pass_filenames: false
 
   - id: flake8
     name: flake8
     stages: [pre-commit]
     language: system
-    entry: flake8 data-processing/gold/src
-    args: [--config=./data-processing/gold/.flake8]
+    entry: flake8
+    args: [--config=./data-processing/gold/.flake8, data-processing/gold/src]
     types: [python]
+    pass_filenames: false
 
   - id: bandit
     name: bandit
     stages: [pre-commit]
     language: system
-    pass_filenames: false
     entry: bandit
     args: [--severity-level, medium, --recursive, data-processing/gold/src]
     types: [python]
-    files: ^data-processing/gold/src/
+    pass_filenames: false
