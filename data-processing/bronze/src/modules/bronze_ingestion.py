@@ -1,9 +1,19 @@
+from typing import Dict
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import StructType
 from utils.utils import add_metadata_columns, generate_batch_id
 
 
-def ingest_bronze_customer_data(spark, config, schema, file_format):
+def ingest_bronze_customer_data(
+    spark: SparkSession,
+    config: Dict[str, str],
+    schema: StructType,
+    file_format: str
+) -> DataFrame:
     """
-    Ingests raw customer data into the Bronze Delta Lake table using Auto Loader.
+    Ingests raw customer data into the Bronze Delta
+    Lake table using Auto Loader.
 
     Args:
         spark (SparkSession): The active Spark session.
@@ -12,7 +22,7 @@ def ingest_bronze_customer_data(spark, config, schema, file_format):
             - output_path (str): Destination path for the Bronze Delta table.
             - checkpoint_path (str): Path to store streaming checkpoints.
         schema (StructType): Expected schema of the input dataset.
-        file_format (str): File format to read (e.g., "csv", "json", "parquet").
+        file_format (str): File format to read (e.g., "csv").
 
     Returns:
         StreamingQuery: A reference to the running writeStream query.
@@ -21,20 +31,20 @@ def ingest_bronze_customer_data(spark, config, schema, file_format):
 
     df = (
         spark.readStream
-            .format("cloudFiles")
-            .option("cloudFiles.format", file_format)
-            .option("header", "true")
-            .schema(schema)
-            .load(config["input_path"])
+        .format("cloudFiles")
+        .option("cloudFiles.format", file_format)
+        .option("header", "true")
+        .schema(schema)
+        .load(config["input_path"])
     )
 
     df = add_metadata_columns(df, batch_id)
 
     return (
         df.writeStream
-          .format("delta")
-          .outputMode("append")
-          .trigger(once=True)
-          .option("checkpointLocation", config["checkpoint_path"])
-          .start(config["output_path"])
+        .format("delta")
+        .outputMode("append")
+        .trigger(once=True)
+        .option("checkpointLocation", config["checkpoint_path"])
+        .start(config["output_path"])
     )

@@ -1,6 +1,6 @@
 import logging
-import sys
 import os
+import sys
 
 base_dir = os.getcwd()
 
@@ -26,14 +26,14 @@ def main():
     and writes the results to the Gold layer as a streaming job.
     """
     logger.info("Starting Gold pipeline execution")
-    
+
     silver_path = DATASET_CONFIG["silver_path"]
     gold_path = DATASET_CONFIG["gold_path"]
-    checkpoint_path = DATASET_CONFIG["gold_checkpoint_path"]
 
     transform_gold(spark, silver_path, gold_path)
 
     logger.info("Gold transformation pipeline completed successfully.")
+
 
 if __name__ == "__main__":
     main()

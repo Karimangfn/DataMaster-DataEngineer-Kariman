@@ -1,10 +1,12 @@
-from pyspark.sql.types import *
+from pyspark.sql.types import (BooleanType, DateType, DoubleType, StringType,
+                               StructField, StructType, TimestampType)
 
 
-def get_silver_schema():
+def get_silver_schema() -> StructType:
     """
-    Returns the schema for the Silver layer customer data with masked sensitive 
-    information and metadata columns.
+    Returns the schema for the Silver layer customer
+    data with masked sensitive information and
+    metadata columns.
 
     Fields:
         - customer_id (StringType): Unique identifier of the customer.
