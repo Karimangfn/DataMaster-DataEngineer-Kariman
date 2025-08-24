@@ -1,11 +1,15 @@
 import re
 
+from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, row_number, sha2, to_date, udf
 from pyspark.sql.types import BooleanType
 from pyspark.sql.window import Window
 
 
-def validate_email(df, email_col="email"):
+def validate_email(
+    df: DataFrame,
+    email_col: str = "email"
+) -> DataFrame:
     """
     Validates email addresses in the specified column using a regex pattern.
 
@@ -29,7 +33,7 @@ def validate_email(df, email_col="email"):
     return df.withColumn("is_email_valid", is_valid_email_udf(df[email_col]))
 
 
-def clean_and_cast_columns(df):
+def clean_and_cast_columns(df: DataFrame) -> DataFrame:
     """
     Converts 'purchase_date' to date type and casts 'total_amount' to double.
 
@@ -47,7 +51,7 @@ def clean_and_cast_columns(df):
     )
 
 
-def deduplicate(df):
+def deduplicate(df: DataFrame) -> DataFrame:
     """
     Removes duplicates keeping the latest record
     per customer_id and purchase_date, based on
@@ -69,7 +73,7 @@ def deduplicate(df):
     )
 
 
-def mask_sensitive_data(df):
+def mask_sensitive_data(df: DataFrame) -> DataFrame:
     """
     Masks sensitive columns 'cpf' and 'credit_card_number' using SHA-256 hash.
 
@@ -88,7 +92,11 @@ def mask_sensitive_data(df):
     )
 
 
-def add_high_value_flag(df, amount_col="total_amount", threshold=5):
+def add_high_value_flag(
+    df: DataFrame,
+    amount_col: str = "total_amount",
+    threshold: float = 5
+) -> DataFrame:
     """
     Adds a boolean flag for high value purchases where
     amount exceeds threshold.
