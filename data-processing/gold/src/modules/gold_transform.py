@@ -1,6 +1,7 @@
 import logging
 import sys
 
+from pyspark.sql import SparkSession
 from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
 
 logging.basicConfig(
@@ -12,7 +13,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def transform_gold(spark, silver_path, gold_path):
+def transform_gold(
+    spark: SparkSession,
+    silver_path: str,
+    gold_path: str
+) -> None:
     """
     Reads Silver layer data as batch Delta, adds purchase_month column,
     aggregates purchase metrics by store location and month, and writes

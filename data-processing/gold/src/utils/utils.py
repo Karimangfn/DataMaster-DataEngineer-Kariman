@@ -1,8 +1,14 @@
+from typing import List
+
+from pyspark.sql import DataFrame
 from pyspark.sql.functions import avg, col, count, date_format, expr
 from pyspark.sql.functions import sum as _sum
 
 
-def add_purchase_month_column(df, date_col="purchase_date"):
+def add_purchase_month_column(
+    df: DataFrame,
+    date_col: str = "purchase_date"
+) -> DataFrame:
     """
     Adds a purchase_month column formatted as yyyy-MM from a date column.
     """
@@ -10,7 +16,10 @@ def add_purchase_month_column(df, date_col="purchase_date"):
                          date_format(col(date_col), "yyyy-MM"))
 
 
-def aggregate_purchase_metrics(df, group_cols):
+def aggregate_purchase_metrics(
+    df: DataFrame,
+    group_cols: List[str]
+) -> DataFrame:
     """
     Aggregates purchase metrics: total purchases, total revenue,
     average purchase value, and count of high value purchases.

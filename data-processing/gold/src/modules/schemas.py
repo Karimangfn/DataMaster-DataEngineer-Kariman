@@ -2,7 +2,7 @@ from pyspark.sql.types import (DoubleType, IntegerType, StringType,
                                StructField, StructType)
 
 
-def get_gold_schema():
+def get_gold_schema() -> StructType:
     """
     Returns the schema for the Gold layer aggregated customer purchase data.
 
