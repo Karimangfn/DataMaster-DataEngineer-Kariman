@@ -1,7 +1,16 @@
+from typing import Dict
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import StructType
+
 from utils.utils import add_metadata_columns, generate_batch_id
 
 
-def ingest_bronze_customer_data(spark, config, schema, file_format):
+def ingest_bronze_customer_data(
+    spark: SparkSession,
+    config: Dict[str, str],
+    schema: StructType,
+    file_format: str
+) -> DataFrame:
     """
     Ingests raw customer data into the Bronze Delta
     Lake table using Auto Loader.

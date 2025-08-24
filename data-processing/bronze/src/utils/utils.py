@@ -1,9 +1,10 @@
 import uuid
 
+from pyspark.sql import DataFrame
 from pyspark.sql.functions import current_timestamp, input_file_name, lit
 
 
-def generate_batch_id():
+def generate_batch_id() -> str:
     """
     Generates a unique UUID to represent a batch ID used for
     tracking data ingestion into the raw/bronze layer.
@@ -14,7 +15,7 @@ def generate_batch_id():
     return str(uuid.uuid4())
 
 
-def add_metadata_columns(df, batch_id):
+def add_metadata_columns(df: DataFrame, batch_id: str) -> DataFrame:
     """
     Adds metadata columns to the DataFrame for lineage and traceability:
     - source_file_name: full path of the source file.
@@ -35,7 +36,7 @@ def add_metadata_columns(df, batch_id):
     )
 
 
-def detect_format_from_extension(file_name):
+def detect_format_from_extension(file_name: str) -> str:
     """
     Detects the file format based on the file extension.
 

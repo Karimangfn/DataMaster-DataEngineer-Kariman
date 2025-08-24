@@ -5,6 +5,6 @@ test:
 	pytest --cov=src/ --cov-report=term-missing tests/
 
 mypy:
-	mypy src/
+	PYTHONPATH=src mypy --ignore-missing-imports src/
 
 check: precommit test mypy

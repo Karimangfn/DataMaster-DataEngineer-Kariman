@@ -1,7 +1,7 @@
 from pyspark.sql.types import StringType, StructField, StructType
 
 
-def get_customer_schema():
+def get_customer_schema() -> StructType:
     """
     Returns the expected schema for raw customer data.
 
