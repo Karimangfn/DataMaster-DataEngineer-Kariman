@@ -23,7 +23,8 @@ locals {
     "oauth2.client.id"       = var.client_id
     "oauth2.client.secret"   = var.client_secret
     "oauth2.client.endpoint" = "https://login.microsoftonline.com/${var.tenant_id}/oauth2/v2.0/token"
-  } : "spark.hadoop.fs.azure.account.${key}.${local.storage_account}.dfs.core.windows.net" => value
+     } : "spark.hadoop.fs.azure.account.${key}.${local.storage_account}.dfs.core.windows.net" => value
+  }
 }
 
 resource "databricks_job" "data_process" {
