@@ -634,7 +634,6 @@ jobs:
     needs:
       - resource-group
       - acr
-      - keyvault
       - aks
       - databricks
       - storage-account
