@@ -25,7 +25,7 @@ def ingest_bronze_customer_data(
         file_format (str): File format to read (e.g., "csv").
 
     Returns:
-        List[StreamingQuery]: References to the running writeStream queries.
+        List[Query]: References to the queries.
     """
     batch_id = generate_batch_id()
     queries = []
