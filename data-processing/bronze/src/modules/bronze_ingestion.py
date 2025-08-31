@@ -1,7 +1,11 @@
+import logging
+
 from typing import Dict, List
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 from utils.utils import add_metadata_columns, generate_batch_id
+
+logger = logging.getLogger(__name__)
 
 
 def ingest_bronze_customer_data(
