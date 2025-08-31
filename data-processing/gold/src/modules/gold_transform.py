@@ -1,16 +1,5 @@
-import logging
-import sys
-
 from pyspark.sql import SparkSession
 from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
-
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 def transform_gold(
