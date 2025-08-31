@@ -13,6 +13,7 @@ def test_settings_dataset_config(monkeypatch):
     settings = importlib.reload(importlib.import_module("src.config.settings"))
 
     assert settings.storage_account == "mystorage"
-    assert "mystorage" in settings.DATASET_CONFIG["input_path"]
+    for path in settings.DATASET_CONFIG["input_path"]:
+        assert "mystorage" in path
     assert "mystorage" in settings.DATASET_CONFIG["output_path"]
     assert "mystorage" in settings.DATASET_CONFIG["checkpoint_path"]
