@@ -6,15 +6,6 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 from utils.utils import add_metadata_columns, generate_batch_id
 
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 def ingest_bronze_customer_data(
     spark: SparkSession,
