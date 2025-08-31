@@ -1,18 +1,6 @@
-import logging
-import sys
-
 from pyspark.sql import SparkSession
 from utils.utils import (add_high_value_flag, clean_and_cast_columns,
                          deduplicate, mask_sensitive_data)
-
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 def transform_silver(
