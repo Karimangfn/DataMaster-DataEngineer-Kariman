@@ -3,8 +3,8 @@ from src.modules.schemas import get_gold_schema
 
 def test_get_gold_schema():
     """
-    Testa se a função get_gold_schema retorna um StructType com os campos
-    corretos e seus respectivos tipos de dados esperados para a camada Gold.
+    Tests if the function get_gold_schema returns a StructType with the correct
+    fields and their expected data types for the Gold layer.
     """
     schema = get_gold_schema()
     assert isinstance(schema, StructType)

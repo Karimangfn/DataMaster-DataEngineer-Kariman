@@ -1,22 +1,33 @@
+import sys
+import importlib
 import pytest
-from src.config.settings import DATASET_CONFIG
 
 
-def test_dataset_config_keys():
+def test_dataset_config_keys(monkeypatch):
     """
     Test that DATASET_CONFIG contains all required keys.
     """
-    required_keys = ["bronze_path", "silver_path", "silver_checkpoint_path"]
+    test_args = ["program", "--storage-account", "mystorage"]
+    monkeypatch.setattr(sys, "argv", test_args)
+
+    settings = importlib.reload(importlib.import_module("src.config.settings"))
+
+    required_keys = ["bronze_path", "silver_path"]
     for key in required_keys:
-        assert key in DATASET_CONFIG
-        assert isinstance(DATASET_CONFIG[key], str)
+        assert key in settings.DATASET_CONFIG
+        assert isinstance(settings.DATASET_CONFIG[key], str)
 
 
-def test_dataset_config_paths_format():
+def test_dataset_config_paths_format(monkeypatch):
     """
     Test that paths in DATASET_CONFIG are valid non-empty strings.
     """
-    for key, path in DATASET_CONFIG.items():
+    test_args = ["program", "--storage-account", "mystorage"]
+    monkeypatch.setattr(sys, "argv", test_args)
+
+    settings = importlib.reload(importlib.import_module("src.config.settings"))
+
+    for key, path in settings.DATASET_CONFIG.items():
         assert path.startswith("abfss://")
         assert path.endswith("/")
         assert len(path) > len("abfss://")

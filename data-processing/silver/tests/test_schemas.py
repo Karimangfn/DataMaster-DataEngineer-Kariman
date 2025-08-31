@@ -8,7 +8,6 @@ def test_get_silver_schema():
     """
     Test that get_silver_schema returns the expected schema with correct fields and types.
     """
-    
     expected_fields = [
         ("customer_id", StringType),
         ("first_name", StringType),

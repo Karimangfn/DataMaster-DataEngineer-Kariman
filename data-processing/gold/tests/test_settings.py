@@ -1,12 +1,19 @@
-from src.config.settings import DATASET_CONFIG
+import sys
+import importlib
+import pytest
 
 
-def test_dataset_config_keys():
+def test_dataset_config_keys(monkeypatch):
     """
-    Testa se o dicionário DATASET_CONFIG contém todas as chaves necessárias
-    para a pipeline Gold e se seus valores são strings.
+    Tests if the DATASET_CONFIG dictionary contains all required keys
+    for the Gold pipeline and if their values are strings.
     """
-    required_keys = ["silver_path", "gold_path", "gold_checkpoint_path"]
+    test_args = ["program", "--storage-account", "mystorage"]
+    monkeypatch.setattr(sys, "argv", test_args)
+
+    settings = importlib.reload(importlib.import_module("src.config.settings"))
+
+    required_keys = ["silver_path", "gold_path"]
     for key in required_keys:
-        assert key in DATASET_CONFIG
-        assert isinstance(DATASET_CONFIG[key], str)
+        assert key in settings.DATASET_CONFIG
+        assert isinstance(settings.DATASET_CONFIG[key], str)

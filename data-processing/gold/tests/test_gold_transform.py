@@ -44,11 +44,13 @@ def test_gold_transform_pipeline_error():
     fake_spark = MagicMock()
     fake_spark.read.format.return_value.load.side_effect = Exception("Read failed")
 
-    import src.main as main_module
-    importlib.reload(main_module)
-    main_module.spark = fake_spark
+    with patch("argparse.ArgumentParser.parse_args", return_value=mock_args):
+        import src.main as main_module
+        importlib.reload(main_module)
 
-    try:
-        main_module.main()
-    except Exception as e:
-        assert str(e) == "Read failed"
+        main_module.spark = fake_spark
+
+        try:
+            main_module.main()
+        except Exception as e:
+            assert str(e) == "Read failed"
