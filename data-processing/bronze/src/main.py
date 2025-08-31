@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 spark.sparkContext.setLogLevel("WARN")
-
+spark._jvm.org.apache.log4j.LogManager.getLogger("py4j").setLevel(
+    spark._jvm.org.apache.log4j.Level.WARN
+)
 
 def main():
     """
@@ -34,7 +36,13 @@ def main():
     logger.info(
         f"Checking files in input path: {DATASET_CONFIG['input_path']}"
     )
-    raw_files = dbutils.fs.ls(DATASET_CONFIG["input_path"])
+    raw_files = []
+    
+    for path in DATASET_CONFIG["input_path"]:
+        try:
+            raw_files.extend(dbutils.fs.ls(path))
+        except Exception as e:
+            logger.warning(f"Could not list files in {path}: {e}")
 
     if not raw_files:
         logger.error(
