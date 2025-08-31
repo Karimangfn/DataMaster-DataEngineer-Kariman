@@ -1,3 +1,7 @@
+"""
+Dataset configuration for the Bronze Layer data ingestion pipeline.
+"""
+
 import argparse
 
 parser = argparse.ArgumentParser()
