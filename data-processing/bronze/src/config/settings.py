@@ -11,11 +11,14 @@ args = parser.parse_args()
 storage_account = args.storage_account
 
 DATASET_CONFIG = {
-    "name": "customer_data",
-    "input_path": (
+    "input_path": [
         f"abfss://raw@{storage_account}.dfs.core.windows.net/"
-        "api/"
-    ),
+        "api/",
+        f"abfss://raw@{storage_account}.dfs.core.windows.net/"
+        "database/",
+        f"abfss://raw@{storage_account}.dfs.core.windows.net/"
+        "files/"
+    ],
     "output_path": (
         f"abfss://bronze@{storage_account}.dfs.core.windows.net/"
         "customer_data/"
