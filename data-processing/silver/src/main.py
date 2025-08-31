@@ -26,7 +26,7 @@ logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
 def main():
     """
     Executes the Silver transformation pipeline.
-    Reads streaming data from Bronze, processes it, and writes to Silver.
+    Reads data from Bronze, processes it, and writes to Silver.
     """
     logger.info("Starting Silver pipeline execution")
 
