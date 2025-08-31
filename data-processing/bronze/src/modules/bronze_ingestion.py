@@ -15,6 +15,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+logging.getLogger("py4j").setLevel(logging.ERROR)
+logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
+
 
 def ingest_bronze_customer_data(
     spark: SparkSession,
