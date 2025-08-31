@@ -21,10 +21,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-spark.sparkContext.setLogLevel("WARN")
-spark._jvm.org.apache.log4j.LogManager.getLogger("py4j").setLevel(
-    spark._jvm.org.apache.log4j.Level.WARN
-)
+logging.getLogger("py4j").setLevel(logging.ERROR)
+logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
+
 
 def main():
     """
