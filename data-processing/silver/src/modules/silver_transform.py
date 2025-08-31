@@ -1,6 +1,10 @@
+import logging
+
 from pyspark.sql import SparkSession
 from utils.utils import (add_high_value_flag, clean_and_cast_columns,
                          deduplicate, mask_sensitive_data)
+
+logger = logging.getLogger(__name__)
 
 
 def transform_silver(
