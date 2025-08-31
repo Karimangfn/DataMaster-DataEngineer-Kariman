@@ -1,8 +1,18 @@
-from typing import Dict
+import logging
 
+from typing import Dict, List
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 from utils.utils import add_metadata_columns, generate_batch_id
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def ingest_bronze_customer_data(
@@ -25,7 +35,7 @@ def ingest_bronze_customer_data(
         file_format (str): File format to read (e.g., "csv").
 
     Returns:
-        List[Query]: References to the queries.
+        List[DataFrame]: The DataFrames that were ingested.
     """
     batch_id = generate_batch_id()
     queries = []
