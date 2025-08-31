@@ -1,6 +1,3 @@
-import logging
-import sys
-
 from typing import Dict, List
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
