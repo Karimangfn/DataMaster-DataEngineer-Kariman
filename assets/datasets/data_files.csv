@@ -1,4 +1,4 @@
-costumer_id,first_name,last_name,email,purchase_date,total_amount,product,store_location,cpf,credit_card_number
+customer_id,first_name,last_name,email,purchase_date,total_amount,product,store_location,cpf,credit_card_number
 1,Tommie,Sipson,tsipson0@merriam-webster.com,7/13/2024,$2.77,Wine - Domaine Boyar Royal,Obernai,865-87-7030,3550938519351653
 2,Rickert,Wayland,rwayland1@typepad.com,11/22/2024,$2.95,"Salsify, Organic",Margahayukencana,292-52-8540,3543512332025172
 3,Catarina,Bartke,cbartke2@cloudflare.com,7/27/2023,$0.94,White Baguette,Redcliff,130-44-5669,346492479218093
