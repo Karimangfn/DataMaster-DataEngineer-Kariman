@@ -26,8 +26,8 @@ logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
 def main():
     """
     Executes the Gold transformation pipeline.
-    Reads data from the Silver layer, aggregates purchases,
-    and writes the results to the Gold layer as a streaming job.
+    Reads data from the Silver layer, aggregates,
+    and writes the results to the Gold layer.
     """
     logger.info("Starting Gold pipeline execution")
 
