@@ -16,11 +16,11 @@ storage_account = args.storage_account
 
 DATASET_CONFIG = {
     "silver_path": (
-        "abfss://silver@{storage_account}.dfs.core.windows.net/"
+        f"abfss://silver@{storage_account}.dfs.core.windows.net/"
         "customer_data/"
     ),
     "gold_path": (
-        "abfss://gold@{storage_account}.dfs.core.windows.net/"
+        f"abfss://gold@{storage_account}.dfs.core.windows.net/"
         "customer_data/"
     )
 }
