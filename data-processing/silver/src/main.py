@@ -15,8 +15,12 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger("silver_pipeline")
 logger.setLevel(logging.INFO)
+
+logging.getLogger("py4j").setLevel(logging.ERROR)
+logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
 
 
 def main():
