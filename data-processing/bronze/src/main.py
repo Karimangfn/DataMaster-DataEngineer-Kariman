@@ -18,7 +18,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bronze_pipeline")
 logger.setLevel(logging.INFO)
 
 logging.getLogger("py4j").setLevel(logging.ERROR)
