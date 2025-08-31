@@ -20,7 +20,7 @@ def ingest_bronze_customer_data(
         config (dict): Configuration dictionary containing:
             - input_path (list of str): Paths to the raw data in cloud storage.
             - output_path (str): Destination path for the Bronze Delta table.
-            - checkpoint_path (str): Path to store streaming checkpoints.
+            - checkpoint_path (str): Path to store checkpoints.
         schema (StructType): Expected schema of the input dataset.
         file_format (str): File format to read (e.g., "csv").
 
