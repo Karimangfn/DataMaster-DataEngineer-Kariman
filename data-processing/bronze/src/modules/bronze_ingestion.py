@@ -7,44 +7,54 @@ from utils.utils import add_metadata_columns, generate_batch_id
 
 def ingest_bronze_customer_data(
     spark: SparkSession,
-    config: Dict[str, str],
+    config: Dict[str, any],
     schema: StructType,
     file_format: str
-) -> DataFrame:
+) -> List[DataFrame]:
     """
-    Ingests raw customer data into the Bronze Delta
-    Lake table using Auto Loader.
+    Ingests raw customer data into the Bronze Delta Lake table using Auto Loader.
+    Supports multiple input paths.
 
     Args:
         spark (SparkSession): The active Spark session.
         config (dict): Configuration dictionary containing:
-            - input_path (str): Path to the raw data in cloud storage.
+            - input_path (list of str): Paths to the raw data in cloud storage.
             - output_path (str): Destination path for the Bronze Delta table.
             - checkpoint_path (str): Path to store streaming checkpoints.
         schema (StructType): Expected schema of the input dataset.
         file_format (str): File format to read (e.g., "csv").
 
     Returns:
-        StreamingQuery: A reference to the running writeStream query.
+        List[StreamingQuery]: References to the running writeStream queries.
     """
     batch_id = generate_batch_id()
+    queries = []
 
-    df = (
-        spark.readStream
-        .format("cloudFiles")
-        .option("cloudFiles.format", file_format)
-        .option("header", "true")
-        .schema(schema)
-        .load(config["input_path"])
-    )
+    input_paths = config["input_path"] if isinstance(config["input_path"], list) else [config["input_path"]]
 
-    df = add_metadata_columns(df, batch_id)
+    for path in input_paths:
+        logger.info(f"Starting ingestion from path: {path}")
 
-    return (
-        df.writeStream
-        .format("delta")
-        .outputMode("append")
-        .trigger(once=True)
-        .option("checkpointLocation", config["checkpoint_path"])
-        .start(config["output_path"])
-    )
+        df = (
+            spark.readStream
+            .format("cloudFiles")
+            .option("cloudFiles.format", file_format)
+            .option("header", "true")
+            .schema(schema)
+            .load(path)
+        )
+
+        df = add_metadata_columns(df, batch_id)
+
+        query = (
+            df.writeStream
+            .format("delta")
+            .outputMode("append")
+            .trigger(once=True)
+            .option("checkpointLocation", config["checkpoint_path"])
+            .start(config["output_path"])
+        )
+
+        queries.append(query)
+
+    return queries
