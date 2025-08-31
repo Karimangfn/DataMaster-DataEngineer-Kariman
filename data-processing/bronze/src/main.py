@@ -21,6 +21,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+spark.sparkContext.setLogLevel("WARN")
+
 
 def main():
     """
