@@ -36,7 +36,7 @@ def main():
         f"Checking files in input path: {DATASET_CONFIG['input_path']}"
     )
     raw_files = []
-    
+
     for path in DATASET_CONFIG["input_path"]:
         try:
             raw_files.extend(dbutils.fs.ls(path))
@@ -60,6 +60,7 @@ def main():
 
     ingest_bronze_customer_data(spark, DATASET_CONFIG, schema, file_format)
     logger.info("Bronze step executed successfully")
+
 
 if __name__ == "__main__":
     main()

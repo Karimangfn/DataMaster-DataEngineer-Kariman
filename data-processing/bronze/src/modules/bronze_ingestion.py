@@ -1,6 +1,6 @@
 import logging
-
 from typing import Dict, List
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 from utils.utils import add_metadata_columns, generate_batch_id
@@ -15,8 +15,9 @@ def ingest_bronze_customer_data(
     file_format: str
 ) -> List[DataFrame]:
     """
-    Ingests raw customer data into the Bronze Delta Lake table using Auto Loader.
-    Supports multiple input paths.
+    Ingests raw customer data into the Bronze Delta
+    Lake table using Auto Loader. Supports multiple
+    input paths.
 
     Args:
         spark (SparkSession): The active Spark session.
@@ -33,7 +34,11 @@ def ingest_bronze_customer_data(
     batch_id = generate_batch_id()
     queries = []
 
-    input_paths = config["input_path"] if isinstance(config["input_path"], list) else [config["input_path"]]
+    input_paths = (
+        config["input_path"]
+        if isinstance(config["input_path"], list)
+        else [config["input_path"]]
+    )
 
     for path in input_paths:
         logger.info(f"Starting ingestion from path: {path}")

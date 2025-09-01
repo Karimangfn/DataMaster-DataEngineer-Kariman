@@ -21,7 +21,7 @@ def test_ingest_bronze_customer_data_mock(mock_batch, mock_add_metadata):
 
     mock_spark.readStream = mock_readStream
     mock_add_metadata.return_value = mock_df
-    mock_df.writeStream.format.return_value.outputMode.return_value.trigger.return_value.option.return_value.start.return_value = "stream_query"
+    mock_df.writeStream.format.return_value.outputMode.return_value.trigger.return_value.option.return_value.start.return_value = "query"
 
     config = {
         "input_path": "input",
@@ -32,6 +32,6 @@ def test_ingest_bronze_customer_data_mock(mock_batch, mock_add_metadata):
     file_format = "csv"
 
     result = bronze_ingestion.ingest_bronze_customer_data(mock_spark, config, schema, file_format)
-    assert result == "stream_query"
+    assert result == ["query"]
     mock_batch.assert_called_once()
     mock_add_metadata.assert_called_once_with(mock_df, "batch123")
