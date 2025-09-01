@@ -4,7 +4,6 @@ from typing import Dict, List
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
-from pyspark.sql.utils import AnalysisException
 from utils.utils import add_metadata_columns, generate_batch_id
 
 logger = logging.getLogger(__name__)
@@ -17,8 +16,8 @@ def ingest_bronze_customer_data(
     file_format: str
 ) -> List[DataFrame]:
     """
-    Ingests raw customer data into the Bronze Delta Lake table using Auto Loader.
-    Supports multiple input paths. Adds detailed logging for debugging.
+    Ingests raw customer data into the Bronze
+    Delta Table using Auto Loader.
     """
     batch_id = generate_batch_id()
     queries = []
@@ -54,7 +53,7 @@ def ingest_bronze_customer_data(
         except Exception as e:
             logger.warning(f"Path not found or empty: {path} ({e}), skipping ingestion.")
             continue
-        
+
         try:
             df = (
                 spark.readStream
