@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def ingest_bronze_customer_data(
     spark: SparkSession,
-    config: Dict[str, any],
+    config: Dict[str, Any],
     schema: StructType,
     file_format: str
 ) -> List[DataFrame]:
