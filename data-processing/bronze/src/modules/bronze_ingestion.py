@@ -37,7 +37,7 @@ def ingest_bronze_customer_data(
             empty_df = spark.createDataFrame([], schema)
             empty_df.write.format("delta").mode("overwrite").save(config["output_path"])
         else:
-            logger.info("Delta table already exists. Skipping creation.")
+            pass
     except Exception as e:
         logger.error(f"Failed to check/create Delta table: {e}")
         raise
