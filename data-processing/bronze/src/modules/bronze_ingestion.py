@@ -1,8 +1,10 @@
 import logging
 from typing import Dict, List
 
+from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
+from pyspark.sql.utils import AnalysisException
 from utils.utils import add_metadata_columns, generate_batch_id
 
 logger = logging.getLogger(__name__)
@@ -91,8 +93,31 @@ def ingest_bronze_customer_data(
     logger.info(f"Output path: {config['output_path']}")
     logger.info(f"Checkpoint path: {config['checkpoint_path']}")
 
+    try:
+        if not DeltaTable.isDeltaTable(spark, config["output_path"]):
+            logger.info(f"Delta table not found at {config['output_path']}. Creating empty table...")
+            empty_df = spark.createDataFrame([], schema)
+            empty_df.write.format("delta").mode("overwrite").save(config["output_path"])
+            logger.info("Empty Delta table created successfully.")
+        else:
+            logger.info("Delta table already exists. Skipping creation.")
+    except Exception as e:
+        logger.error(f"Failed to check/create Delta table: {e}")
+        raise
+
     for path in input_paths:
         logger.info(f"Starting ingestion from path: {path}")
+
+        try:
+            if spark.read.format(file_format).load(path).limit(1).rdd.isEmpty():
+                logger.warning(f"No files found in path: {path}, skipping ingestion.")
+                continue
+            else:
+                logger.info(f"Files found in path: {path}")
+        except Exception as e:
+            logger.warning(f"Path not found or empty: {path} ({e}), skipping ingestion.")
+            continue
+        
         try:
             df = (
                 spark.readStream
@@ -106,6 +131,7 @@ def ingest_bronze_customer_data(
             df = add_metadata_columns(df, batch_id)
 
             logger.info(f"DataFrame schema for {path}:\n{df.printSchema()}")
+            df.printSchema()
 
             path_name = path.rstrip("/").split("/")[-1]
             checkpoint_path_for_path = f"{config['checkpoint_path']}/{path_name}"
