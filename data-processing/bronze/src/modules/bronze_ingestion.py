@@ -51,7 +51,10 @@ def ingest_bronze_customer_data(
         logger.info(f"Starting ingestion from path: {path}")
 
         try:
-            if spark.read.format(file_format).load(path).limit(1).rdd.isEmpty():
+            if spark.read.format(file_format) \
+                    .load(path) \
+                    .limit(1) \
+                    .rdd.isEmpty():
                 logger.warning(
                     f"No files found in path: {path}, skipping ingestion."
                 )
