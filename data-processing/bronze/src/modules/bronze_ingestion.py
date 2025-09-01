@@ -10,66 +10,6 @@ from utils.utils import add_metadata_columns, generate_batch_id
 logger = logging.getLogger(__name__)
 
 
-# def ingest_bronze_customer_data(
-#     spark: SparkSession,
-#     config: Dict[str, any],
-#     schema: StructType,
-#     file_format: str
-# ) -> List[DataFrame]:
-#     """
-#     Ingests raw customer data into the Bronze Delta
-#     Lake table using Auto Loader. Supports multiple
-#     input paths.
-
-#     Args:
-#         spark (SparkSession): The active Spark session.
-#         config (dict): Configuration dictionary containing:
-#             - input_path (list of str): Paths to the raw data in cloud storage.
-#             - output_path (str): Destination path for the Bronze Delta table.
-#             - checkpoint_path (str): Path to store checkpoints.
-#         schema (StructType): Expected schema of the input dataset.
-#         file_format (str): File format to read (e.g., "csv").
-
-#     Returns:
-#         List[DataFrame]: The DataFrames that were ingested.
-#     """
-#     batch_id = generate_batch_id()
-#     queries = []
-
-#     input_paths = (
-#         config["input_path"]
-#         if isinstance(config["input_path"], list)
-#         else [config["input_path"]]
-#     )
-
-#     for path in input_paths:
-#         logger.info(f"Starting ingestion from path: {path}")
-
-#         df = (
-#             spark.readStream
-#             .format("cloudFiles")
-#             .option("cloudFiles.format", file_format)
-#             .option("header", "true")
-#             .schema(schema)
-#             .load(path)
-#         )
-
-#         df = add_metadata_columns(df, batch_id)
-
-#         query = (
-#             df.writeStream
-#             .format("delta")
-#             .outputMode("append")
-#             .trigger(once=True)
-#             .option("checkpointLocation", config["checkpoint_path"])
-#             .start(config["output_path"])
-#         )
-
-#         queries.append(query)
-
-#     return queries
-
-### Debug
 def ingest_bronze_customer_data(
     spark: SparkSession,
     config: Dict[str, any],
@@ -89,16 +29,13 @@ def ingest_bronze_customer_data(
         else [config["input_path"]]
     )
 
-    logger.info(f"Generated batch_id: {batch_id}")
-    logger.info(f"Output path: {config['output_path']}")
-    logger.info(f"Checkpoint path: {config['checkpoint_path']}")
-
     try:
         if not DeltaTable.isDeltaTable(spark, config["output_path"]):
-            logger.info(f"Delta table not found at {config['output_path']}. Creating empty table...")
+            logger.info(
+                f"Table not found at {config['output_path']}. Creating Table..."
+            )
             empty_df = spark.createDataFrame([], schema)
             empty_df.write.format("delta").mode("overwrite").save(config["output_path"])
-            logger.info("Empty Delta table created successfully.")
         else:
             logger.info("Delta table already exists. Skipping creation.")
     except Exception as e:
@@ -113,7 +50,7 @@ def ingest_bronze_customer_data(
                 logger.warning(f"No files found in path: {path}, skipping ingestion.")
                 continue
             else:
-                logger.info(f"Files found in path: {path}")
+                pass
         except Exception as e:
             logger.warning(f"Path not found or empty: {path} ({e}), skipping ingestion.")
             continue
@@ -130,9 +67,6 @@ def ingest_bronze_customer_data(
 
             df = add_metadata_columns(df, batch_id)
 
-            logger.info(f"DataFrame schema for {path}:\n{df.printSchema()}")
-            df.printSchema()
-
             path_name = path.rstrip("/").split("/")[-1]
             checkpoint_path_for_path = f"{config['checkpoint_path']}/{path_name}"
 
@@ -145,22 +79,9 @@ def ingest_bronze_customer_data(
                 .start(config["output_path"])
             )
 
-            logger.info(
-                f"Streaming query started for path {path}, "
-                f"id={query.id}, isActive={query.isActive}"
-            )
-
             queries.append(query)
 
         except Exception as e:
             logger.error(f"Failed ingestion from path {path}: {e}")
-
-    logger.info(f"Total queries started: {len(queries)}")
-
-    for q in queries:
-        logger.info(
-            f"Query {q.id} status: isActive={q.isActive}, "
-            f"recentProgress={q.recentProgress}, lastProgress={q.lastProgress}"
-        )
 
     return queries
