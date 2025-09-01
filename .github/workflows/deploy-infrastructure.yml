@@ -671,11 +671,22 @@ jobs:
               fi
             
               block=$(sed -n "/+ resource \"$full_type\" \"$block_name\" {/,/^}/p" ./infrastructure/plan.txt)
-              name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"([^"]+)"/\1/')
-            
-              if [ -z "$name" ]; then
+
+              name=$(echo "$block" \
+                | grep '^[ ~+-]*name\s*=' \
+                | head -n1 \
+                | sed -E 's/^[ ~+-]*name\s*=\s*"(.*)".*/\1/' \
+                | sed -E 's/ ->.*//')
+              
+              if [ -z "$name" ] || [[ "$name" == "(known after apply)" ]]; then
                 name="$block_name"
               fi
+              
+              # name=$(echo "$block" | grep '^\s*+ name\s*=' | head -n1 | sed -E 's/^\s*\+ name\s*=\s*"([^"]+)"/\1/')
+            
+              # if [ -z "$name" ]; then
+              #   name="$block_name"
+              # fi
             
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
             done
