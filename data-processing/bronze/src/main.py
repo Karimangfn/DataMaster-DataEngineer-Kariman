@@ -35,31 +35,34 @@ def main():
     logger.info(
         f"Checking files in input path: {DATASET_CONFIG['input_path']}"
     )
-    raw_files = []
 
     for path in DATASET_CONFIG["input_path"]:
         try:
-            raw_files.extend(dbutils.fs.ls(path))
+            raw_files = dbutils.fs.ls(path)
         except Exception as e:
             logger.warning(f"Could not list files in {path}: {e}")
+            continue
 
-    if not raw_files:
-        logger.error(
-            f"No files found in {DATASET_CONFIG['input_path']}"
+        if not raw_files:
+            logger.warning(f"No files found in {path}, skipping ingestion.")
+            continue
+
+        first_file = raw_files[0].name
+        logger.info(f"First file found: {first_file}")
+    
+        file_format = detect_format_from_extension(first_file)
+        logger.info(f"Detected file format: {file_format}")
+    
+        schema = get_customer_schema()
+        logger.info("Schema loaded successfully")
+    
+        ingest_bronze_customer_data(
+            spark,
+            {**DATASET_CONFIG, "input_path": [path]},
+            schema,
+            file_format
         )
-        return
-
-    first_file = raw_files[0].name
-    logger.info(f"First file found: {first_file}")
-
-    file_format = detect_format_from_extension(first_file)
-    logger.info(f"Detected file format: {file_format}")
-
-    schema = get_customer_schema()
-    logger.info("Schema loaded successfully")
-
-    ingest_bronze_customer_data(spark, DATASET_CONFIG, schema, file_format)
-    logger.info("Bronze step executed successfully")
+        logger.info("Bronze step executed successfully")
 
 
 if __name__ == "__main__":
