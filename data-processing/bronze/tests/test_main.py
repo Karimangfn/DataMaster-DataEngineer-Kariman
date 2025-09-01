@@ -24,7 +24,9 @@ def test_main_pipeline():
         main_module.detect_format_from_extension = MagicMock(return_value="csv")
         main_module.get_customer_schema = MagicMock(return_value="schema")
 
-        main_module.main()
+        with patch.dict(main_module.DATASET_CONFIG, {"input_path": ["abfss://raw@mock.dfs.core.windows.net/api/"]}):
+            main_module.main()
+
         main_module.ingest_bronze_customer_data.assert_called_once()
 
 
