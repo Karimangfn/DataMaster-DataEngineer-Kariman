@@ -107,12 +107,15 @@ def ingest_bronze_customer_data(
 
             logger.info(f"DataFrame schema for {path}:\n{df.printSchema()}")
 
+            path_name = path.rstrip("/").split("/")[-1]
+            checkpoint_path_for_path = f"{config['checkpoint_path']}/{path_name}"
+
             query = (
                 df.writeStream
                 .format("delta")
                 .outputMode("append")
                 .trigger(once=True)
-                .option("checkpointLocation", config["checkpoint_path"])
+                .option("checkpointLocation", checkpoint_path_for_path)
                 .start(config["output_path"])
             )
 
