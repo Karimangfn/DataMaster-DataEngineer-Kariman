@@ -49,13 +49,13 @@ def main():
 
         first_file = raw_files[0].name
         logger.info(f"First file found: {first_file}")
-    
+
         file_format = detect_format_from_extension(first_file)
         logger.info(f"Detected file format: {file_format}")
-    
+
         schema = get_customer_schema()
         logger.info("Schema loaded successfully")
-    
+
         ingest_bronze_customer_data(
             spark,
             {**DATASET_CONFIG, "input_path": [path]},

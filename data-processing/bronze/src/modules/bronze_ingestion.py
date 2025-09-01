@@ -1,10 +1,9 @@
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
-from pyspark.sql.utils import AnalysisException
 from utils.utils import add_metadata_columns, generate_batch_id
 
 logger = logging.getLogger(__name__)
@@ -12,13 +11,13 @@ logger = logging.getLogger(__name__)
 
 def ingest_bronze_customer_data(
     spark: SparkSession,
-    config: Dict[str, any],
+    config: Dict[str, Any],
     schema: StructType,
     file_format: str
 ) -> List[DataFrame]:
     """
-    Ingests raw customer data into the Bronze Delta Lake table using Auto Loader.
-    Supports multiple input paths. Adds detailed logging for debugging.
+    Ingests raw customer data into the Bronze
+    Delta Table using Auto Loader.
     """
     batch_id = generate_batch_id()
     queries = []
@@ -32,10 +31,16 @@ def ingest_bronze_customer_data(
     try:
         if not DeltaTable.isDeltaTable(spark, config["output_path"]):
             logger.info(
-                f"Table not found at {config['output_path']}. Creating Table..."
+                f"Table not found at {config['output_path']}. "
+                "Creating Table..."
             )
             empty_df = spark.createDataFrame([], schema)
-            empty_df.write.format("delta").mode("overwrite").save(config["output_path"])
+            (
+                empty_df.write
+                .format("delta")
+                .mode("overwrite")
+                .save(config["output_path"])
+            )
         else:
             pass
     except Exception as e:
@@ -46,15 +51,22 @@ def ingest_bronze_customer_data(
         logger.info(f"Starting ingestion from path: {path}")
 
         try:
-            if spark.read.format(file_format).load(path).limit(1).rdd.isEmpty():
-                logger.warning(f"No files found in path: {path}, skipping ingestion.")
+            if spark.read.format(file_format) \
+                    .load(path) \
+                    .limit(1) \
+                    .rdd.isEmpty():
+                logger.warning(
+                    f"No files found in path: {path}, skipping ingestion."
+                )
                 continue
             else:
                 pass
         except Exception as e:
-            logger.warning(f"Path not found or empty: {path} ({e}), skipping ingestion.")
+            logger.warning(
+                f"Path not found or empty: {path} ({e}), skipping ingestion."
+            )
             continue
-        
+
         try:
             df = (
                 spark.readStream
@@ -68,7 +80,10 @@ def ingest_bronze_customer_data(
             df = add_metadata_columns(df, batch_id)
 
             path_name = path.rstrip("/").split("/")[-1]
-            checkpoint_path_for_path = f"{config['checkpoint_path']}/{path_name}"
+            checkpoint_path_for_path = (
+                f"{config['checkpoint_path']}/"
+                f"{path_name}"
+            )
 
             query = (
                 df.writeStream

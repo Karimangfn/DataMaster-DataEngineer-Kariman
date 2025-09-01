@@ -5,3 +5,4 @@ bandit
 pytest
 pytest-cov
 pyspark
+delta-spark
