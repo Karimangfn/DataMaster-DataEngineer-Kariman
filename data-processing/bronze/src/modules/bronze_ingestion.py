@@ -31,10 +31,16 @@ def ingest_bronze_customer_data(
     try:
         if not DeltaTable.isDeltaTable(spark, config["output_path"]):
             logger.info(
-                f"Table not found at {config['output_path']}. Creating Table..."
+                f"Table not found at {config['output_path']}. "
+                "Creating Table..."
             )
             empty_df = spark.createDataFrame([], schema)
-            empty_df.write.format("delta").mode("overwrite").save(config["output_path"])
+            (
+                empty_df.write
+                .format("delta")
+                .mode("overwrite")
+                .save(config["output_path"])
+            )
         else:
             pass
     except Exception as e:
@@ -71,7 +77,10 @@ def ingest_bronze_customer_data(
             df = add_metadata_columns(df, batch_id)
 
             path_name = path.rstrip("/").split("/")[-1]
-            checkpoint_path_for_path = f"{config['checkpoint_path']}/{path_name}"
+            checkpoint_path_for_path = (
+                f"{config['checkpoint_path']}/"
+                f"{path_name}"
+            )
 
             query = (
                 df.writeStream
