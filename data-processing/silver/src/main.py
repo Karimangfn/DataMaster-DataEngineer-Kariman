@@ -38,5 +38,6 @@ def main():
 
     logging.info("Silver transformation pipeline completed successfully.")
 
+
 if __name__ == "__main__":
     main()
