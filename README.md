@@ -1,7 +1,7 @@
 # Data Master - Kariman Gomes
 
 <p align="center">
-  <img src="assets/images/Data-Master-Logo-2.png" style="width:800px; height:250px;">
+  <img src="assets/images/Data-Master-Logo.png" style="width:800px; height:250px;">
 </p>
 
 O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenharia de Dados criada por [Kariman](https://www.linkedin.com/in/kariman-gomes/) como parte do programa Data Master, uma iniciativa da F1rst Santander. <p>
