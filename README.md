@@ -86,6 +86,7 @@ O fluxo de dados segue a arquitetura medalhão, garantindo que cada camada tenha
 A seguir, apresentamos a **visão geral da solução**, mostrando como os dados fluem desde a ingestão até a disponibilização das camadas analíticas (Bronze → Silver → Gold).
 
 ![Figura 1 — Arquitetura de Solução](assets/images/Arquitetura-Pipeline-de-Dados.png)
+
 *Figura 1 — Arquitetura de solução em alto nível, mostrando ingestão, processamento e armazenamento das camadas do Data Lake.*
 
 ### 2.3 Componentes Principais
@@ -125,6 +126,7 @@ Delta Lake: Garantia de consistência, versionamento e ACID nas tabelas.
 O diagrama abaixo mostra como a **infraestrutura do projeto** é provisionada via Terraform, detalhando os principais recursos criados na Azure.
 
 ![Figura 2 — Infraestrutura CI/CD](assets/images/Arquitetura-Infrastructure-CI-CD.png)  
+
 *Figura 2 — Arquitetura de infraestrutura com Terraform e principais recursos provisionados na Azure.*
 
 Toda a infraestrutura do projeto é criada com uso de **Terraform**, que também salva o estado das criações para permitir atualizações ou exclusão da infraestrutura.
@@ -150,6 +152,7 @@ Orquestração ainda em desenvolvimento
 Este diagrama detalha a **arquitetura CI/CD dos microserviços de ingestão**, mostrando como cada serviço consome suas fontes de dados, gera containers e faz deploy no AKS.
 
 ![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)  
+
 *Figura 3 — Arquitetura de CI/CD dos microserviços de ingestão: extração de dados, build, deploy no AKS.*
 
 A ingestão dos dados é realizada por **microserviços** desenvolvidos para cada fonte de dados (banco de dados, API e arquivos CSV). Esses microserviços são empacotados em contêineres e executados em um **Azure Kubernetes Service (AKS)**, garantindo escalabilidade e isolamento de processos.  
@@ -180,6 +183,7 @@ Cada camada possui um **container dedicado**, garantindo organização e isolame
 O diagrama a seguir representa a **arquitetura de processamento de dados**, detalhando o fluxo Bronze → Silver → Gold no Databricks.
 
 ![Figura 4 — Data Processing CI](assets/images/Arquitetura-Data-Processing-CI.png)
+
 *Figura 4 — Arquitetura de processamento e transformação de dados em Databricks, seguindo a arquitetura medalhão.*
 
 O processamento dos dados é realizado no **Azure Databricks**, utilizando **notebooks Python** organizados em tarefas dentro de um **Databricks Job**.  
