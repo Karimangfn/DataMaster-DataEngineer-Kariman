@@ -75,7 +75,7 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
   <summary>📚 7. Referências</summary>
 </details>
 
-## 1. Objetivo do Projeto
+##  📌 1. Objetivo do Projeto
 
 Este projeto busca integrar dados de clientes espalhados em diferentes fontes e formatos, que dificultam a integração, padronização e análise unificada em um único repositório estruturado, permitindo que os dados sejam processados, transformados e analisados de maneira consistente e confiável, seguindo boas práticas de engenharia de dados e de software.
 
@@ -96,7 +96,7 @@ A solução proposta é construir um pipeline de dados baseado na arquitetura me
 - Aplica limpeza, padronização e mascaramento de dados sensíveis.  
 - Disponibiliza camadas de dados confiáveis e prontas para consumo analítico.
 
-## 2. Arquitetura de Solução
+##  🏗️ 2. Arquitetura de Solução
 
 ### 2.1 Visão Geral
 
@@ -120,7 +120,7 @@ O fluxo de dados segue a arquitetura medalhão, garantindo que cada camada tenha
 
 ### 2.4 Características Essenciais do Projeto
 
-## 3. Arquitetura Técnica
+## ⚙️ 3. Arquitetura Técnica
 
 ### 3.1 Visão Geral Técnica
 
@@ -305,7 +305,7 @@ O projeto foi estruturado para suportar aumento de volume de dados e crescimento
 - Redução da latência entre ingestão e disponibilização dos dados analíticos.  
 - Otimização de custos ao escalar recursos somente quando necessário.
 
-## 4. Guia de Configuração e Execução
+##  🚀 4. Guia de Configuração e Execução
 
 ### 4.1 Pré-requisitos
 
@@ -557,9 +557,9 @@ Durante a execução do Job, é possível acompanhar:
 - A separação em camadas (Bronze, Silver, Gold) assegura evolução gradual na confiabilidade dos dados.  
 - Novas transformações podem ser adicionadas facilmente criando tasks adicionais no Job.
 
-## 5. Melhorias e Considerações Finais
+##  💡 5. Melhorias e Considerações Finais
 
-### 5.1 Melhorias Futuras
+###  5.1 Melhorias Futuras
 
 Apesar de o projeto atender ao objetivo principal de centralizar dados de múltiplas fontes em um Data Lake estruturado e processado até a camada Gold, existem pontos de evolução que podem ser incorporados em versões futuras:
 
@@ -572,11 +572,11 @@ Apesar de o projeto atender ao objetivo principal de centralizar dados de múlti
 - **Testes Automatizados:** expandir o uso de testes unitários e de integração para notebooks e microserviços, garantindo maior confiabilidade nas mudanças de código.  
 - **Custo e Performance:** analisar otimizações de custo (storage tiers, autoscaling de clusters no Databricks) e desempenho (particionamento e otimização de tabelas Delta).  
 
-### 5.2 Considerações Finais
+###  5.2 Considerações Finais
 
 O projeto demonstrou como é possível integrar dados de múltiplas fontes e formatos, organizando-os em um pipeline escalável e confiável na Azure.  
 A solução aplicou boas práticas de engenharia de dados (arquitetura medalhão, uso de Delta Lake, pipelines automatizados) em conjunto com boas práticas de engenharia de software (microserviços, CI/CD, IaC).  
 
 Embora ainda existam pontos de evolução, a arquitetura atual já fornece uma base sólida para ingestão, transformação e disponibilização de dados prontos para análise, podendo ser expandida gradualmente conforme as necessidades de negócio e requisitos de governança cresçam.
 
-## 6. Referências
+##  📚 6. Referências
