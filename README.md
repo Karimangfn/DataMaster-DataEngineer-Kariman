@@ -1,9 +1,8 @@
 # Data Master - Kariman Gomes
 
 &nbsp;
-
 <p align="center">
-  <img src="assets/images/Data-Master-Logo-2.png" width="300">
+  <img src="assets/images/Data-Master-Logo-2.png" style="width:600px; max-width:90%;">
 </p>
 &nbsp;
 
