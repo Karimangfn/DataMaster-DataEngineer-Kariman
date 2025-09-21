@@ -83,8 +83,6 @@ O fluxo de dados segue a arquitetura medalhão, garantindo que cada camada tenha
 
 ### 2.2 Diagrama da Arquitetura de Solução
 
-A seguir, apresentamos a **visão geral da solução**, mostrando como os dados fluem desde a ingestão até a disponibilização das camadas analíticas (Bronze → Silver → Gold).
-
 ![Figura 1 — Arquitetura de Solução](assets/images/Arquitetura-Pipeline-de-Dados.png)
 
 *Figura 1 — Arquitetura de solução em alto nível, mostrando ingestão, processamento e armazenamento das camadas do Data Lake.*
@@ -123,8 +121,6 @@ Delta Lake: Garantia de consistência, versionamento e ACID nas tabelas.
 
 ### 3.4 Infraestrutura como Código
 
-O diagrama abaixo mostra como a **infraestrutura do projeto** é provisionada via Terraform, detalhando os principais recursos criados na Azure.
-
 ![Figura 2 — Infraestrutura CI/CD](assets/images/Arquitetura-Infrastructure-CI-CD.png)  
 
 *Figura 2 — Arquitetura de infraestrutura com Terraform e principais recursos provisionados na Azure.*
@@ -148,8 +144,6 @@ Toda a infraestrutura do projeto é criada com uso de **Terraform**, que também
 Orquestração ainda em desenvolvimento
 
 ### 3.6 Extração e Ingestão de Dados
-
-Este diagrama detalha a **arquitetura CI/CD dos microserviços de ingestão**, mostrando como cada serviço consome suas fontes de dados, gera containers e faz deploy no AKS.
 
 ![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)  
 
@@ -179,8 +173,6 @@ Cada camada possui um **container dedicado**, garantindo organização e isolame
 - **Gold**: camada final com dados prontos para consumo em análises e dashboards.  
 
 ### 3.8 Processamento e Transformação dos Dados
-
-O diagrama a seguir representa a **arquitetura de processamento de dados**, detalhando o fluxo Bronze → Silver → Gold no Databricks.
 
 ![Figura 4 — Data Processing CI](assets/images/Arquitetura-Data-Processing-CI.png)
 
