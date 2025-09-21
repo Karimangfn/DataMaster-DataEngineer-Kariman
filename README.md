@@ -9,48 +9,71 @@
 
 O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenharia de Dados criada por [Kariman](https://www.linkedin.com/in/kariman-gomes/) como parte do programa Data Master, uma iniciativa da F1rst Santander. <p>
 
-&nbsp;
-1. [Objetivo do Projeto]()
-   - [Início Rápido]()
+## 📑 Sumário
 
-2. [Arquitetura de Solução]()
-   - [Visão Geral]()
-   - [Diagrama da Arquitetura de Solução]()
-   - [Componentes Principais]()
-   - [Características Essenciais do Projeto]()
+<details>
+  <summary>📌 1. Objetivo do Projeto</summary>
 
-3. [Arquitetura Técnica]()
-   - [Visão Geral Técnica]()
-   - [Descrição do Fluxo de Dados]()
-   - [Modelagem e Estrutura do Data Lake]()
-   - [Tecnologias e Serviços Utilizados]()
-   - [Infraestrutura como Código]()
-   - [Orquestração de Pipelines]()
-   - [Extração e Ingestão de Dados]()
-   - [Armazenamento de Dados]()
-   - [Processamento e Transformação dos Dados]()
-   - [Qualidade e Validação de Dados]()
-   - [Mascaramento e Segurança dos Dados]()
-   - [Observabilidade e Monitoramento]()
-   - [Escalabilidade e Desempenho]()
+  - [Início Rápido](#inicio-rapido)
 
-4. [Guia de Configuração e Execução]()
-   - [Pré-requisitos]()
-   - [Configuração da Infraestrutura]()
-   - [Configuração de Credenciais e Acessos]()
-   - [Execução dos Pipelines de Ingestão]()
-   - [Execução dos Pipelines de Transformação]()
-   - [Execução da Integração com o CRM]()
+</details>
 
-5. [Melhorias e Considerações Finais]()
-   - [Melhorias Futuras]()
-   - [Considerações Finais]()
+<details>
+  <summary>🏗️ 2. Arquitetura de Solução</summary>
 
-6. [Custos do Projeto]()
+  - [Visão Geral](#visao-geral)
+  - [Diagrama da Arquitetura de Solução](#diagrama-da-arquitetura-de-solucao)
+  - [Componentes Principais](#componentes-principais)
+  - [Características Essenciais do Projeto](#caracteristicas-essenciais-do-projeto)
 
-7. [Referências]()
+</details>
 
-&nbsp;
+<details>
+  <summary>⚙️ 3. Arquitetura Técnica</summary>
+
+  - [Visão Geral Técnica](#visao-geral-tecnica)
+  - [Descrição do Fluxo de Dados](#descricao-do-fluxo-de-dados)
+  - [Modelagem e Estrutura do Data Lake](#modelagem-e-estrutura-do-data-lake)
+  - [Tecnologias e Serviços Utilizados](#tecnologias-e-servicos-utilizados)
+  - [Infraestrutura como Código](#infraestrutura-como-codigo)
+  - [Orquestração de Pipelines](#orquestracao-de-pipelines)
+  - [Extração e Ingestão de Dados](#extracao-e-ingestao-de-dados)
+  - [Armazenamento de Dados](#armazenamento-de-dados)
+  - [Processamento e Transformação dos Dados](#processamento-e-transformacao-dos-dados)
+  - [Qualidade e Validação de Dados](#qualidade-e-validacao-de-dados)
+  - [Mascaramento e Segurança dos Dados](#mascaramento-e-seguranca-dos-dados)
+  - [Observabilidade e Monitoramento](#observabilidade-e-monitoramento)
+  - [Escalabilidade e Desempenho](#escalabilidade-e-desempenho)
+
+</details>
+
+<details>
+  <summary>🚀 4. Guia de Configuração e Execução</summary>
+
+  - [Pré-requisitos](#pre-requisitos)
+  - [Configuração da Infraestrutura](#configuracao-da-infraestrutura)
+  - [Configuração de Credenciais e Acessos](#configuracao-de-credenciais-e-acessos)
+  - [Execução dos Pipelines de Ingestão](#execucao-dos-pipelines-de-ingestao)
+  - [Execução dos Pipelines de Transformação](#execucao-dos-pipelines-de-transformacao)
+  - [Execução da Integração com o CRM](#execucao-da-integracao-com-o-crm)
+
+</details>
+
+<details>
+  <summary>💡 5. Melhorias e Considerações Finais</summary>
+
+  - [Melhorias Futuras](#melhorias-futuras)
+  - [Considerações Finais](#consideracoes-finais)
+
+</details>
+
+<details>
+  <summary>💰 6. Custos do Projeto</summary>
+</details>
+
+<details>
+  <summary>📚 7. Referências</summary>
+</details>
 
 ## 1. Objetivo do Projeto
 
