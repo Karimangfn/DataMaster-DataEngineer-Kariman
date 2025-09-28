@@ -210,18 +210,46 @@ Características principais:
 - **Escalabilidade**: O uso do AKS permite aumentar ou reduzir réplicas de ingestão conforme a demanda.  
 - **Automação**: Pipelines no GitHub Actions garantem que os microserviços sejam validados, construídos e implantados automaticamente no cluster.
 
-### Estrutura de Pastas
-microservice_name/ (ingest-api / ingest-db / ingest-files)
+#### Estrutura
+microservice_name/
+├── helm/               # Helm chart para deploy no AKS
 ├── src/
-│ ├── main.py
-│ ├── config.py
-│ ├── services/
-│ │ ├── extractor.py
-│ │ └── transformer.py
-│ ├── utils/
-│ │ └── helpers.py
-│ └── tests/
-│ └── test_main.py
+│ ├── application/      # Regras de negócio da aplicação
+│ │ ├── helpers/        # Funções utilitárias
+│ │ ├── services/       # Serviços de orquestração da lógica
+│ │ └── validators/     # Validações de entrada e regras específicas
+│ ├── domain/           # Definições de domínio
+│ │ ├── exceptions/     # Classes de exceções específicas
+│ │ └── ports/          # Interfaces para comunicação entre camadas
+│ ├── infrastructure/   # Implementações concretas
+│ │ ├── authentication/ # Autenticação e segurança
+│ │ ├── config/         # Configurações de ambiente
+│ │ ├── logging/        # Logs e monitoramento
+│ │ ├── ingestion/      # Conectores e ingestão de dados
+│ │ └── storage/        # Interação com o Data Lake
+│ └── interfaces/       # Pontos de entrada
+│ └── main.py           # API/CLI principal do microserviço
+├── tests/              # Testes unitários e de integração
+├── Dockerfile          # Definição da imagem Docker
+├── Makefile            # Definição da imagem Docker
+├── requirements.txt    # Dependências do serviço
+├── setup.py            # Definição da imagem Docker
+└── VERSION             # Usado para versionamento do Microserviço
+
+A organização segue princípios da Clean Architecture, garantindo separação de responsabilidades e facilidade de manutenção:
+- **domain** → Regras de negócio puras, interfaces (ports) e exceções.
+- **application** → Casos de uso, serviços, validadores e helpers.
+- **infrastructure** → Autenticação, logging, ingestão e persistência.
+- **interfaces** → Pontos de entrada do serviço (ex.: main.py).
+- **tests** → Testes unitários e de integração.
+- **helm** → Manifests para deploy no AKS.
+
+Arquivos de Configuração:
+- **.dockerignore** -> Exclui arquivos desnecessários no build Docker.  
+- **.flake8** -> Regras de lint para garantir padrão de código. 
+- **.gitignore** -> Define arquivos ignorados no versionamento.
+- **.pre-commit-config.yaml** -> Hooks para validações automáticas antes do commit.
+- **pytest.ini** -> Configurações para execução dos testes com Pytest.
 
 ### 3.8 Armazenamento de Dados
 
@@ -256,6 +284,22 @@ Cada job é dividido em três etapas principais, alinhadas à arquitetura medalh
    - Estruturação dos dados em modelos analíticos.  
    - Preparação das tabelas para consumo em ferramentas de BI e relatórios.  
    - Disponibilização de dados consistentes e confiáveis para análise.
+
+#### Estrutura
+processing_job/  
+├── src/  
+│   ├── config/       # Configurações do pipeline (parâmetros, schemas, paths)  
+│   ├── modules/      # Módulos principais de transformação (Bronze, Silver ou Gold)  
+│   ├── utils/        # Funções utilitárias reutilizáveis  
+│   └── main.py       # Script principal do job executado no Databricks  
+├── tests/            # Testes unitários e de integração  
+├── requirements.txt  # Dependências do job
+
+Arquivos de Configuração
+- **.flake8** → Regras de lint para garantir padrão de código.
+- **.gitignore** -> Define arquivos ignorados no versionamento.
+- **.pre-commit-config.yaml** → Hooks para validações automáticas antes do commit.  
+- **pytest.ini** → Configurações para execução dos testes com Pytest.
 
 ### 3.10 Qualidade e Validação de Dados
 
@@ -349,6 +393,19 @@ O cluster Databricks está configurado com parâmetros de otimização para melh
 - Redução da latência entre ingestão e disponibilização dos dados analíticos.  
 - Otimização de custos ao escalar recursos somente quando necessário.
 
+### 3.14 Metodologia de Desenvolvimento
+
+O ciclo de desenvolvimento do projeto segue a estratégia de **GitFlow** para organização e rastreabilidade do código.  
+
+Principais práticas adotadas:
+- **Branch main** → sempre estável, representa a versão de produção.  
+- **Branch develop** → concentra as novas features e integrações em andamento.  
+- **Feature branches** → criadas a partir de `develop` para desenvolvimento de funcionalidades específicas.  
+- **Release branches** → usadas para preparar versões estáveis antes de ir para produção.  
+- **Hotfix branches** → permitem correções rápidas diretamente na `main`.
+
+**Adicionar imagens das Branchs**
+
 ##  🚀 4. Guia de Configuração e Execução
 
 ### 4.1 Pré-requisitos
@@ -360,7 +417,7 @@ Antes de configurar e executar o projeto, é necessário garantir que o ambiente
 - **Secret da SPN** configurado (*Secret Value*, não o *Secret ID*).  
 - A **SPN** precisa ter permissões na assinatura da Azure:  
   - *Contributor*  
-  - *User Access Administrator*  
+  - *User Access Administrator*
 
 #### GitHub Actions
 - **Personal Access Token (PAT)** do GitHub criado e salvo nas *Secrets* do repositório com permissões adequadas.  
