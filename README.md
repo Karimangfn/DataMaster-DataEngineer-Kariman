@@ -211,6 +211,8 @@ Características principais:
 - **Automação**: Pipelines no GitHub Actions garantem que os microserviços sejam validados, construídos e implantados automaticamente no cluster.
 
 #### Estrutura
+
+```bash
 microservice_name/
 ├── helm/               # Helm chart para deploy no AKS
 ├── src/
@@ -235,6 +237,7 @@ microservice_name/
 ├── requirements.txt    # Dependências do serviço
 ├── setup.py            # Definição da imagem Docker
 └── VERSION             # Usado para versionamento do Microserviço
+```
 
 A organização segue princípios da Clean Architecture, garantindo separação de responsabilidades e facilidade de manutenção:
 - **domain** → Regras de negócio puras, interfaces (ports) e exceções.
@@ -286,6 +289,8 @@ Cada job é dividido em três etapas principais, alinhadas à arquitetura medalh
    - Disponibilização de dados consistentes e confiáveis para análise.
 
 #### Estrutura
+
+```bash
 processing_job/  
 ├── src/  
 │   ├── config/       # Configurações do pipeline (parâmetros, schemas, paths)  
@@ -294,6 +299,7 @@ processing_job/
 │   └── main.py       # Script principal do job executado no Databricks  
 ├── tests/            # Testes unitários e de integração  
 ├── requirements.txt  # Dependências do job
+```
 
 Arquivos de Configuração
 - **.flake8** → Regras de lint para garantir padrão de código.
