@@ -42,7 +42,11 @@ def transform_silver(
         df = add_high_value_flag(df)
 
         logger.info(f"Writing transformed data to Silver path: {silver_path}")
-        df.write.format("delta").mode("append").save(silver_path)
+        df.write \
+          .format("delta") \
+          .mode("append") \
+          .option("path", silver_path) \
+          .saveAsTable("data_catalog.data_processing_db.silver")
     except Exception as e:
         logger.error(f"Error during Silver transformation: {e}")
         raise

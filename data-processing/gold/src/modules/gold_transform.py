@@ -37,8 +37,13 @@ def transform_gold(
         df_agg = aggregate_purchase_metrics(
             df, ["store_location", "purchase_month"]
         )
+
         logger.info(f"Writing aggregated data to Gold path: {gold_path}")
-        df_agg.write.format("delta").mode("overwrite").save(gold_path)
+        df_agg.write \
+            .format("delta") \
+            .mode("overwrite") \
+            .option("path", gold_path) \
+            .saveAsTable("data_catalog.data_processing_db.gold")
     except Exception as e:
         logger.error(f"Error during Gold transformation: {e}")
         raise

@@ -39,7 +39,8 @@ def ingest_bronze_customer_data(
                 empty_df.write
                 .format("delta")
                 .mode("overwrite")
-                .save(config["output_path"])
+                .option("path", config["output_path"])
+                .saveAsTable("data_catalog.data_processing_db." + config["table_name"])
             )
         else:
             pass
@@ -91,7 +92,7 @@ def ingest_bronze_customer_data(
                 .outputMode("append")
                 .trigger(once=True)
                 .option("checkpointLocation", checkpoint_path_for_path)
-                .start(config["output_path"])
+                .toTable("data_catalog.data_processing_db." + config["table_name"])
             )
 
             queries.append(query)
