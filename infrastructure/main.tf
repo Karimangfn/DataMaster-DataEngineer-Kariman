@@ -14,15 +14,6 @@ module "acr" {
   location            = module.resource_group.resource_group_location
 }
 
-module "key_vault" {
-  source              = "./modules/key_vault"
-  prefix              = var.prefix
-  random_id           = module.resource_group.random_id
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-}
-
 module "aks" {
   source                = "./modules/aks"
   prefix                = var.prefix
