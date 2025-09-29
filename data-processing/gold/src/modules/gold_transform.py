@@ -1,5 +1,6 @@
 import logging
 
+from typing import Any, Dict
 from pyspark.sql import SparkSession
 from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
 
@@ -8,8 +9,7 @@ logger = logging.getLogger(__name__)
 
 def transform_gold(
     spark: SparkSession,
-    silver_path: str,
-    gold_path: str
+    config: Dict[str, str]
 ) -> None:
     """
     Reads Silver layer data as batch Delta, adds purchase_month column,
@@ -18,15 +18,14 @@ def transform_gold(
 
     Args:
         spark (SparkSession): Spark session object.
-        silver_path (str): Path to Silver Delta table.
-        gold_path (str): Output path for Gold Delta table.
+        config: Dictionary with all pipeline configurations.
 
     Returns:
         None
     """
     try:
-        logger.info(f"Reading data from Silver path: {silver_path}")
-        df = spark.read.format("delta").load(silver_path)
+        logger.info(f"Reading data from Silver path: {config['silver_path']}")
+        df = spark.read.format("delta").load(config["silver_path"])
 
         logger.info("Adding purchase_month column...")
         df = add_purchase_month_column(df)
@@ -38,12 +37,12 @@ def transform_gold(
             df, ["store_location", "purchase_month"]
         )
 
-        logger.info(f"Writing aggregated data to Gold path: {gold_path}")
+        logger.info(f"Writing aggregated data to Gold path: {config['gold_path']}")
         df_agg.write \
             .format("delta") \
             .mode("overwrite") \
-            .option("path", gold_path) \
-            .saveAsTable("data_catalog.data_processing_db.gold")
+            .option("path", config["gold_path"]) \
+            .saveAsTable(f"{config['catalog']}.{config['database']}.gold")
     except Exception as e:
         logger.error(f"Error during Gold transformation: {e}")
         raise
