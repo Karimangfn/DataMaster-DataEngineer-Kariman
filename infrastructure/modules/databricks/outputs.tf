@@ -8,6 +8,11 @@ output "workspace_resource_id" {
 }
 
 output "databricks_catalog_name" {
-  description = "Name of the Databricks Unity Catalog for this workspace"
+  description = "Name of the Databricks Unity Catalog"
   value       = local.databricks_catalog_name
+}
+
+output "databricks_database_name" {
+  description = "Databricks Database Name"
+  value       = databricks_schema.data_processing_db.name
 }
