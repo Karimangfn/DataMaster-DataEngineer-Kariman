@@ -6,10 +6,19 @@ resource "azurerm_databricks_workspace" "dbw" {
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
 }
 
+resource "databricks_metastore" "metastore" {
+  name         = "${var.prefix}-${var.random_id}-metastore"
+  storage_root = var.catalog_storage_path
+}
+
+resource "databricks_metastore_assignment" "assignment" {
+  metastore_id = databricks_metastore.metastore.id
+  workspace_id = azurerm_databricks_workspace.dbw.id
+}
+
 resource "databricks_catalog" "catalog" {
   name         = "data_catalog"
   provider     = databricks.this
-  storage_root = var.catalog_storage_path
 }
 
 resource "databricks_schema" "data_processing_db" {
