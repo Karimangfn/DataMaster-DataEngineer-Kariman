@@ -6,25 +6,10 @@ resource "azurerm_databricks_workspace" "dbw" {
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
 }
 
-resource "databricks_metastore" "metastore" {
-  provider      = databricks.accounts
-  name          = "${var.prefix}-${var.random_id}-metastore"
-  storage_root  = var.catalog_storage_path
-  force_destroy = true
-  depends_on    = [azurerm_databricks_workspace.dbw]
-}
-
-resource "databricks_metastore_assignment" "assignment" {
-  provider      = databricks.accounts
-  metastore_id = databricks_metastore.metastore.id
-  workspace_id = azurerm_databricks_workspace.dbw.id
-  depends_on   = [azurerm_databricks_workspace.dbw]
-}
-
 resource "databricks_catalog" "catalog" {
-  name         = "data_catalog"
-  provider     = databricks.this
-  depends_on   = [databricks_metastore.metastore]
+  name          = "data_catalog"
+  storage_root  = var.catalog_storage_path
+  provider      = databricks.this
 }
 
 resource "databricks_schema" "data_processing_db" {
