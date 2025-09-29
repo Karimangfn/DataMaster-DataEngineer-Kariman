@@ -7,8 +7,9 @@ resource "azurerm_databricks_workspace" "dbw" {
 }
 
 resource "databricks_schema" "data_processing_db" {
-  name         = "data_processing_db"
-  catalog_name = azurerm_databricks_workspace.dbw.name
+  provider      = databricks.accounts
+  name          = "data_processing_db"
+  catalog_name  = azurerm_databricks_workspace.dbw.name
 }
 
 locals {
