@@ -6,13 +6,3 @@ output "databricks_workspace_url" {
 output "workspace_resource_id" {
   value = azurerm_databricks_workspace.dbw.id
 }
-
-output "databricks_catalog_name" {
-  description = "Name of the Databricks Unity Catalog"
-  value       = local.databricks_catalog_name
-}
-
-output "databricks_database_name" {
-  description = "Databricks Database Name"
-  value       = databricks_schema.data_processing_db.name
-}
