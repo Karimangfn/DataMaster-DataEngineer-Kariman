@@ -34,15 +34,16 @@ module "storage" {
 
 module "databricks" {
   source = "./modules/databricks"
-  prefix                = var.prefix
-  random_id             = module.resource_group.random_id
-  location              = module.resource_group.resource_group_location
-  resource_group_name   = module.resource_group.resource_group_name
-  storage_account_name  = module.storage.storage_account_name
-  client_id             = var.client_id
-  client_secret         = var.client_secret
-  tenant_id             = var.tenant_id
-  git_repo_url          = var.git_repo_url
-  git_repo_branch       = var.git_repo_branch
-  enable                = var.enable_databricks
+  prefix                  = var.prefix
+  random_id               = module.resource_group.random_id
+  location                = module.resource_group.resource_group_location
+  resource_group_name     = module.resource_group.resource_group_name
+  storage_account_name    = module.storage.storage_account_name
+  catalog_container_path  = "abfss://catalog@${module.storage.storage_account_name}.dfs.core.windows.net/"
+  client_id               = var.client_id
+  client_secret           = var.client_secret
+  tenant_id               = var.tenant_id
+  git_repo_url            = var.git_repo_url
+  git_repo_branch         = var.git_repo_branch
+  enable                  = var.enable_databricks
 }
