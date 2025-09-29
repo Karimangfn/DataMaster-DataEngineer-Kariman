@@ -17,6 +17,12 @@ resource "azurerm_role_assignment" "spn_storage_blob_contributor" {
   principal_id         = data.azuread_service_principal.github_actions_spn.object_id
 }
 
+resource "azurerm_storage_container" "metastore" {
+  name                  = "metastore"
+  storage_account_id    = azurerm_storage_account.lake.id
+  container_access_type = "private"
+}
+
 resource "azurerm_storage_container" "raw" {
   name                  = "raw"
   storage_account_id    = azurerm_storage_account.lake.id
