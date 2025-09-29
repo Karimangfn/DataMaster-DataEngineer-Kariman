@@ -24,14 +24,14 @@ resource "databricks_metastore_assignment" "assignment" {
 resource "databricks_catalog" "catalog" {
   name         = "data_catalog"
   provider     = databricks.this
-  depends_on   = [azurerm_databricks_workspace.dbw]
+  depends_on   = [databricks_metastore.metastore]
 }
 
 resource "databricks_schema" "data_processing_db" {
   name         = "data_processing_db"
   catalog_name = databricks_catalog.catalog.name
   provider     = databricks.this
-  depends_on   = [azurerm_databricks_workspace.dbw]
+  depends_on   = [databricks_catalog.catalog]
 }
 
 locals {
