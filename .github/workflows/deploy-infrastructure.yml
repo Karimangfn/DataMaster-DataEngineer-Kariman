@@ -487,12 +487,14 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
+            -target=module.storage.azurerm_storage_container.catalog \
             -target=module.storage.azurerm_storage_container.raw \
             -target=module.storage.azurerm_storage_container.bronze \
             -target=module.storage.azurerm_storage_container.silver \
             -target=module.storage.azurerm_storage_container.gold \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
+      
       - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-txt
@@ -502,6 +504,7 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
+            -target=module.storage.azurerm_storage_container.catalog \
             -target=module.storage.azurerm_storage_container.raw \
             -target=module.storage.azurerm_storage_container.bronze \
             -target=module.storage.azurerm_storage_container.silver \
@@ -573,6 +576,7 @@ jobs:
           overwrite: true
       
       - run: terraform validate
+      
       - run: |
           terraform apply -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
