@@ -23,7 +23,7 @@ variable "location" {
   type        = string
 }
 
-variable "catalog_container_path" {
+variable "catalog_storage_path" {
   description = "Path of the storage container used as the Databricks Catalog location"
   type        = string
 }
