@@ -656,6 +656,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
   
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
+
+          # RG_NAME=$(terraform output -raw resource_group_name)
   
           if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
@@ -683,8 +685,16 @@ jobs:
                 | sed -E 's/^[ ~+-]*name\s*=\s*"(.*)".*/\1/' \
                 | sed -E 's/ ->.*//')
               
+              # if [ -z "$name" ] || [[ "$name" == "(known after apply)" ]]; then
+              #   name="$block_name"
+              # fi
+
               if [ -z "$name" ] || [[ "$name" == "(known after apply)" ]]; then
-                name="$block_name"
+                if [[ "$type" == "resource_group" ]] && [[ -n "$RG_NAME" ]]; then
+                  name="$RG_NAME"
+                else
+                  name="$block_name"
+                fi
               fi
             
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
