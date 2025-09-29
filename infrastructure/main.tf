@@ -39,7 +39,6 @@ module "databricks" {
   location              = module.resource_group.resource_group_location
   resource_group_name   = module.resource_group.resource_group_name
   storage_account_name  = module.storage.storage_account_name
-  catalog_storage_path  = "abfss://catalog@${module.storage.storage_account_name}.dfs.core.windows.net/"
   client_id             = var.client_id
   client_secret         = var.client_secret
   tenant_id             = var.tenant_id
