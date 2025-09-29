@@ -657,7 +657,7 @@ jobs:
   
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
 
-          # RG_NAME=$(terraform output -raw resource_group_name)
+          RG_NAME=$(terraform output -raw resource_group_name)
   
           if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
