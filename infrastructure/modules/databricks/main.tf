@@ -6,12 +6,6 @@ resource "azurerm_databricks_workspace" "dbw" {
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
 }
 
-resource "databricks_catalog" "catalog" {
-  name          = "data_catalog"
-  storage_root  = var.catalog_storage_path
-  provider      = databricks.this
-}
-
 resource "databricks_schema" "data_processing_db" {
   name         = "data_processing_db"
   catalog_name = databricks_catalog.catalog.name
