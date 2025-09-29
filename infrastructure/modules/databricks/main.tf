@@ -6,6 +6,14 @@ resource "azurerm_databricks_workspace" "dbw" {
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
 }
 
+data "databricks_mws_workspaces" "all" {
+  provider = databricks.accounts
+}
+
+locals {
+  account_id = data.databricks_mws_workspaces.all.workspaces[0].account_id
+}
+
 resource "databricks_metastore" "metastore" {
   provider      = databricks.accounts
   name          = "${var.prefix}-${var.random_id}-metastore"
