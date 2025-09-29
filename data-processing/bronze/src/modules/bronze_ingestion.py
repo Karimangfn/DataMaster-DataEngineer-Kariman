@@ -40,7 +40,7 @@ def ingest_bronze_customer_data(
                 .format("delta")
                 .mode("overwrite")
                 .option("path", config["output_path"])
-                .saveAsTable("data_catalog.data_processing_db." + config["table_name"])
+                .saveAsTable(f"{config['catalog']}.{config['database']}.{config['table_name']}")
             )
         else:
             pass
@@ -92,7 +92,7 @@ def ingest_bronze_customer_data(
                 .outputMode("append")
                 .trigger(once=True)
                 .option("checkpointLocation", checkpoint_path_for_path)
-                .toTable("data_catalog.data_processing_db." + config["table_name"])
+                .toTable(f"{config['catalog']}.{config['database']}.{config['table_name']}")
             )
 
             queries.append(query)
