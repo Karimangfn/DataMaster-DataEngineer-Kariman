@@ -561,8 +561,8 @@ jobs:
            -target=module.databricks.azurerm_databricks_workspace.dbw \
            -target=module.databricks.databricks_catalog.catalog \
            -target=module.databricks.databricks_schema.data_processing_db \
-           -var="subscription_id=$(az account show --query id -o tsv)" \
-           -var="catalog_container_path=abfss://catalog@${{ secrets.STORAGE_ACCOUNT }}.dfs.core.windows.net/"
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           # -var="catalog_container_path=abfss://catalog@${{ secrets.STORAGE_ACCOUNT }}.dfs.core.windows.net/"
            terraform show -no-color tfplan >> plan.txt
       
       - uses: actions/upload-artifact@v4
@@ -578,8 +578,8 @@ jobs:
             -target=module.databricks.azurerm_databricks_workspace.dbw \
             -target=module.databricks.databricks_catalog.catalog \
             -target=module.databricks.databricks_schema.data_processing_db \
-            -var="subscription_id=$(az account show --query id -o tsv)" \
-            -var="catalog_container_path=abfss://catalog@${{ secrets.STORAGE_ACCOUNT }}.dfs.core.windows.net/"
+            -var="subscription_id=$(az account show --query id -o tsv)"
+            # -var="catalog_container_path=abfss://catalog@${{ secrets.STORAGE_ACCOUNT }}.dfs.core.windows.net/"
 
           terraform destroy -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
