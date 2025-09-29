@@ -7,12 +7,14 @@ resource "azurerm_databricks_workspace" "dbw" {
 }
 
 resource "databricks_metastore" "metastore" {
+  provider     = databricks.azure_account
   name         = "${var.prefix}-${var.random_id}-metastore"
   storage_root = var.catalog_storage_path
   depends_on   = [azurerm_databricks_workspace.dbw]
 }
 
 resource "databricks_metastore_assignment" "assignment" {
+  provider     = databricks.azure_account
   metastore_id = databricks_metastore.metastore.id
   workspace_id = azurerm_databricks_workspace.dbw.id
   depends_on   = [azurerm_databricks_workspace.dbw]
