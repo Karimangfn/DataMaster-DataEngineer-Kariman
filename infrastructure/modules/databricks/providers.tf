@@ -13,10 +13,5 @@ provider "databricks" {
   azure_client_secret         = var.client_secret
   azure_tenant_id             = var.tenant_id
   azure_workspace_resource_id = azurerm_databricks_workspace.dbw.id
-}
-
-provider "databricks" {
-  alias                 = "accounts"
-  host                  = "https://accounts.azuredatabricks.net"
-  account_id            = local.account_id
+  host                        = azurerm_databricks_workspace.dbw.workspace_url
 }
