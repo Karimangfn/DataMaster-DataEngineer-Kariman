@@ -562,7 +562,6 @@ jobs:
       - run: |
            terraform plan -out=tfplan -no-color \
            -target=module.databricks.azurerm_databricks_workspace.dbw \
-           -target=module.databricks.databricks_catalog.catalog \
            -target=module.databricks.databricks_schema.data_processing_db \
            -var="subscription_id=$(az account show --query id -o tsv)"
            terraform show -no-color tfplan >> plan.txt
@@ -579,7 +578,6 @@ jobs:
           terraform apply -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -target=module.databricks.azurerm_databricks_workspace.dbw \
-            -target=module.databricks.databricks_catalog.catalog \
             -target=module.databricks.databricks_schema.data_processing_db \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
