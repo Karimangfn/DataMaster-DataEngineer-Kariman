@@ -15,7 +15,7 @@ resource "databricks_catalog" "catalog" {
 resource "databricks_schema" "data_processing_db" {
   provider      = databricks.accounts
   name          = "data_processing_db"
-  catalog_name  = azurerm_databricks_workspace.dbw.name
+  catalog_name  = "data_catalog"
 }
 
 locals {
