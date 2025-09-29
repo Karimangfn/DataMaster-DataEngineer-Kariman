@@ -31,10 +31,7 @@ def main():
     """
     logger.info("Starting Gold pipeline execution")
 
-    silver_path = DATASET_CONFIG["silver_path"]
-    gold_path = DATASET_CONFIG["gold_path"]
-
-    transform_gold(spark, silver_path, gold_path)
+    transform_gold(spark, DATASET_CONFIG)
 
     logger.info("Gold transformation pipeline completed successfully.")
 
