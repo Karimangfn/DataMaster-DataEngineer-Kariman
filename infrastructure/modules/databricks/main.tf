@@ -9,7 +9,7 @@ resource "azurerm_databricks_workspace" "dbw" {
 resource "databricks_catalog" "catalog" {
   name         = "data_catalog"
   provider     = databricks.this
-  storage_root = var.catalog_container_path
+  storage_root = var.catalog_storage_path
 }
 
 resource "databricks_schema" "data_processing_db" {
