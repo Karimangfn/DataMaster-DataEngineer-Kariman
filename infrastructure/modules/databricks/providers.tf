@@ -16,7 +16,7 @@ provider "databricks" {
 }
 
 provider "databricks" {
-  alias                 = "azure_account"
+  alias                 = "accounts"
   host                  = "https://accounts.azuredatabricks.net"
   azure_client_id       = var.client_id
   azure_client_secret   = var.client_secret
