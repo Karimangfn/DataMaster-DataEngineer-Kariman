@@ -23,6 +23,11 @@ variable "location" {
   type        = string
 }
 
+variable "catalog_container_path" {
+  description = "Path of the storage container used as the Databricks Catalog location"
+  type        = string
+}
+
 variable "client_id" {
   description = "Azure Service Principal Client ID"
   type        = string
