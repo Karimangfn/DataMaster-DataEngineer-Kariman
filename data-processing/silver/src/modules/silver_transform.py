@@ -46,7 +46,7 @@ def transform_silver(
           .format("delta") \
           .mode("append") \
           .option("path", silver_path) \
-          .saveAsTable("data_catalog.data_processing_db.silver")
+          .saveAsTable(f"{catalog}.{database}.{table_name}")
     except Exception as e:
         logger.error(f"Error during Silver transformation: {e}")
         raise
