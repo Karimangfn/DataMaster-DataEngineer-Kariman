@@ -8,9 +8,9 @@ resource "azurerm_databricks_workspace" "dbw" {
 
 resource "databricks_schema" "data_processing_db" {
   name         = "data_processing_db"
-  catalog_name = databricks_catalog.catalog.name
+  catalog_name = azurerm_databricks_workspace.dbw.name
   provider     = databricks.this
-  depends_on   = [databricks_catalog.catalog]
+  depends_on   = [azurerm_databricks_workspace.dbw]
 }
 
 locals {
