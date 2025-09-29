@@ -9,22 +9,26 @@ resource "azurerm_databricks_workspace" "dbw" {
 resource "databricks_metastore" "metastore" {
   name         = "${var.prefix}-${var.random_id}-metastore"
   storage_root = var.catalog_storage_path
+  depends_on   = [azurerm_databricks_workspace.dbw]
 }
 
 resource "databricks_metastore_assignment" "assignment" {
   metastore_id = databricks_metastore.metastore.id
   workspace_id = azurerm_databricks_workspace.dbw.id
+  depends_on   = [azurerm_databricks_workspace.dbw]
 }
 
 resource "databricks_catalog" "catalog" {
   name         = "data_catalog"
   provider     = databricks.this
+  depends_on   = [azurerm_databricks_workspace.dbw]
 }
 
 resource "databricks_schema" "data_processing_db" {
   name         = "data_processing_db"
   catalog_name = databricks_catalog.catalog.name
   provider     = databricks.this
+  depends_on   = [azurerm_databricks_workspace.dbw]
 }
 
 locals {
