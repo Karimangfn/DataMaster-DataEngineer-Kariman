@@ -75,7 +75,10 @@ resource "databricks_job" "data_process" {
     spark_python_task {
       source      = "GIT"
       python_file = "data-processing/bronze/src/main.py"
-      parameters  = ["--storage-account", var.storage_account_name]
+      parameters  = [
+          "--storage-account", var.storage_account_name,
+          "--catalog", local.databricks_catalog_name
+      ]
     }
   }
 
@@ -91,7 +94,10 @@ resource "databricks_job" "data_process" {
     spark_python_task {
       source      = "GIT"
       python_file = "data-processing/silver/src/main.py"
-      parameters  = ["--storage-account", var.storage_account_name]
+      parameters  = [
+          "--storage-account", var.storage_account_name,
+          "--catalog", local.databricks_catalog_name
+      ]
     }
   }
 
@@ -107,7 +113,10 @@ resource "databricks_job" "data_process" {
     spark_python_task {
       source      = "GIT"
       python_file = "data-processing/gold/src/main.py"
-      parameters  = ["--storage-account", var.storage_account_name]
+      parameters  = [
+          "--storage-account", var.storage_account_name,
+          "--catalog", local.databricks_catalog_name
+      ]
     }
   }
 }
