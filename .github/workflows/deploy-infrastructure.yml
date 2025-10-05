@@ -574,15 +574,6 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure/plan.txt
           overwrite: true
-
-      # - name: 🧹 Clean Unity Catalog Resources
-      #   run: |
-      #     if terraform state list | grep -q "module.databricks.databricks_schema.data_processing_db"; then
-      #       echo "Removing stale schema from state..."
-      #       terraform state rm module.databricks.databricks_schema.data_processing_db
-      #     else
-      #       echo "Schema not in state, nothing to remove."
-      #     fi
       
       - run: terraform validate
       
@@ -590,11 +581,15 @@ jobs:
           terraform apply -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -target=module.databricks.azurerm_databricks_workspace.dbw \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -detailed-exitcode -out plan.tfplan 
+          apply_exit=$?
 
           terraform destroy -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
+
+          echo "APPLY_EXIT=$apply_exit" >> $GITHUB_ENV
 
       - name: 🔎 Get workspace URL and AAD token
         id: get-databricks-info
@@ -649,7 +644,12 @@ jobs:
       
       - name: 🚀 Create Databricks Schema
         run: |
-          terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+          if [ "$APPLY_EXIT" = "2" ]; then
+              echo "🧹 Schema will be recreated, removing from state"
+              terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+          else
+              echo "Schema will not be recreated, keeping state"
+          fi
           
           terraform apply -auto-approve \
             -target=module.databricks.databricks_schema.data_processing_db \
