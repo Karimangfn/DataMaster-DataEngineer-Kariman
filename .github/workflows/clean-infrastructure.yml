@@ -92,7 +92,7 @@ jobs:
       - name: Check Terraform resource existence and fix state
         run: |
           resources=(
-            "module.databricks.databricks_job.data_process"
+            "module.databricks.databricks_job.data_process",
             "module.databricks.databricks_schema.data_processing_db"
           )
 
