@@ -362,7 +362,19 @@ Nesse projeto, o tema de governança de dados é tratado para garantir que cada 
 | Administrador       | Controle Total                    | Gerenciar usuários, permissões e monitorar segurança.           |
 
 - Todos os acessos são concedidos seguindo o princípio do **menor privilégio**.  
-- O controle é feito via **RBAC** da Azure Storage Account e Service Principals.    
+- O controle é feito via **RBAC** da Azure Storage Account e Service Principals.   
+
+#### Azure Storage Account (RBAC)
+
+- Engenheiros de dados recebem Storage Blob Data Contributor nos containers Raw e Bronze.
+- Cientistas e analistas recebem Storage Blob Data Reader ou Reader parcial nos containers Silver e Gold.
+
+#### Databricks
+
+- Engenheiros de dados configuram e executam os jobs que processam os dados entre os layers (Raw → Bronze → Silver → Gold).
+- Cientistas de dados podem acessar resultados processados nos jobs em Silver e Gold.
+- Analistas de BI podem executar queries e montar dashboards apenas sobre os dados Gold gerados pelos jobs.
+- Administradores têm controle total sobre a Storage Account e podem gerenciar jobs, permissões e auditoria no Databricks.
 
 ### 3.13 Observabilidade e Monitoramento
 
