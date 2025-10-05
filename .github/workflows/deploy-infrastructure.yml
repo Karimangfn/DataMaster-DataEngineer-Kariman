@@ -612,27 +612,68 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
 
-      - name: 🧩 Normalize Databricks Catalog Name
+      # - name: 🧩 Normalize Databricks Catalog Name
+      #   run: |
+      #     echo "🔍 Checking Databricks catalogs..."
+      #     catalogs=$(curl -s -X GET \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+      
+      #     echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
+      
+      #     while read -r name; do
+      #       if [[ "$name" == *dbw* ]]; then
+      #         new_name="data_catalog"
+      #         echo "🧠 Renaming catalog $name → $new_name"
+      
+      #         curl -s -X PATCH \
+      #           -H "Authorization: Bearer $TOKEN" \
+      #           -H "Content-Type: application/json" \
+      #           -d "{\"new_name\": \"$new_name\"}" \
+      #           "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name"
+      
+      #         echo "✅ Catalog renamed successfully."
+      #       else
+      #         echo "ℹ️ Catalog $name does not need renaming."
+      #       fi
+      #     done < catalogs.txt
+
+      - name: 🔍 Check and rename Databricks catalogs
+        shell: bash
         run: |
           echo "🔍 Checking Databricks catalogs..."
           catalogs=$(curl -s -X GET \
-            -H "Authorization: Bearer $TOKEN" \
+            -H "Authorization: $TOKEN" \
             "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+      
+          echo "📄 Catalogs retornados pela API:"
+          echo "$catalogs" | jq '.catalogs[]'
       
           echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
       
           while read -r name; do
+            echo "ℹ️ Verificando catálogo: $name"
             if [[ "$name" == *dbw* ]]; then
               new_name="data_catalog"
-              echo "🧠 Renaming catalog $name → $new_name"
+              echo "🧠 Tentando renomear $name → $new_name"
       
-              curl -s -X PATCH \
-                -H "Authorization: Bearer $TOKEN" \
+              response=$(curl -s -w "\n%{http_code}" -X PATCH \
+                -H "Authorization: $TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "{\"new_name\": \"$new_name\"}" \
-                "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name"
+                "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
       
-              echo "✅ Catalog renamed successfully."
+              body=$(echo "$response" | head -n1)
+              status=$(echo "$response" | tail -n1)
+      
+              echo "📤 Response body: $body"
+              echo "📊 HTTP status: $status"
+      
+              if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
+                echo "✅ Catalog renamed successfully."
+              else
+                echo "⚠️ Failed to rename catalog $name, skipping."
+              fi
             else
               echo "ℹ️ Catalog $name does not need renaming."
             fi
