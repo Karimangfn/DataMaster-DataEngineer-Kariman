@@ -567,12 +567,7 @@ jobs:
            terraform plan -out=tfplan -no-color \
              -target=module.databricks.azurerm_databricks_workspace.dbw \
              -var="subscription_id=$(az account show --query id -o tsv)" \
-             -detailed-exitcode
-           apply_exit=$?
-           
            terraform show -no-color tfplan >> plan.txt
-        
-           echo "APPLY_EXIT=$apply_exit" >> $GITHUB_ENV
       
       - uses: actions/upload-artifact@v4
         with:
@@ -642,38 +637,56 @@ jobs:
               echo "ℹ️ Catalog $name does not need renaming."
             fi
           done < catalogs.txt
-      
+
       - name: 🚀 Create Databricks Schema
         run: |
-          # if [ "$APPLY_EXIT" = "2" ]; then
-          #     echo "🧹 Schema will be recreated, removing from state"
-          #     terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
-          # else
-          #     echo "Schema will not be recreated, keeping state"
-          # fi
-
-          if [ "$APPLY_EXIT" = "2" ]; then
-              terraform show -json tfplan > plan.json
-          
-              REPLACE_DBW=$(jq -r '
-                .resource_changes[]
-                | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
-                | .change.actions[]
-              ' plan.json | grep -w "replace")
-          
-              if [ -n "$REPLACE_DBW" ]; then
-                  echo "🧹 Workspace will be replaced → removing schema from state"
-                  terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
-              else
-                  echo "Schema will not be recreated, workspace change does not require replace"
-              fi
-          else
-              echo "Schema will not be recreated, no changes detected in workspace"
+          terraform show -json tfplan > plan.json
+      
+          REPLACE_DBW=$(jq -r '
+            .resource_changes[]
+            | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
+            | .change.actions[]
+          ' plan.json | grep -w "create\|replace")
+      
+          if [ -n "$REPLACE_DBW" ]; then
+              terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
           fi
-          
+      
           terraform apply -auto-approve \
             -target=module.databricks.databricks_schema.data_processing_db \
             -var="subscription_id=$(az account show --query id -o tsv)"
+      
+      # - name: 🚀 Create Databricks Schema
+      #   run: |
+      #     # if [ "$APPLY_EXIT" = "2" ]; then
+      #     #     echo "🧹 Schema will be recreated, removing from state"
+      #     #     terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+      #     # else
+      #     #     echo "Schema will not be recreated, keeping state"
+      #     # fi
+
+      #     if [ "$APPLY_EXIT" = "2" ]; then
+      #         terraform show -json tfplan > plan.json
+          
+      #         REPLACE_DBW=$(jq -r '
+      #           .resource_changes[]
+      #           | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
+      #           | .change.actions[]
+      #         ' plan.json | grep -w "replace")
+          
+      #         if [ -n "$REPLACE_DBW" ]; then
+      #             echo "🧹 Workspace will be replaced → removing schema from state"
+      #             terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+      #         else
+      #             echo "Schema will not be recreated, workspace change does not require replace"
+      #         fi
+      #     else
+      #         echo "Schema will not be recreated, no changes detected in workspace"
+      #     fi
+          
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_schema.data_processing_db \
+      #       -var="subscription_id=$(az account show --query id -o tsv)"
         
       - name: 🚀 Create Databricks Job
         run: |
