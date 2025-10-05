@@ -627,9 +627,9 @@ jobs:
           echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
       
           while read -r name; do
-            if [[ "$name" =~ _dbw_[0-9]+$ ]]; then
-              new_name="${name%_[0-9]*}"
-              echo "🧠 Found catalog with numeric suffix: $name → renaming to $new_name"
+            if [[ "$name" == *"_dbw_"* ]]; then
+              new_name="data_catalog"
+              echo "🧠 Renaming catalog $name → $new_name"
       
               curl -s -X PATCH \
                 -H "Authorization: Bearer $TOKEN" \
