@@ -627,7 +627,7 @@ jobs:
           echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
       
           while read -r name; do
-            if [[ "$name" == *"_dbw_"* ]]; then
+            if [[ "$name" == *dbw* ]]; then
               new_name="data_catalog"
               echo "🧠 Renaming catalog $name → $new_name"
       
