@@ -220,7 +220,7 @@ jobs:
   aks:
     name: ☸️ Creating AKS Cluster
     runs-on: ubuntu-latest
-    needs: [resource-group, acr, databricks]
+    needs: [resource-group, acr]
     defaults:
       run:
         working-directory: ./infrastructure
@@ -426,7 +426,7 @@ jobs:
   databricks:
     name: 🧪 Creating Databricks Workspace
     runs-on: ubuntu-latest
-    needs: [resource-group, storage-account, storage-containers]
+    needs: [resource-group, storage-account, storage-containers, aks]
     defaults:
       run:
         working-directory: ./infrastructure
