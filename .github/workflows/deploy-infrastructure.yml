@@ -566,8 +566,13 @@ jobs:
       - run: |
            terraform plan -out=tfplan -no-color \
              -target=module.databricks.azurerm_databricks_workspace.dbw \
-             -var="subscription_id=$(az account show --query id -o tsv)"
+             -var="subscription_id=$(az account show --query id -o tsv)" \
+             -detailed-exitcode
+           apply_exit=$?
+           
            terraform show -no-color tfplan >> plan.txt
+        
+           echo "APPLY_EXIT=$apply_exit" >> $GITHUB_ENV
       
       - uses: actions/upload-artifact@v4
         with:
@@ -582,14 +587,10 @@ jobs:
             -target=module.aks.azurerm_network_watcher.default \
             -target=module.databricks.azurerm_databricks_workspace.dbw \
             -var="subscription_id=$(az account show --query id -o tsv)" \
-            -detailed-exitcode -out plan.tfplan 
-          apply_exit=$?
 
           terraform destroy -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
-
-          echo "APPLY_EXIT=$apply_exit" >> $GITHUB_ENV
 
       - name: 🔎 Get workspace URL and AAD token
         id: get-databricks-info
