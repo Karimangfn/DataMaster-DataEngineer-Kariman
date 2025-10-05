@@ -624,7 +624,6 @@ jobs:
       - name: 🚀 Create Databricks Schema
         run: |
           terraform apply -auto-approve \
-            -refresh=false \
             -target=module.databricks.databricks_schema.data_processing_db \
             -var="subscription_id=$(az account show --query id -o tsv)"
         
