@@ -294,7 +294,7 @@ jobs:
   storage-account:
     name: 💾 Creating Storage Account
     runs-on: ubuntu-latest
-    needs: [resource-group, acr]
+    needs: resource-group
     defaults:
       run:
         working-directory: ./infrastructure
