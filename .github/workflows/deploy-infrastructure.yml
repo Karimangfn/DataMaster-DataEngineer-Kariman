@@ -753,6 +753,44 @@ jobs:
           path: infrastructure/plan.txt
           overwrite: true
 
+  databricks-groups:
+    name: 👥 Create Databricks Groups
+    runs-on: ubuntu-latest
+    needs: [databricks, access]
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
+  
+      - name: 🔎 Ensure Databricks Workspace Info
+        run: |
+          if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.TOKEN }}" ]; then
+            echo "Databricks workspace URL or token is missing!"
+            exit 1
+          fi
+  
+      - name: 👥 Create data_engineers group
+        run: |
+          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/scim+json" \
+            -d '{"displayName":"data_engineers"}' || echo "Group may already exist"
+  
+      - name: 👥 Create data_scientists group
+        run: |
+          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/scim+json" \
+            -d '{"displayName":"data_scientists"}' || echo "Group may already exist"
+  
+      - name: 👥 Create data_analysts group
+        run: |
+          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/scim+json" \
+            -d '{"displayName":"data_analysts"}' || echo "Group may already exist"
+
   generate-summary:
     name: 📝 Generate Creation and Update Summary
     runs-on: ubuntu-latest
@@ -765,6 +803,7 @@ jobs:
       - storage-account
       - storage-containers
       - access
+      - databricks-groups
     steps:    
       - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
