@@ -89,19 +89,22 @@ jobs:
             done
           fi
 
-      - name: 🧹 Remove stale Databricks resources from state
+      - name: Check Terraform resource existence and fix state
         run: |
           resources=(
             "module.databricks.databricks_job.data_process"
             "module.databricks.databricks_schema.data_processing_db"
           )
       
+          subscription_id=$(az account show --query id -o tsv)
+          
           for res in "${resources[@]}"; do
-            if terraform state list | grep -q "$res"; then
-              echo "Removing $res from Terraform state..."
+            echo "Checking resource $res ..."
+            if ! terraform plan -target="$res" -var="subscription_id=$subscription_id"; then
+              echo "Resource $res not accessible or does not exist, removing from state"
               terraform state rm "$res" || true
             else
-              echo "$res not in state, skipping."
+              echo "Resource $res accessible, no action needed."
             fi
           done
 
@@ -142,13 +145,6 @@ jobs:
           else
             echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
           fi
-
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
       
       - name: Generate summary of resources to be destroyed
         if: always()
