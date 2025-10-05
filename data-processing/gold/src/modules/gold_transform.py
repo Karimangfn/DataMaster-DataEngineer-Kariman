@@ -3,6 +3,7 @@ import logging
 from typing import Any, Dict
 from pyspark.sql import SparkSession
 from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
+from utils.access import grant_access_to_gold
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ def transform_gold(
             .mode("overwrite") \
             .option("path", config["gold_path"]) \
             .saveAsTable(f"{config['catalog']}.{config['database']}.gold")
+
+        grant_access_to_gold(spark, config['catalog'], config['database'])
     except Exception as e:
         logger.error(f"Error during Gold transformation: {e}")
         raise
