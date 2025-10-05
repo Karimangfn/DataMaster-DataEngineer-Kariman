@@ -1,30 +1,35 @@
-resource "azuread_group" "data_engineers" {
+data "azuread_service_principal" "github_actions_spn" {
+  client_id = var.client_id
+}
+
+data "azuread_group" "data_engineers" {
   display_name = var.data_engineers_group
 }
 
-resource "azuread_group" "data_analysts" {
+data "azuread_group" "data_analysts" {
   display_name = var.data_analysts_group
 }
 
-resource "azuread_group" "data_scientists" {
-  display_name = var.data_scientists_group
+resource "azurerm_role_assignment" "raw_access" {
+  scope                = var.raw_container_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azuread_group.data_engineers.object_id
 }
 
-locals {
-  containers = ["raw", "bronze", "silver", "gold"]
+resource "azurerm_role_assignment" "bronze_access" {
+  scope                = var.bronze_container_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azuread_group.data_engineers.object_id
 }
 
-resource "azurerm_storage_data_lake_gen2_path" "permissions" {
-  for_each = {
-    "raw"    = azuread_group.data_engineers.id
-    "bronze" = azuread_group.data_engineers.id
-    "silver" = azuread_group.data_engineers.id
-    "gold"   = azuread_group.data_analysts.id
-  }
+resource "azurerm_role_assignment" "silver_access" {
+  scope                = var.silver_container_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azuread_group.data_analysts.object_id
+}
 
-  filesystem_name    = each.key
-  path               = "/"
-  storage_account_id = var.storage_account_id
-  role               = "Storage Blob Data Contributor"
-  principal_id       = each.value
+resource "azurerm_role_assignment" "gold_access" {
+  scope                = var.gold_container_id
+  role_definition_name = "Storage Blob Data Reader"
+  principal_id         = data.azuread_group.data_analysts.object_id
 }
