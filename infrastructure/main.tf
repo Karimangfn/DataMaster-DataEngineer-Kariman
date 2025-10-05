@@ -50,9 +50,11 @@ module "databricks" {
 module "access" {
   source                = "./modules/access"
   prefix                = var.prefix
-  resource_group_name   = module.resource_group.resource_group_name
-  storage_account_name  = module.storage.storage_account_name
+  raw_container_id      = module.storage.raw_container_id
+  bronze_container_id   = module.storage.bronze_container_id
+  silver_container_id   = module.storage.silver_container_id
+  gold_container_id     = module.storage.gold_container_id
   data_engineers_group  = var.data_engineers_group
   data_analysts_group   = var.data_analysts_group
-  data_scientists_group = var.data_scientists_group
+  client_id             = var.client_id
 }
