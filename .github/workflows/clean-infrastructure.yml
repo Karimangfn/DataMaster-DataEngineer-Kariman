@@ -121,6 +121,29 @@ jobs:
           -var="subscription_id=$(az account show --query id -o tsv)" \
           -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
 
+      - name: Delete Databricks Unity Catalog Resources
+        run: |
+          set +e
+          echo "Fetching Databricks workspace name from Terraform outputs..."
+
+          DBW_NAME=$(terraform output -raw databricks_workspace_name 2>/dev/null || echo "")
+          
+          if [ -z "$DBW_NAME" ]; then
+            echo "⚠️ Databricks workspace name not found in Terraform outputs. Skipping deletion."
+            exit 0
+          fi
+
+          DB_RG="${DBW_NAME}-mrg"
+          echo "🧹 Attempting to delete Databricks managed resource group: $DB_RG"
+
+          if az group show --name "$DB_RG" &>/dev/null; then
+            echo "🗑️ Resource group $DB_RG found. Deleting..."
+            az group delete --name "$DB_RG" --yes --no-wait
+            echo "✅ Deletion initiated for $DB_RG."
+          else
+            echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
+          fi
+      
       - name: Generate summary of resources to be destroyed
         if: always()
         run: |
