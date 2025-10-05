@@ -370,6 +370,82 @@ jobs:
   #         path: infrastructure/plan.txt
   #         overwrite: true
 
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔎 Get workspace URL and AAD token
+        id: get-databricks-info
+        run: |
+          tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+          client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
+          post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
+          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
+          WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$TOKEN"
+  
+      - name: 🔧 Create Git Credential on Databricks
+        run: |
+          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "git_provider": "gitHub",
+              "git_username": "x-token-auth",
+              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+            }'
+
+      - name: 🔍 Check and Rename Databricks Catalogs
+        shell: bash
+        run: |
+          echo "🔍 Checking Databricks catalogs..."
+          catalogs=$(curl -s -X GET -H "Authorization: $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+      
+          echo "📄 Full API response:"
+          echo "$catalogs"
+      
+          catalog_count=$(echo "$catalogs" | jq '.catalogs | length // 0')
+          if [[ "$catalog_count" -eq 0 ]]; then
+              echo "⚠️ No catalogs found or API returned invalid data"
+              exit 0
+          fi
+      
+          echo "📂 Catalogs encontrados:"
+          echo "$catalogs" | jq '.catalogs[]'
+      
+          echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
+      
+          while read -r name; do
+            echo "ℹ️ Verificando catálogo: $name"
+            if [[ "$name" == *dbw* ]]; then
+              new_name="data_catalog"
+              echo "🧠 Tentando renomear $name → $new_name"
+      
+              response=$(curl -s -w "\n%{http_code}" -X PATCH \
+                -H "Authorization: $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"new_name\": \"$new_name\"}" \
+                "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
+      
+              body=$(echo "$response" | head -n1)
+              status=$(echo "$response" | tail -n1)
+      
+              echo "📤 Response body: $body"
+              echo "📊 HTTP status: $status"
+      
+              if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
+                echo "✅ Catalog renamed successfully."
+              else
+                echo "⚠️ Failed to rename catalog $name, skipping."
+              fi
+            else
+              echo "ℹ️ Catalog $name does not need renaming."
+            fi
+          done < catalogs.txt
+  
   storage-account:
     name: 💾 Creating Storage Account
     runs-on: ubuntu-latest
