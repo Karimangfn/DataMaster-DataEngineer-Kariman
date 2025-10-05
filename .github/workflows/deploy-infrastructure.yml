@@ -370,125 +370,125 @@ jobs:
   #         path: infrastructure/plan.txt
   #         overwrite: true
 
-  debug:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔎 Get workspace URL and AAD token
-        id: get-databricks-info
-        run: |
-          tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
-          client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
-          client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
-          uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
-          post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
-          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
-          WORKSPACE_URL="https://adb-536507845724072.12.azuredatabricks.net"
-          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
-          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "::add-mask::$TOKEN"
+  # debug:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 🔎 Get workspace URL and AAD token
+  #       id: get-databricks-info
+  #       run: |
+  #         tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+  #         client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+  #         client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+  #         uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
+  #         post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
+  #         TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
+  #         WORKSPACE_URL="https://adb-536507845724072.12.azuredatabricks.net"
+  #         echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+  #         echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+  #         echo "::add-mask::$TOKEN"
   
-      - name: 🔧 Create Git Credential on Databricks
-        run: |
-          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "git_provider": "gitHub",
-              "git_username": "x-token-auth",
-              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
-            }'
+  #     - name: 🔧 Create Git Credential on Databricks
+  #       run: |
+  #         curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+  #           -H "Authorization: Bearer $TOKEN" \
+  #           -H "Content-Type: application/json" \
+  #           -d '{
+  #             "git_provider": "gitHub",
+  #             "git_username": "x-token-auth",
+  #             "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+  #           }'
 
-      - name: 🔍 Check and Rename Databricks Catalogs
-        shell: bash
-        run: |
-          echo "🔍 Checking Databricks catalogs..."
-          catalogs=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+  #     - name: 🔍 Check and Rename Databricks Catalogs
+  #       shell: bash
+  #       run: |
+  #         echo "🔍 Checking Databricks catalogs..."
+  #         catalogs=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
           
-          echo "📄 Full API response:"
-          echo "$catalogs"
+  #         echo "📄 Full API response:"
+  #         echo "$catalogs"
           
-          catalog_count=$(echo "$catalogs" | jq '.catalogs | length // 0')
-          if [[ "$catalog_count" -eq 0 ]]; then
-              echo "⚠️ No catalogs found or API returned invalid data"
-              exit 0
-          fi
+  #         catalog_count=$(echo "$catalogs" | jq '.catalogs | length // 0')
+  #         if [[ "$catalog_count" -eq 0 ]]; then
+  #             echo "⚠️ No catalogs found or API returned invalid data"
+  #             exit 0
+  #         fi
           
-          echo "📂 Catalogs encontrados:"
-          echo "$catalogs" | jq '.catalogs[]'
+  #         echo "📂 Catalogs encontrados:"
+  #         echo "$catalogs" | jq '.catalogs[]'
           
-          echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
+  #         echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
           
-          while read -r name; do
-            echo "ℹ️ Verificando catálogo: $name"
-            if [[ "$name" == *dbw* ]]; then
-              new_name="data_catalog"
-              echo "🧠 Tentando renomear $name → $new_name"
+  #         while read -r name; do
+  #           echo "ℹ️ Verificando catálogo: $name"
+  #           if [[ "$name" == *dbw* ]]; then
+  #             new_name="data_catalog"
+  #             echo "🧠 Tentando renomear $name → $new_name"
         
-              response=$(curl -s -w "\n%{http_code}" -X PATCH \
-                -H "Authorization: Bearer $TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "{\"new_name\": \"$new_name\"}" \
-                "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
+  #             response=$(curl -s -w "\n%{http_code}" -X PATCH \
+  #               -H "Authorization: Bearer $TOKEN" \
+  #               -H "Content-Type: application/json" \
+  #               -d "{\"new_name\": \"$new_name\"}" \
+  #               "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
         
-              body=$(echo "$response" | head -n1)
-              status=$(echo "$response" | tail -n1)
+  #             body=$(echo "$response" | head -n1)
+  #             status=$(echo "$response" | tail -n1)
         
-              echo "📤 Response body: $body"
-              echo "📊 HTTP status: $status"
+  #             echo "📤 Response body: $body"
+  #             echo "📊 HTTP status: $status"
         
-              if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
-                echo "✅ Catalog renamed successfully."
-              elif echo "$body" | grep -q "CATALOG_ALREADY_EXISTS"; then
-                echo "⚠️ Catalog $new_name already exists. Deleting existing catalog..."
+  #             if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
+  #               echo "✅ Catalog renamed successfully."
+  #             elif echo "$body" | grep -q "CATALOG_ALREADY_EXISTS"; then
+  #               echo "⚠️ Catalog $new_name already exists. Deleting existing catalog..."
         
-                delete_id=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs" \
-                  | jq -r ".catalogs[] | select(.name==\"$new_name\") | .id")
+  #               delete_id=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs" \
+  #                 | jq -r ".catalogs[] | select(.name==\"$new_name\") | .id")
         
-                if [[ -n "$delete_id" ]]; then
-                  echo "🗑️ Deleting catalog $new_name (id: $delete_id)..."
-                  delete_response=$(curl -s -w "\n%{http_code}" -X DELETE \
-                    -H "Authorization: Bearer $TOKEN" \
-                    "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$delete_id")
+  #               if [[ -n "$delete_id" ]]; then
+  #                 echo "🗑️ Deleting catalog $new_name (id: $delete_id)..."
+  #                 delete_response=$(curl -s -w "\n%{http_code}" -X DELETE \
+  #                   -H "Authorization: Bearer $TOKEN" \
+  #                   "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$delete_id")
         
-                  delete_body=$(echo "$delete_response" | head -n1)
-                  delete_status=$(echo "$delete_response" | tail -n1)
+  #                 delete_body=$(echo "$delete_response" | head -n1)
+  #                 delete_status=$(echo "$delete_response" | tail -n1)
         
-                  echo "📤 Delete response body: $delete_body"
-                  echo "📊 Delete HTTP status: $delete_status"
+  #                 echo "📤 Delete response body: $delete_body"
+  #                 echo "📊 Delete HTTP status: $delete_status"
         
-                  if [[ "$delete_status" -ge 200 && "$delete_status" -lt 300 ]]; then
-                    echo "✅ Catalog deleted. Retrying rename..."
+  #                 if [[ "$delete_status" -ge 200 && "$delete_status" -lt 300 ]]; then
+  #                   echo "✅ Catalog deleted. Retrying rename..."
         
-                    retry_response=$(curl -s -w "\n%{http_code}" -X PATCH \
-                      -H "Authorization: Bearer $TOKEN" \
-                      -H "Content-Type: application/json" \
-                      -d "{\"new_name\": \"$new_name\"}" \
-                      "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
+  #                   retry_response=$(curl -s -w "\n%{http_code}" -X PATCH \
+  #                     -H "Authorization: Bearer $TOKEN" \
+  #                     -H "Content-Type: application/json" \
+  #                     -d "{\"new_name\": \"$new_name\"}" \
+  #                     "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
         
-                    retry_body=$(echo "$retry_response" | head -n1)
-                    retry_status=$(echo "$retry_response" | tail -n1)
+  #                   retry_body=$(echo "$retry_response" | head -n1)
+  #                   retry_status=$(echo "$retry_response" | tail -n1)
         
-                    echo "📤 Retry response body: $retry_body"
-                    echo "📊 Retry HTTP status: $retry_status"
+  #                   echo "📤 Retry response body: $retry_body"
+  #                   echo "📊 Retry HTTP status: $retry_status"
         
-                    if [[ "$retry_status" -ge 200 && "$retry_status" -lt 300 ]]; then
-                      echo "✅ Catalog renamed successfully after deleting existing catalog."
-                    else
-                      echo "⚠️ Failed to rename catalog after deleting existing one. Skipping."
-                    fi
-                  else
-                    echo "⚠️ Failed to delete existing catalog. Skipping rename."
-                  fi
-                else
-                  echo "⚠️ Could not find ID of catalog $new_name to delete. Skipping rename."
-                fi
-              else
-                echo "⚠️ Failed to rename catalog $name, skipping."
-              fi
-            else
-              echo "ℹ️ Catalog $name does not need renaming."
-            fi
-          done < catalogs.txt
+  #                   if [[ "$retry_status" -ge 200 && "$retry_status" -lt 300 ]]; then
+  #                     echo "✅ Catalog renamed successfully after deleting existing catalog."
+  #                   else
+  #                     echo "⚠️ Failed to rename catalog after deleting existing one. Skipping."
+  #                   fi
+  #                 else
+  #                   echo "⚠️ Failed to delete existing catalog. Skipping rename."
+  #                 fi
+  #               else
+  #                 echo "⚠️ Could not find ID of catalog $new_name to delete. Skipping rename."
+  #               fi
+  #             else
+  #               echo "⚠️ Failed to rename catalog $name, skipping."
+  #             fi
+  #           else
+  #             echo "ℹ️ Catalog $name does not need renaming."
+  #           fi
+  #         done < catalogs.txt
   
   storage-account:
     name: 💾 Creating Storage Account
@@ -732,72 +732,34 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
 
-      # - name: 🧩 Normalize Databricks Catalog Name
-      #   run: |
-      #     echo "🔍 Checking Databricks catalogs..."
-      #     catalogs=$(curl -s -X GET \
-      #       -H "Authorization: Bearer $TOKEN" \
-      #       "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
-      
-      #     echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
-      
-      #     while read -r name; do
-      #       if [[ "$name" == *dbw* ]]; then
-      #         new_name="data_catalog"
-      #         echo "🧠 Renaming catalog $name → $new_name"
-      
-      #         curl -s -X PATCH \
-      #           -H "Authorization: Bearer $TOKEN" \
-      #           -H "Content-Type: application/json" \
-      #           -d "{\"new_name\": \"$new_name\"}" \
-      #           "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name"
-      
-      #         echo "✅ Catalog renamed successfully."
-      #       else
-      #         echo "ℹ️ Catalog $name does not need renaming."
-      #       fi
-      #     done < catalogs.txt
-
-      - name: 🔍 Check and rename Databricks catalogs
-        shell: bash
+      - name: 🧩 Normalize Databricks Catalog Name
         run: |
-          echo "🔍 Checking Databricks catalogs..."
           catalogs=$(curl -s -X GET \
-            -H "Authorization: $TOKEN" \
-            "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+                          -H "Authorization: Bearer $TOKEN" \
+                          "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
       
-          echo "📄 Catalogs retornados pela API:"
-          echo "$catalogs" | jq '.catalogs[]'
-      
-          echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
+          target_exists=$(echo "$catalogs" | jq -r '.catalogs[].name' | grep -w "data_catalog" || true)
       
           while read -r name; do
-            echo "ℹ️ Verificando catálogo: $name"
             if [[ "$name" == *dbw* ]]; then
               new_name="data_catalog"
-              echo "🧠 Tentando renomear $name → $new_name"
       
-              response=$(curl -s -w "\n%{http_code}" -X PATCH \
-                -H "Authorization: $TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "{\"new_name\": \"$new_name\"}" \
-                "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
-      
-              body=$(echo "$response" | head -n1)
-              status=$(echo "$response" | tail -n1)
-      
-              echo "📤 Response body: $body"
-              echo "📊 HTTP status: $status"
-      
-              if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
-                echo "✅ Catalog renamed successfully."
-              else
-                echo "⚠️ Failed to rename catalog $name, skipping."
+              if [[ -n "$target_exists" ]]; then
+                existing_id=$(echo "$catalogs" | jq -r ".catalogs[] | select(.name==\"$new_name\") | .id")
+                if [[ -n "$existing_id" ]]; then
+                  curl -s -X DELETE \
+                       -H "Authorization: Bearer $TOKEN" \
+                       "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$existing_id"
+                fi
               fi
-            else
-              echo "ℹ️ Catalog $name does not need renaming."
+      
+              curl -s -X PATCH \
+                   -H "Authorization: Bearer $TOKEN" \
+                   -H "Content-Type: application/json" \
+                   -d "{\"new_name\": \"$new_name\"}" \
+                   "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name"
             fi
-          done < catalogs.txt
+          done < <(echo "$catalogs" | jq -r '.catalogs[].name')
 
       - name: 🚀 Handle Databricks Schema Based on Workspace Changes
         shell: bash
@@ -832,38 +794,6 @@ jobs:
           terraform apply -auto-approve \
             -target=module.databricks.databricks_schema.data_processing_db \
             -var="subscription_id=$(az account show --query id -o tsv)"
-      
-      # - name: 🚀 Create Databricks Schema
-      #   run: |
-      #     # if [ "$APPLY_EXIT" = "2" ]; then
-      #     #     echo "🧹 Schema will be recreated, removing from state"
-      #     #     terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
-      #     # else
-      #     #     echo "Schema will not be recreated, keeping state"
-      #     # fi
-
-      #     if [ "$APPLY_EXIT" = "2" ]; then
-      #         terraform show -json tfplan > plan.json
-          
-      #         REPLACE_DBW=$(jq -r '
-      #           .resource_changes[]
-      #           | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
-      #           | .change.actions[]
-      #         ' plan.json | grep -w "replace")
-          
-      #         if [ -n "$REPLACE_DBW" ]; then
-      #             echo "🧹 Workspace will be replaced → removing schema from state"
-      #             terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
-      #         else
-      #             echo "Schema will not be recreated, workspace change does not require replace"
-      #         fi
-      #     else
-      #         echo "Schema will not be recreated, no changes detected in workspace"
-      #     fi
-          
-      #     terraform apply -auto-approve \
-      #       -target=module.databricks.databricks_schema.data_processing_db \
-      #       -var="subscription_id=$(az account show --query id -o tsv)"
         
       - name: 🚀 Create Databricks Job
         run: |
