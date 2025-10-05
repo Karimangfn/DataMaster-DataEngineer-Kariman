@@ -1,13 +1,9 @@
 resource "azuread_group" "data_engineers" {
-  display_name = var.data_engineers_group
-  mail_enabled = false
-  security_enabled = true
+  display_name = "data_engineers"
 }
 
 resource "azuread_group" "data_analysts" {
-  display_name = var.data_analysts_group
-  mail_enabled = false
-  security_enabled = true
+  display_name = "data_analysts"
 }
 
 resource "azurerm_role_assignment" "raw_access" {
