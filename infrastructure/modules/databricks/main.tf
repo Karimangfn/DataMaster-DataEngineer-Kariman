@@ -16,6 +16,12 @@ resource "databricks_schema" "data_processing_db" {
   catalog_name  = local.databricks_catalog_name
 }
 
+data "databricks_schema" "data_processing_db" {
+  provider     = databricks.accounts
+  name         = databricks_schema.data_processing_db.name
+  catalog_name = local.databricks_catalog_name
+}
+
 locals {
   storage_account = var.storage_account_name
 
@@ -78,7 +84,7 @@ resource "databricks_job" "data_process" {
       parameters  = [
           "--storage-account", var.storage_account_name,
           "--catalog", local.databricks_catalog_name,
-          "--database", databricks_schema.data_processing_db.name
+          "--database", data.databricks_schema.data_processing_db.name
       ]
     }
   }
@@ -98,7 +104,7 @@ resource "databricks_job" "data_process" {
       parameters  = [
           "--storage-account", var.storage_account_name,
           "--catalog", local.databricks_catalog_name,
-          "--database", databricks_schema.data_processing_db.name
+          "--database", data.databricks_schema.data_processing_db.name
       ]
     }
   }
@@ -118,7 +124,7 @@ resource "databricks_job" "data_process" {
       parameters  = [
           "--storage-account", var.storage_account_name,
           "--catalog", local.databricks_catalog_name,
-          "--database", databricks_schema.data_processing_db.name
+          "--database", data.databricks_schema.data_processing_db.name
       ]
     }
   }
