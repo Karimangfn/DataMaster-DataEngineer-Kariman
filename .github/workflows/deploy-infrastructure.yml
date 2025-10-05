@@ -128,6 +128,13 @@ jobs:
             -target=module.resource_group.azurerm_resource_group.rg \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
+
       - name: 📦 Get Resource Group Name
         id: tfoutput_rg
         run: |
@@ -165,6 +172,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -229,6 +242,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -299,6 +318,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -367,6 +392,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -423,6 +454,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -522,6 +559,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
   
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -575,7 +618,7 @@ jobs:
         working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
-  
+
       - name: 🔎 Ensure Databricks Workspace Info
         run: |
           if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.TOKEN }}" ]; then
