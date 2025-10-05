@@ -108,7 +108,7 @@ jobs:
             fi
           done
 
-      - name: 📦 Get Databricks Resource
+      - name: Get Databricks Resource
         id: tfoutput_dbw
         run: |
           DBW_NAME=$(terraform output -raw databricks_workspace_name 2>/dev/null || echo "")
