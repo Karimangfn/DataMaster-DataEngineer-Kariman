@@ -646,6 +646,8 @@ jobs:
       # - databricks
       # - storage-account
       # - storage-containers
+    env:
+      RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
     steps:    
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
@@ -689,7 +691,7 @@ jobs:
                 | sed -E 's/ ->.*//')
 
               if [ "$type" = "resource_group" ]; then
-                name="${{ secrets.RESOURCE_GROUP }}"
+                name="$RESOURCE_GROUP"
               fi
             
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
@@ -740,7 +742,7 @@ jobs:
               fi
 
                if [ "$type" = "resource_group" ]; then
-                new_name="${{ secrets.RESOURCE_GROUP }}"
+                new_name="$RESOURCE_GROUP"
               fi
           
               echo "| $type | $new_name | ✅ |" >> $GITHUB_STEP_SUMMARY
