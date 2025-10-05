@@ -636,31 +636,18 @@ jobs:
             fi
           done < <(echo "$catalogs" | jq -r '.catalogs[].name')
 
-      - name: 🚀 Handle Databricks Schema Based on Workspace Changes
-        shell: bash
+      - name: 🚀 Create Databricks Schema
         run: |
           terraform show -json tfplan > plan.json
       
-          echo "🔎 Debug: todas as alterações no plan"
-          jq -r '.resource_changes[] | "\(.type) \(.name) actions: \(.change.actions[]?)"' plan.json
-      
-          echo "🔎 Debug: alterações da workspace dbw"
-          jq -r '
+          RECREATE_DBW=$(jq -r '
             .resource_changes[]
             | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
-            | {before: .change.before, after: .change.after, actions: .change.actions}
-          ' plan.json
-      
-          CHANGED_DBW=$(jq -r '
-            .resource_changes[]
-            | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
-            | .change.actions[]?
+            | select(.change.actions? | index("delete") and index("create"))
+            | .address
           ' plan.json)
       
-          echo "🔍 Debug: ações detectadas para workspace dbw: $CHANGED_DBW"
-      
-          if [ -n "$CHANGED_DBW" ]; then
-              echo "🧹 Workspace dbw alterada, removendo schema do state"
+          if [[ -n "$RECREATE_DBW" ]]; then
               terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
           else
               echo "ℹ️ Workspace dbw não requer remoção da schema"
