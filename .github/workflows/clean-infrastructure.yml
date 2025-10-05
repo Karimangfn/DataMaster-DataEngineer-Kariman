@@ -89,22 +89,19 @@ jobs:
             done
           fi
 
-      - name: Check Terraform resource existence and fix state
+      - name: 🧹 Remove stale Databricks resources from state
         run: |
           resources=(
             "module.databricks.databricks_job.data_process"
             "module.databricks.databricks_schema.data_processing_db"
           )
-
-          subscription_id=$(az account show --query id -o tsv)
-          
+      
           for res in "${resources[@]}"; do
-            echo "Checking resource $res ..."
-            if ! terraform plan -target="$res" -var="subscription_id=$subscription_id"; then
-              echo "Resource $res not accessible or does not exist, removing from state"
+            if terraform state list | grep -q "$res"; then
+              echo "Removing $res from Terraform state..."
               terraform state rm "$res" || true
             else
-              echo "Resource $res accessible, no action needed."
+              echo "$res not in state, skipping."
             fi
           done
 
