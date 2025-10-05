@@ -57,9 +57,8 @@ jobs:
           terraform_version: 1.5.7
 
       - name: 🔍 Detectar Resource Group via Terraform Output
+        working-directory: ./infrastructure
         run: |
-          cd ./infrastructure
-      
           echo "📄 Listando todos os outputs do Terraform..."
           terraform output
       
