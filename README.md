@@ -348,9 +348,23 @@ Essas transformações são aplicadas através dos **Microserviços Python**, ga
 **Benefícios principais**:  
 - Proteção de informações sensíveis em conformidade com boas práticas de governança.  
 - Redução de riscos em auditorias e conformidade regulatória (LGPD).  
-- Garantia de que dados analíticos não exponham informações pessoais desnecessárias.  
+- Garantia de que dados analíticos não exponham informações pessoais desnecessárias.
 
-### 3.12 Observabilidade e Monitoramento
+### 3.12 Governança
+
+Nesse projeto, o tema de governança de dados é tratado para garantir que cada usuário tenha acesso apenas às informações necessárias, de acordo com sua função, promovendo segurança, rastreabilidade e compliance.
+
+| Persona             | Nível de Acesso                   | Objetivo do Acesso                                              |
+|---------------------|-----------------------------------|-----------------------------------------------------------------|
+| Engenheiro de Dados | Leitura e Escrita na Raw e Bronze | Implementar e manter pipelines de ingestão e transformação.     |
+| Cientista de Dados  | Leitura na Silver e Gold          | Realizar análises e modelagem preditiva sobre dados confiáveis. |
+| Analista de BI      | Leitura na Gold                   | Construir dashboards e relatórios para tomada de decisão.       |
+| Administrador       | Controle Total                    | Gerenciar usuários, permissões e monitorar segurança.           |
+
+- Todos os acessos são concedidos seguindo o princípio do **menor privilégio**.  
+- O controle é feito via **RBAC** da Azure Storage Account e Service Principals.    
+
+### 3.13 Observabilidade e Monitoramento
 
 O projeto prevê mecanismos de **observabilidade e monitoramento** para acompanhar a execução dos pipelines, identificar falhas rapidamente e garantir confiabilidade no fluxo de dados.
 
@@ -373,7 +387,7 @@ O projeto prevê mecanismos de **observabilidade e monitoramento** para acompanh
 - Garantia de confiabilidade e disponibilidade dos pipelines.  
 - Maior transparência sobre a saúde do ecossistema de dados.  
 
-### 3.13 Escalabilidade e Desempenho
+### 3.14 Escalabilidade e Desempenho
 
 O projeto foi estruturado para suportar aumento de volume de dados e crescimento no número de fontes, mantendo eficiência e confiabilidade no processamento.
 
@@ -399,7 +413,7 @@ O cluster Databricks está configurado com parâmetros de otimização para melh
 - Redução da latência entre ingestão e disponibilização dos dados analíticos.  
 - Otimização de custos ao escalar recursos somente quando necessário.
 
-### 3.14 Metodologia de Desenvolvimento
+### 3.15 Metodologia de Desenvolvimento
 
 O ciclo de desenvolvimento do projeto segue a estratégia de **GitFlow** para organização e rastreabilidade do código.  
 
