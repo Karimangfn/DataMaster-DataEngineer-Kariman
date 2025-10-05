@@ -38,7 +38,7 @@ locals {
 }
 
 resource "databricks_job" "data_process" {
-  provider = databricks.accounts
+  provider = databricks.this
 
   name = "transform-clean-data-process"
 
