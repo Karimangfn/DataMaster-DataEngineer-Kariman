@@ -19,7 +19,6 @@ resource "databricks_schema" "data_processing_db" {
 data "databricks_schema" "data_processing_db" {
   provider     = databricks.accounts
   name         = databricks_schema.data_processing_db.name
-  catalog_name = local.databricks_catalog_name
 }
 
 locals {
