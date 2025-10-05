@@ -646,20 +646,35 @@ jobs:
       # - databricks
       # - storage-account
       # - storage-containers
-    env:
-      RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
     steps:    
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
+
       - name: 📄 Download Terraform plan file
         uses: actions/download-artifact@v4
         with:
           name: terraform-plan-txt
           path: ./infrastructure
+
+      # - name: 🧰 Setup Terraform
+      #   uses: hashicorp/setup-terraform@v3
+      #   with:
+      #     terraform_version: 1.5.7
   
       - name: 📊 Generate Terraform
         run: |
           echo "## 🚀 Terraform Created Resources" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
+          cd infrastructure
+          # terraform init -input=false > /dev/null 2>&1
+          # RG_NAME=$(terraform output -raw resource_group_name || echo "unknown-rg")
+          RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || echo "unknown-rg")
+          cd ..
+          
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
 
           # RG_NAME=$(terraform output -raw resource_group_name)
@@ -691,7 +706,7 @@ jobs:
                 | sed -E 's/ ->.*//')
 
               if [ "$type" = "resource_group" ]; then
-                name="$RESOURCE_GROUP"
+                name="$RG_NAME"
               fi
             
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
@@ -742,7 +757,7 @@ jobs:
               fi
 
                if [ "$type" = "resource_group" ]; then
-                new_name="$RESOURCE_GROUP"
+                new_name="$RG_NAME"
               fi
           
               echo "| $type | $new_name | ✅ |" >> $GITHUB_STEP_SUMMARY
