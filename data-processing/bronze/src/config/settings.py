@@ -3,6 +3,8 @@ Dataset configuration for the Bronze Layer data ingestion pipeline.
 """
 
 import argparse
+import sys
+import shlex
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -20,7 +22,8 @@ parser.add_argument(
     required=True,
     help='Databricks Database Name'
 )
-args = parser.parse_args()
+# args = parser.parse_args()
+args = parser.parse_args(shlex.split(" ".join(sys.argv[1:])))
 
 storage_account = args.storage_account
 catalog = args.catalog
