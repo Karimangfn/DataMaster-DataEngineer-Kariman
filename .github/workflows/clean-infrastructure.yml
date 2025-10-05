@@ -144,6 +144,12 @@ jobs:
           else
             echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
           fi
+
+      - name: Debug List remaining Terraform state
+        if: always()
+        run: |
+          echo "🧐 Remaining resources in Terraform state:"
+          terraform state list || echo "⚠️ Terraform state is empty or cannot be read."
       
       - name: Generate summary of resources to be destroyed
         if: always()
