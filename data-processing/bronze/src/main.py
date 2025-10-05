@@ -7,6 +7,9 @@ base_dir = os.getcwd()
 if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
+print("=== SYS.ARGV ===")
+print(sys.argv)
+
 from config.settings import DATASET_CONFIG
 from modules.bronze_ingestion import ingest_bronze_customer_data
 from modules.schemas import get_customer_schema
