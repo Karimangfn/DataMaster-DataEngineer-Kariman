@@ -576,14 +576,14 @@ jobs:
           path: ./infrastructure/plan.txt
           overwrite: true
 
-      - name: 🧹 Clean Unity Catalog Resources
-        run: |
-          if terraform state list | grep -q "module.databricks.databricks_schema.data_processing_db"; then
-            echo "Removing stale schema from state..."
-            terraform state rm module.databricks.databricks_schema.data_processing_db
-          else
-            echo "Schema not in state, nothing to remove."
-          fi
+      # - name: 🧹 Clean Unity Catalog Resources
+      #   run: |
+      #     if terraform state list | grep -q "module.databricks.databricks_schema.data_processing_db"; then
+      #       echo "Removing stale schema from state..."
+      #       terraform state rm module.databricks.databricks_schema.data_processing_db
+      #     else
+      #       echo "Schema not in state, nothing to remove."
+      #     fi
       
       - run: terraform validate
       
@@ -622,8 +622,15 @@ jobs:
               "git_username": "x-token-auth",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
+      
+      - name: 🚀 Create Databricks Schema
+        run: |
+          terraform apply -auto-approve \
+            -refresh=false \
+            -target=module.databricks.databricks_schema.data_processing_db \
+            -var="subscription_id=$(az account show --query id -o tsv)"
         
-      - name: 🚀 Deploy Databricks Job
+      - name: 🚀 Create Databricks Job
         run: |
           terraform apply -auto-approve \
             -refresh=false \
