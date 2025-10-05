@@ -664,8 +664,14 @@ jobs:
       #   with:
       #     terraform_version: 1.5.7
 
-      - name: 🔍 List downloaded files
-        run: ls -R ./infrastructure
+      # - name: 🔍 List downloaded files
+      #   run: ls -R ./infrastructure
+
+      - name: 📦 Get Resource Group Name
+        id: tfoutput_rg
+        run: |
+          RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
   
       - name: 📊 Generate Terraform
         run: |
