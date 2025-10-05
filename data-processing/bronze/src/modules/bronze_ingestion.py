@@ -5,6 +5,7 @@ from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 from utils.utils import add_metadata_columns, generate_batch_id
+from utils.access import grant_access_to_bronze
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ def ingest_bronze_customer_data(
                 .saveAsTable(f"{config['catalog']}.{config['database']}.bronze")
 
             )
+
+            grant_access_to_bronze(spark, config['catalog'], config['database'])
         else:
             pass
     except Exception as e:
