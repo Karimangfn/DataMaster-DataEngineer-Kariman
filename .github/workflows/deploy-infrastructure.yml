@@ -404,7 +404,7 @@ jobs:
           echo "🔍 Listing Unity Catalog metastores..."
           metastores=$(curl -s -X GET \
             -H "Authorization: Bearer $TOKEN" \
-            "$WORKSPACE_URL/api/2.1/unity-catalog/metastores")
+            "https://adb-939372215075967.7.azuredatabricks.net/api/2.1/unity-catalog/metastores")
           
           echo "📄 Full Metastores API response:"
           echo "$metastores"
