@@ -487,7 +487,6 @@ jobs:
 
       - run: |
            terraform plan -out=tfplan -no-color \
-            -target=module.storage.azurerm_storage_container.catalog \
             -target=module.storage.azurerm_storage_container.raw \
             -target=module.storage.azurerm_storage_container.bronze \
             -target=module.storage.azurerm_storage_container.silver \
@@ -504,7 +503,6 @@ jobs:
       - run: terraform validate
       - run: |
           terraform apply -auto-approve \
-            -target=module.storage.azurerm_storage_container.catalog \
             -target=module.storage.azurerm_storage_container.raw \
             -target=module.storage.azurerm_storage_container.bronze \
             -target=module.storage.azurerm_storage_container.silver \
