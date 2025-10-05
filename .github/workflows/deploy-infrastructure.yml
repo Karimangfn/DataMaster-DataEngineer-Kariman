@@ -669,11 +669,11 @@ jobs:
           echo "## 🚀 Terraform Created Resources" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
   
-          cd infrastructure
+          # cd infrastructure
           # terraform init -input=false > /dev/null 2>&1
           # RG_NAME=$(terraform output -raw resource_group_name || echo "unknown-rg")
           RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || echo "unknown-rg")
-          cd ..
+          # cd ..
           
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
 
