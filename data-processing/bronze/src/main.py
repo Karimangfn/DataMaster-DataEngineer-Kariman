@@ -24,8 +24,6 @@ logger.setLevel(logging.INFO)
 logging.getLogger("py4j").setLevel(logging.ERROR)
 logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
 
-logger.info("=== SYS.ARGV ===")
-logger.info(sys.argv)
 
 def main():
     """
