@@ -645,11 +645,30 @@ jobs:
       
       - name: 🚀 Create Databricks Schema
         run: |
+          # if [ "$APPLY_EXIT" = "2" ]; then
+          #     echo "🧹 Schema will be recreated, removing from state"
+          #     terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+          # else
+          #     echo "Schema will not be recreated, keeping state"
+          # fi
+
           if [ "$APPLY_EXIT" = "2" ]; then
-              echo "🧹 Schema will be recreated, removing from state"
-              terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+              terraform show -json tfplan > plan.json
+          
+              REPLACE_DBW=$(jq -r '
+                .resource_changes[]
+                | select(.type=="azurerm_databricks_workspace" and .name=="dbw")
+                | .change.actions[]
+              ' plan.json | grep -w "replace")
+          
+              if [ -n "$REPLACE_DBW" ]; then
+                  echo "🧹 Workspace will be replaced → removing schema from state"
+                  terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
+              else
+                  echo "Schema will not be recreated, workspace change does not require replace"
+              fi
           else
-              echo "Schema will not be recreated, keeping state"
+              echo "Schema will not be recreated, no changes detected in workspace"
           fi
           
           terraform apply -auto-approve \
