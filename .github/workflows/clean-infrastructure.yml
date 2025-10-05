@@ -107,6 +107,33 @@ jobs:
       #         echo "Resource $res accessible, no action needed."
       #       fi
       #     done
+      
+      - name: 🌟 Debug Terraform State
+        run: |
+          echo "✅ Listing the Terraform state file:"
+          ls -lah ./infrastructure
+      
+          echo ""
+          echo "✅ Showing first 100 lines of terraform.tfstate (for sanity check):"
+          head -n 100 ./infrastructure/terraform.tfstate
+      
+          echo ""
+          echo "🌟 Raw Terraform outputs (JSON):"
+          terraform output -state=./infrastructure/terraform.tfstate -json || true
+      
+          echo ""
+          echo "🌟 All output keys and values individually:"
+          terraform output -state=./infrastructure/terraform.tfstate -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"'
+      
+          echo ""
+          echo "🌟 Terraform workspace info:"
+          terraform workspace list
+          terraform workspace show
+      
+          echo ""
+          echo "✅ Full state resource list:"
+          terraform state list
+      
       - name: Debug Terraform Outputs
         run: |
           echo "🌟 Listing all Terraform outputs:"
