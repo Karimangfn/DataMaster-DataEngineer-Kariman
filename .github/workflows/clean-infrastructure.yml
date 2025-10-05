@@ -111,7 +111,7 @@ jobs:
       - name: Get Databricks Resource
         id: tfoutput_dbw
         run: |
-          DBW_NAME=$(terraform output -raw databricks_workspace_name 2>/dev/null || echo "")
+          DBW_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw databricks_workspace_name 2>/dev/null || echo "unknown-rg")
           if [ -z "$DBW_NAME" ]; then
             echo "⚠️ Databricks workspace name not found in Terraform outputs."
             exit 1
