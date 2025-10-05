@@ -49,7 +49,6 @@ module "databricks" {
 
 module "access" {
   source                = "./modules/access"
-  prefix                = var.prefix
   raw_container_id      = module.storage.raw_container_id
   bronze_container_id   = module.storage.bronze_container_id
   silver_container_id   = module.storage.silver_container_id
