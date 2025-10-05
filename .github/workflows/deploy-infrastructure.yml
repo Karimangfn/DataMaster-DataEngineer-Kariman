@@ -634,7 +634,6 @@ jobs:
           echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------------|---------------|-----------------| " >> $GITHUB_STEP_SUMMARY
   
-          # Array de recursos e seus outputs
           declare -A resources
           resources=(
             ["resource_group"]="${{ needs.resource-group.outputs.RESOURCE_GROUP_NAME }}"
