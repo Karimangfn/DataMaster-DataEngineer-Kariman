@@ -709,7 +709,6 @@ jobs:
   generate-summary:
     name: 📝 Generate Creation and Update Summary
     runs-on: ubuntu-latest
-    if: always()
     needs:
       - resource-group
       - acr
@@ -720,6 +719,11 @@ jobs:
       - access
       - databricks-groups
     steps:
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
       - name: 📝 Generate Terraform Summary Table
         run: |
           echo "## 🚀 Terraform Created Resources" >> $GITHUB_STEP_SUMMARY
@@ -727,27 +731,39 @@ jobs:
           echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------------|---------------|-----------------| " >> $GITHUB_STEP_SUMMARY
   
-          declare -A resources
-          resources=(
-            ["resource_group"]="${{ needs.resource-group.outputs.RESOURCE_GROUP_NAME }}"
-            ["container_registry"]="${{ needs.acr.outputs.CONTAINER_REGISTRY_NAME }}"
-            ["kubernetes_cluster"]="${{ needs.aks.outputs.KUBERNETES_SERVICE }}"
-            ["storage_account"]="${{ needs.storage-account.outputs.STORAGE_ACCOUNT_NAME }}"
-            ["storage_container_raw"]="raw"
-            ["storage_container_bronze"]="bronze"
-            ["storage_container_silver"]="silver"
-            ["storage_container_gold"]="gold"
-            ["databricks_workspace"]="${{ needs.databricks.outputs.WORKSPACE_URL }}"
-            ["role_assignment_raw"]="raw_access"
-            ["role_assignment_bronze"]="bronze_access"
-            ["role_assignment_silver"]="silver_access"
-            ["role_assignment_gold"]="gold_access"
-            ["databricks_group_data_engineers"]="data_engineers"
-            ["databricks_group_data_scientists"]="data_scientists"
-            ["databricks_group_data_analysts"]="data_analysts"
-          )
+          RG_NAME="${{ needs.resource-group.outputs.RESOURCE_GROUP_NAME }}"
+          if az group show --name "$RG_NAME" &>/dev/null; then STATUS="✅"; else STATUS="❌"; fi
+          echo "| Resource Group | $RG_NAME | $STATUS |" >> $GITHUB_STEP_SUMMARY
   
-          for type in "${!resources[@]}"; do
-            name=${resources[$type]}
-            echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
+          ACR_NAME="${{ needs.acr.outputs.CONTAINER_REGISTRY_NAME }}"
+          if az acr show --name "$ACR_NAME" &>/dev/null; then STATUS="✅"; else STATUS="❌"; fi
+          echo "| Container Registry | $ACR_NAME | $STATUS |" >> $GITHUB_STEP_SUMMARY
+  
+          AKS_NAME="${{ needs.aks.outputs.KUBERNETES_SERVICE }}"
+          if az aks show --name "$AKS_NAME" --resource-group "$RG_NAME" &>/dev/null; then STATUS="✅"; else STATUS="❌"; fi
+          echo "| Kubernetes Cluster | $AKS_NAME | $STATUS |" >> $GITHUB_STEP_SUMMARY
+  
+          STA_NAME="${{ needs.storage-account.outputs.STORAGE_ACCOUNT_NAME }}"
+          if az storage account show --name "$STA_NAME" --resource-group "$RG_NAME" &>/dev/null; then STATUS="✅"; else STATUS="❌"; fi
+          echo "| Storage Account | $STA_NAME | $STATUS |" >> $GITHUB_STEP_SUMMARY
+  
+          for CONTAINER in raw bronze silver gold; do
+            if az storage container show --account-name "$STA_NAME" --name "$CONTAINER" &>/dev/null; then STATUS="✅"; else STATUS="❌"; fi
+            echo "| Storage Container | $CONTAINER | $STATUS |" >> $GITHUB_STEP_SUMMARY
+          done
+  
+          DB_WORKSPACE="${{ needs.databricks.outputs.WORKSPACE_URL }}"
+          if [ -n "$DB_WORKSPACE" ]; then STATUS="✅"; else STATUS="❌"; fi
+          echo "| Databricks Workspace | $DB_WORKSPACE | $STATUS |" >> $GITHUB_STEP_SUMMARY
+  
+          for GROUP in data_engineers data_scientists data_analysts; do
+            RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$DB_WORKSPACE/api/2.0/preview/scim/v2/Groups")
+            if echo "$RESPONSE" | grep -q "\"displayName\": \"$GROUP\""; then STATUS="✅"; else STATUS="❌"; fi
+            echo "| Databricks Group | $GROUP | $STATUS |" >> $GITHUB_STEP_SUMMARY
+          done
+  
+          for ROLE in raw_access bronze_access silver_access gold_access; do
+            # Aqui você pode fazer checagem via az role assignment list
+            if az role assignment list --assignee "${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" --query "[?roleDefinitionName=='$ROLE']" -o tsv | grep -q .; then STATUS="✅"; else STATUS="❌"; fi
+            echo "| Role Assignment | $ROLE | $STATUS |" >> $GITHUB_STEP_SUMMARY
           done
