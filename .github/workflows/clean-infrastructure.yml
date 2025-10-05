@@ -56,126 +56,145 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - run: terraform init
-      
-      - run: terraform validate
-
-      - name: 🧹 Conditionally delete Network Watchers not managed by Terraform
+      - name: 🧪 Teste de visibilidade do Resource Group
         run: |
-          echo "🔎 Fetching existing Network Watchers..."
-          nw_list=$(az network watcher list --query "[].{name:name, rg:resourceGroup, id:id}" -o tsv)
-      
-          if [ -z "$nw_list" ]; then
-            echo "✅ No Network Watchers found."
-          else
-            echo "$nw_list" | while read -r name rg id; do
-              echo "🔍 Checking if Network Watcher '$name' (RG: $rg) exists in Terraform state..."
-      
-              if terraform state list | grep -q "$id"; then
-                echo "✅ $name is managed by Terraform. Will NOT delete via CLI."
-              else
-                echo "🗑️ $name is NOT managed by Terraform. Deleting directly via Azure CLI..."
-                az resource delete --ids "$id"
-      
-                echo "🧹 Checking if resource group '$rg' is empty..."
-                rg_resources=$(az resource list --resource-group "$rg" --query "length([])")
-                
-                if [ "$rg_resources" -eq 0 ]; then
-                  echo "🗑️ Resource group '$rg' is now empty. Deleting..."
-                  az group delete --name "$rg" --yes --no-wait
-                else
-                  echo "ℹ️ Resource group '$rg' still has resources. Skipping deletion."
-                fi
-              fi
-            done
-          fi
-
-      - name: Check Terraform resource existence and fix state
-        run: |
-          resources=(
-            "module.databricks.databricks_job.data_process"
-            "module.databricks.databricks_schema.data_processing_db"
-          )
-      
-          subscription_id=$(az account show --query id -o tsv)
-          
-          for res in "${resources[@]}"; do
-            echo "Checking resource $res ..."
-            if ! terraform plan -target="$res" -var="subscription_id=$subscription_id"; then
-              echo "Resource $res not accessible or does not exist, removing from state"
-              terraform state rm "$res" || true
-            else
-              echo "Resource $res accessible, no action needed."
-            fi
-          done
-
-      - name: Terraform Destroy
-        id: tf_destroy
-        run: |
-          terraform plan \
-          -destroy \
-          -no-color \
-          -var="subscription_id=$(az account show --query id -o tsv)" \
-          -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" > plan.txt || true
-          
-          terraform destroy \
-          -auto-approve \
-          -var="subscription_id=$(az account show --query id -o tsv)" \
-          -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-
-      - name: Delete Databricks Unity Catalog Resources
-        run: |
-          set +e
+          echo "🔍 Lendo secret..."
           RG_NAME="${{ secrets.RESOURCE_GROUP }}"
-          DB_RG="${RG_NAME%-rg}-dbw-mrg"
-      
-          if az group show --name "$DB_RG" &>/dev/null; then
-            echo "🗑️ Resource group $DB_RG found. Deleting..."
-            az group delete --name "$DB_RG" --yes --no-wait
-            echo "✅ Deletion initiated for $DB_RG."
-          else
-            echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
-          fi
-      
-      - name: Generate summary of resources to be destroyed
-        if: always()
-        run: |
-          echo "## 🧹 Terraform Resources to be Destroyed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-      
-          if grep -q '^\s*# .*will be destroyed' plan.txt; then
-            echo "| Resource Type | Resource Name | Delete Status |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
-      
-            grep '^\s*# .*will be destroyed' plan.txt | while read -r line; do
-              resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be destroyed/\1 \2/')
-            
-              short_id=$(echo "$resource" | sed -E 's/^module\.([^.]+)\.//')
-            
-              full_type=$(echo "$short_id" | awk '{print $1}')
-              id=$(echo "$short_id" | awk '{print $2}')
-              type=${full_type#azurerm_}
 
-              if [ "$type" = "random_id" ] || 
-                 [ "$type" = "role_assignment" ] || 
-                 [ "$type" = "databricks_job" ]; then
-                continue
-              fi
+          echo "Valor bruto da secret (vai ser mascarado): $RG_NAME"
+
+          CLEAN_RG_NAME=$(echo "$RG_NAME" | sed 's/[^a-zA-Z0-9_-]//g')
+          echo "Valor limpo (não mascarado): $CLEAN_RG_NAME"
+
+          # Exporta para summary
+          echo "## 🧪 Teste de visibilidade do Resource Group" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**RG_NAME (mascarado)**: $RG_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**CLEAN_RG_NAME (visível)**: $CLEAN_RG_NAME" >> $GITHUB_STEP_SUMMARY
+
+          # Também exporta como env para steps seguintes
+          echo "CLEAN_RG_NAME=$CLEAN_RG_NAME" >> $GITHUB_ENV
+
+      # - run: terraform init
+      
+      # - run: terraform validate
+
+      # - name: 🧹 Conditionally delete Network Watchers not managed by Terraform
+      #   run: |
+      #     echo "🔎 Fetching existing Network Watchers..."
+      #     nw_list=$(az network watcher list --query "[].{name:name, rg:resourceGroup, id:id}" -o tsv)
+      
+      #     if [ -z "$nw_list" ]; then
+      #       echo "✅ No Network Watchers found."
+      #     else
+      #       echo "$nw_list" | while read -r name rg id; do
+      #         echo "🔍 Checking if Network Watcher '$name' (RG: $rg) exists in Terraform state..."
+      
+      #         if terraform state list | grep -q "$id"; then
+      #           echo "✅ $name is managed by Terraform. Will NOT delete via CLI."
+      #         else
+      #           echo "🗑️ $name is NOT managed by Terraform. Deleting directly via Azure CLI..."
+      #           az resource delete --ids "$id"
+      
+      #           echo "🧹 Checking if resource group '$rg' is empty..."
+      #           rg_resources=$(az resource list --resource-group "$rg" --query "length([])")
+                
+      #           if [ "$rg_resources" -eq 0 ]; then
+      #             echo "🗑️ Resource group '$rg' is now empty. Deleting..."
+      #             az group delete --name "$rg" --yes --no-wait
+      #           else
+      #             echo "ℹ️ Resource group '$rg' still has resources. Skipping deletion."
+      #           fi
+      #         fi
+      #       done
+      #     fi
+
+      # - name: Check Terraform resource existence and fix state
+      #   run: |
+      #     resources=(
+      #       "module.databricks.databricks_job.data_process"
+      #       "module.databricks.databricks_schema.data_processing_db"
+      #     )
+      
+      #     subscription_id=$(az account show --query id -o tsv)
+          
+      #     for res in "${resources[@]}"; do
+      #       echo "Checking resource $res ..."
+      #       if ! terraform plan -target="$res" -var="subscription_id=$subscription_id"; then
+      #         echo "Resource $res not accessible or does not exist, removing from state"
+      #         terraform state rm "$res" || true
+      #       else
+      #         echo "Resource $res accessible, no action needed."
+      #       fi
+      #     done
+
+      # - name: Terraform Destroy
+      #   id: tf_destroy
+      #   run: |
+      #     terraform plan \
+      #     -destroy \
+      #     -no-color \
+      #     -var="subscription_id=$(az account show --query id -o tsv)" \
+      #     -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" > plan.txt || true
+          
+      #     terraform destroy \
+      #     -auto-approve \
+      #     -var="subscription_id=$(az account show --query id -o tsv)" \
+      #     -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+
+      # - name: Delete Databricks Unity Catalog Resources
+      #   run: |
+      #     set +e
+      #     RG_NAME="${{ secrets.RESOURCE_GROUP }}"
+      #     DB_RG="${RG_NAME%-rg}-dbw-mrg"
+      
+      #     if az group show --name "$DB_RG" &>/dev/null; then
+      #       echo "🗑️ Resource group $DB_RG found. Deleting..."
+      #       az group delete --name "$DB_RG" --yes --no-wait
+      #       echo "✅ Deletion initiated for $DB_RG."
+      #     else
+      #       echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
+      #     fi
+      
+      # - name: Generate summary of resources to be destroyed
+      #   if: always()
+      #   run: |
+      #     echo "## 🧹 Terraform Resources to be Destroyed" >> $GITHUB_STEP_SUMMARY
+      #     echo "" >> $GITHUB_STEP_SUMMARY
+      
+      #     if grep -q '^\s*# .*will be destroyed' plan.txt; then
+      #       echo "| Resource Type | Resource Name | Delete Status |" >> $GITHUB_STEP_SUMMARY
+      #       echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
+      
+      #       grep '^\s*# .*will be destroyed' plan.txt | while read -r line; do
+      #         resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) will be destroyed/\1 \2/')
+            
+      #         short_id=$(echo "$resource" | sed -E 's/^module\.([^.]+)\.//')
+            
+      #         full_type=$(echo "$short_id" | awk '{print $1}')
+      #         id=$(echo "$short_id" | awk '{print $2}')
+      #         type=${full_type#azurerm_}
+
+      #         if [ "$type" = "random_id" ] || 
+      #            [ "$type" = "role_assignment" ] || 
+      #            [ "$type" = "databricks_job" ]; then
+      #           continue
+      #         fi
               
-              block=$(sed -n "/- resource \"$full_type\" \"$id\" {/,/^}/p" plan.txt)
+      #         block=$(sed -n "/- resource \"$full_type\" \"$id\" {/,/^}/p" plan.txt)
             
-              if [ -z "$block" ]; then
-                echo "⚠️ WARNING: Could not extract block for $full_type.$id"
-                name="$id"
-              else
-                name=$(echo "$block" | grep '^[ ~+-]*name\s*=' | head -n1 | sed -E 's/^[ ~+-]*name\s*=\s*"(.*)".*/\1/' | sed -E 's/ ->.*//')
-                if [ -z "$name" ]; then
-                  name="$id"
-                fi
-              fi
+      #         if [ -z "$block" ]; then
+      #           echo "⚠️ WARNING: Could not extract block for $full_type.$id"
+      #           name="$id"
+      #         else
+      #           name=$(echo "$block" | grep '^[ ~+-]*name\s*=' | head -n1 | sed -E 's/^[ ~+-]*name\s*=\s*"(.*)".*/\1/' | sed -E 's/ ->.*//')
+      #           if [ -z "$name" ]; then
+      #             name="$id"
+      #           fi
+      #         fi
             
-              echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
-            done
-          else
-            echo "_No resources to destroy._" >> $GITHUB_STEP_SUMMARY
-          fi
+      #         echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
+      #       done
+      #     else
+      #       echo "_No resources to destroy._" >> $GITHUB_STEP_SUMMARY
+      #     fi
