@@ -7,7 +7,7 @@ resource "azurerm_databricks_workspace" "dbw" {
 }
 
 locals {
-  databricks_catalog_name = "data_catalog"
+  databricks_catalog_name = replace(azurerm_databricks_workspace.dbw.name, "-", "_")
 }
 
 resource "databricks_schema" "data_processing_db" {
