@@ -382,7 +382,7 @@ jobs:
           uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
           post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
           TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
-          WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
+          WORKSPACE_URL="https://adb-536507845724072.12.azuredatabricks.net"
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "::add-mask::$TOKEN"
