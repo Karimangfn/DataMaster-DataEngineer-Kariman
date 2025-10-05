@@ -663,39 +663,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-
-      # - name: 📦 Get Resource Group Name
-      #   id: tfoutput_rg
-      #   run: |
-      #     TFSTATE="./infrastructure/terraform.tfstate"
-          
-      #     if [ ! -s "$TFSTATE" ]; then
-      #       echo "Error: Terraform state not found or empty"
-      #       echo "RESOURCE_GROUP_NAME=unknown-rg" >> $GITHUB_ENV
-      #       exit 0
-      #     fi
-      
-      #     echo "=== Terraform outputs (raw) ==="
-      #     terraform -chdir=./infrastructure output
-      
-      #     echo "=== Terraform outputs (JSON) ==="
-      #     terraform -chdir=./infrastructure output -json
-      
-      #     # Tenta pegar o output do root
-      #     RESOURCE_GROUP_NAME=$(terraform -chdir=./infrastructure output -raw resource_group_name 2>/dev/null || echo "")
-      
-      #     if [ -z "$RESOURCE_GROUP_NAME" ]; then
-      #       echo "⚠️ resource_group_name não encontrado no root module. Tentando pegar do módulo..."
-      #       RESOURCE_GROUP_NAME=$(terraform -chdir=./infrastructure output -json | jq -r '.module_resource_group.resource_group_name.value // empty')
-      #     fi
-      
-      #     if [ -z "$RESOURCE_GROUP_NAME" ]; then
-      #       echo "❌ Resource group name não encontrado em nenhum output"
-      #       RESOURCE_GROUP_NAME="unknown-rg"
-      #     fi
-      
-      #     echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
-      #     echo "✅ RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
   
       - name: 📊 Generate Terraform
         run: |
@@ -705,8 +672,6 @@ jobs:
           RG_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "unknown-rg")
           
           grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
-
-          # RG_NAME=$(terraform output -raw resource_group_name)
   
           if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
             echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
