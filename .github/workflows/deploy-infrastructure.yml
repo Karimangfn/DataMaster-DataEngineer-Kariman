@@ -151,6 +151,7 @@ jobs:
 
       - name: Export Terraform outputs
         run: terraform output -json > terraform_outputs.json
+        working-directory: ./infrastructure
       
       - name: Upload outputs as artifact
         uses: actions/upload-artifact@v4
@@ -204,6 +205,13 @@ jobs:
           terraform apply -auto-approve \
             -target=module.acr.azurerm_container_registry.acr \
             -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: 📦 Get Container Registry Name
         id: tfoutput_acr
@@ -281,6 +289,13 @@ jobs:
             -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
+
       - name: ☁️ Get Azure Kubernetes Service Name
         id: tfoutput_aks
         run: |
@@ -354,6 +369,13 @@ jobs:
             -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
             -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: 📦 Get Storage Account Name
         id: tfoutput_storage
@@ -430,6 +452,13 @@ jobs:
             -target=module.storage.azurerm_storage_container.silver \
             -target=module.storage.azurerm_storage_container.gold \
             -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: Export Terraform outputs
         run: terraform output -json > terraform_outputs.json
@@ -536,6 +565,13 @@ jobs:
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
             -var="enable_databricks=true"
 
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
+
       - name: Export Terraform outputs
         run: terraform output -json > terraform_outputs.json
       
@@ -583,12 +619,6 @@ jobs:
             -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
           terraform show -no-color tfplan >> plan.txt
   
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
-  
       - run: terraform validate
   
       - run: |
@@ -599,6 +629,13 @@ jobs:
             -target=module.access_lake.azurerm_role_assignment.gold_access \
             -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: Export Terraform outputs
         run: terraform output -json > terraform_outputs.json
@@ -618,6 +655,12 @@ jobs:
         working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
 
       - name: 🔎 Ensure Databricks Workspace Info
         run: |
@@ -646,6 +689,13 @@ jobs:
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/scim+json" \
             -d '{"displayName":"data_analysts"}' || echo "Group may already exist"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: Export Terraform outputs
         run: terraform output -json > terraform_outputs.json
