@@ -366,7 +366,7 @@ jobs:
   storage-containers:
     name: 📁 Creating Storage Containers
     runs-on: ubuntu-latest
-    needs: [resource-group, storage-account]
+    needs: [resource-group, storage-account, acr]
     defaults:
       run:
         working-directory: ./infrastructure
