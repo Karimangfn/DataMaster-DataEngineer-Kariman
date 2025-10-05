@@ -107,7 +107,11 @@ jobs:
       #         echo "Resource $res accessible, no action needed."
       #       fi
       #     done
-
+      - name: Debug Terraform Outputs
+        run: |
+          echo "🌟 Listing all Terraform outputs:"
+          terraform output -state=./infrastructure/terraform.tfstate -json | jq
+      
       - name: Get Databricks Resource
         id: tfoutput_dbw
         run: |
