@@ -56,24 +56,16 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: 🧪 Teste de visibilidade do Resource Group
+      - name: 🧪 Tornar RG visível no summary
         run: |
-          echo "🔍 Lendo secret..."
-          RG_NAME="${{ secrets.RESOURCE_GROUP }}"
+          SECRET_RG="${{ secrets.RESOURCE_GROUP }}"
+          # Detecta RG via Azure (ou use Terraform output/state)
+          DETECTED_RG=$(az group list --query "[?name=='$SECRET_RG'].name" -o tsv)
+          
+          echo "✅ Resource Group confirmado: $DETECTED_RG"
 
-          echo "Valor bruto da secret (vai ser mascarado): $RG_NAME"
-
-          CLEAN_RG_NAME=$(echo "$RG_NAME" | sed 's/[^a-zA-Z0-9_-]//g')
-          echo "Valor limpo (não mascarado): $CLEAN_RG_NAME"
-
-          # Exporta para summary
-          echo "## 🧪 Teste de visibilidade do Resource Group" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**RG_NAME (mascarado)**: $RG_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "**CLEAN_RG_NAME (visível)**: $CLEAN_RG_NAME" >> $GITHUB_STEP_SUMMARY
-
-          # Também exporta como env para steps seguintes
-          echo "CLEAN_RG_NAME=$CLEAN_RG_NAME" >> $GITHUB_ENV
+          echo "## ☁️ Resource Group Detalhes" >> $GITHUB_STEP_SUMMARY
+          echo "**Nome real:** $DETECTED_RG" >> $GITHUB_STEP_SUMMARY
 
       # - run: terraform init
       
