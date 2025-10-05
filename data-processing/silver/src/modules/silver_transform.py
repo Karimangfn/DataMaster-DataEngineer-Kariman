@@ -4,6 +4,7 @@ from typing import Any, Dict
 from pyspark.sql import SparkSession
 from utils.utils import (add_high_value_flag, clean_and_cast_columns,
                          deduplicate, mask_sensitive_data)
+from utils.access import grant_access_to_silver
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,8 @@ def transform_silver(
           .mode("append") \
           .option("path", config["silver_path"]) \
           .saveAsTable(f"{config['catalog']}.{config['database']}.silver")
+
+        grant_access_to_silver(spark, config['catalog'], config['database'])
     except Exception as e:
         logger.error(f"Error during Silver transformation: {e}")
         raise
