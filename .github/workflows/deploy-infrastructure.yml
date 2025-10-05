@@ -623,6 +623,8 @@ jobs:
       
       - name: 🚀 Create Databricks Schema
         run: |
+          terraform state rm module.databricks.databricks_schema.data_processing_db || true
+          
           terraform apply -auto-approve \
             -target=module.databricks.databricks_schema.data_processing_db \
             -var="subscription_id=$(az account show --query id -o tsv)"
