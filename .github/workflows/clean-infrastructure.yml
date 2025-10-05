@@ -109,9 +109,12 @@ jobs:
       #     done
       
       - name: Get Databricks Resource Name
+        working-directory: ./infrastructure
         id: tfoutput_dbw
         run: |
-          RG_BASE=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "")
+          RG_BASE=$(terraform output -raw resource_group_name 2>/dev/null || true)
+          RG_BASE=$(echo "$RG_BASE" | tr -d '\r\n')
+      
           if [ -z "$RG_BASE" ]; then
             echo "⚠️ No Databricks resource group found. Skipping deletion."
             echo "DBW_NAME=" >> $GITHUB_ENV
