@@ -112,19 +112,19 @@ jobs:
         working-directory: ./infrastructure
         run: |
           echo "✅ Listing the Terraform state file:"
-          ls -lah ./infrastructure
+          ls -lah
       
           echo ""
           echo "✅ Showing first 100 lines of terraform.tfstate (for sanity check):"
-          head -n 100 ./infrastructure/terraform.tfstate
+          head -n 100 terraform.tfstate
       
           echo ""
           echo "🌟 Raw Terraform outputs (JSON):"
-          terraform output -state=./infrastructure/terraform.tfstate -json || true
+          terraform output -state=terraform.tfstate -json || true
       
           echo ""
           echo "🌟 All output keys and values individually:"
-          terraform output -state=./infrastructure/terraform.tfstate -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"'
+          terraform output -state=terraform.tfstate -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"'
       
           echo ""
           echo "🌟 Terraform workspace info:"
