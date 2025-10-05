@@ -107,21 +107,6 @@ jobs:
               echo "Resource $res accessible, no action needed."
             fi
           done
-      
-      - name: Get Databricks Resource Name
-        working-directory: ./infrastructure
-        id: tfoutput_dbw
-        run: |
-          RG_BASE=$(terraform output -raw resource_group_name 2>/dev/null || true)
-          RG_BASE=$(echo "$RG_BASE" | tr -d '\r\n')
-      
-          if [ -z "$RG_BASE" ]; then
-            echo "⚠️ No Databricks resource group found. Skipping deletion."
-            echo "DBW_NAME=" >> $GITHUB_ENV
-          else
-            DBW_NAME="${RG_BASE%-rg}-dbw-mrg"
-            echo "DBW_NAME=$DBW_NAME" >> $GITHUB_ENV
-          fi
 
       - name: Terraform Destroy
         id: tf_destroy
