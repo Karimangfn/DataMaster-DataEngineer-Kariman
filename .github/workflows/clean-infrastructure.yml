@@ -43,7 +43,7 @@ jobs:
 
           echo "RUN_ID=$(cat $RUN_ID_PATH)" >> "$GITHUB_ENV"
 
-      - name: Download Terraform state from previous run
+      - name: 📥 Download Terraform state from Previous Run
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
@@ -146,11 +146,12 @@ jobs:
             echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
           fi
 
-      - name: Debug List remaining Terraform state
-        if: always()
-        run: |
-          echo "🧐 Remaining resources in Terraform state:"
-          terraform state list || echo "⚠️ Terraform state is empty or cannot be read."
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
       
       - name: Generate summary of resources to be destroyed
         if: always()
