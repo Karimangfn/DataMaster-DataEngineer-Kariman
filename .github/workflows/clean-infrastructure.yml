@@ -161,8 +161,7 @@ jobs:
           echo "## 🧹 Terraform Resources to be Destroyed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || true)
-          RG_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "unknown-rg")
+          Resource_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "unknown-rg")
       
           if grep -q '^\s*# .*will be destroyed' plan.txt; then
             echo "| Resource Type | Resource Name | Delete Status |" >> $GITHUB_STEP_SUMMARY
@@ -196,7 +195,7 @@ jobs:
               fi
 
               if [ "$type" = "resource_group" ]; then
-                name="$RG_NAME"
+                name="$Resource_NAME"
               fi
             
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
