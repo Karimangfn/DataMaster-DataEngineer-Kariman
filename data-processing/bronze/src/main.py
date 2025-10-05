@@ -7,9 +7,6 @@ base_dir = os.getcwd()
 if base_dir not in sys.path:
     sys.path.insert(0, base_dir)
 
-print("=== SYS.ARGV ===")
-print(sys.argv)
-
 from config.settings import DATASET_CONFIG
 from modules.bronze_ingestion import ingest_bronze_customer_data
 from modules.schemas import get_customer_schema
@@ -27,6 +24,8 @@ logger.setLevel(logging.INFO)
 logging.getLogger("py4j").setLevel(logging.ERROR)
 logging.getLogger("py4j.clientserver").setLevel(logging.ERROR)
 
+logger.info("=== SYS.ARGV ===")
+logger.info(sys.argv)
 
 def main():
     """
