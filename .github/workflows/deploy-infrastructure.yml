@@ -403,41 +403,85 @@ jobs:
         run: |
           echo "🔍 Checking Databricks catalogs..."
           catalogs=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
-      
+          
           echo "📄 Full API response:"
           echo "$catalogs"
-      
+          
           catalog_count=$(echo "$catalogs" | jq '.catalogs | length // 0')
           if [[ "$catalog_count" -eq 0 ]]; then
               echo "⚠️ No catalogs found or API returned invalid data"
               exit 0
           fi
-      
+          
           echo "📂 Catalogs encontrados:"
           echo "$catalogs" | jq '.catalogs[]'
-      
+          
           echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
-      
+          
           while read -r name; do
             echo "ℹ️ Verificando catálogo: $name"
             if [[ "$name" == *dbw* ]]; then
               new_name="data_catalog"
               echo "🧠 Tentando renomear $name → $new_name"
-      
+        
               response=$(curl -s -w "\n%{http_code}" -X PATCH \
                 -H "Authorization: Bearer $TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "{\"new_name\": \"$new_name\"}" \
                 "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
-      
+        
               body=$(echo "$response" | head -n1)
               status=$(echo "$response" | tail -n1)
-      
+        
               echo "📤 Response body: $body"
               echo "📊 HTTP status: $status"
-      
+        
               if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
                 echo "✅ Catalog renamed successfully."
+              elif echo "$body" | grep -q "CATALOG_ALREADY_EXISTS"; then
+                echo "⚠️ Catalog $new_name already exists. Deleting existing catalog..."
+        
+                delete_id=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs" \
+                  | jq -r ".catalogs[] | select(.name==\"$new_name\") | .id")
+        
+                if [[ -n "$delete_id" ]]; then
+                  echo "🗑️ Deleting catalog $new_name (id: $delete_id)..."
+                  delete_response=$(curl -s -w "\n%{http_code}" -X DELETE \
+                    -H "Authorization: Bearer $TOKEN" \
+                    "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$delete_id")
+        
+                  delete_body=$(echo "$delete_response" | head -n1)
+                  delete_status=$(echo "$delete_response" | tail -n1)
+        
+                  echo "📤 Delete response body: $delete_body"
+                  echo "📊 Delete HTTP status: $delete_status"
+        
+                  if [[ "$delete_status" -ge 200 && "$delete_status" -lt 300 ]]; then
+                    echo "✅ Catalog deleted. Retrying rename..."
+        
+                    retry_response=$(curl -s -w "\n%{http_code}" -X PATCH \
+                      -H "Authorization: Bearer $TOKEN" \
+                      -H "Content-Type: application/json" \
+                      -d "{\"new_name\": \"$new_name\"}" \
+                      "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
+        
+                    retry_body=$(echo "$retry_response" | head -n1)
+                    retry_status=$(echo "$retry_response" | tail -n1)
+        
+                    echo "📤 Retry response body: $retry_body"
+                    echo "📊 Retry HTTP status: $retry_status"
+        
+                    if [[ "$retry_status" -ge 200 && "$retry_status" -lt 300 ]]; then
+                      echo "✅ Catalog renamed successfully after deleting existing catalog."
+                    else
+                      echo "⚠️ Failed to rename catalog after deleting existing one. Skipping."
+                    fi
+                  else
+                    echo "⚠️ Failed to delete existing catalog. Skipping rename."
+                  fi
+                else
+                  echo "⚠️ Could not find ID of catalog $new_name to delete. Skipping rename."
+                fi
               else
                 echo "⚠️ Failed to rename catalog $name, skipping."
               fi
