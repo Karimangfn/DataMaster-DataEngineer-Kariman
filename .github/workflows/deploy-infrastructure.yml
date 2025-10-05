@@ -576,7 +576,7 @@ jobs:
           path: ./infrastructure/plan.txt
           overwrite: true
 
-      - name: 🧹 Remove stale Databricks schema from state
+      - name: 🧹 Clean Unity Catalog Resources
         run: |
           if terraform state list | grep -q "module.databricks.databricks_schema.data_processing_db"; then
             echo "Removing stale schema from state..."
