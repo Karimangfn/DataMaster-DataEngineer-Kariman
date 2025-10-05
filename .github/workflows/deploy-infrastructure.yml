@@ -402,7 +402,7 @@ jobs:
         shell: bash
         run: |
           echo "🔍 Checking Databricks catalogs..."
-          catalogs=$(curl -s -X GET -H "Authorization: $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+          catalogs=$(curl -s -X GET -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
       
           echo "📄 Full API response:"
           echo "$catalogs"
@@ -425,7 +425,7 @@ jobs:
               echo "🧠 Tentando renomear $name → $new_name"
       
               response=$(curl -s -w "\n%{http_code}" -X PATCH \
-                -H "Authorization: $TOKEN" \
+                -H "Authorization: Bearer $TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "{\"new_name\": \"$new_name\"}" \
                 "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name")
