@@ -108,47 +108,17 @@ jobs:
       #       fi
       #     done
       
-      - name: 🌟 Debug Terraform State
-        working-directory: ./infrastructure
-        run: |
-          echo "✅ Listing the Terraform state file:"
-          ls -lah
-      
-          echo ""
-          echo "✅ Showing first 100 lines of terraform.tfstate (for sanity check):"
-          head -n 100 terraform.tfstate
-      
-          echo ""
-          echo "🌟 Raw Terraform outputs (JSON):"
-          terraform output -state=terraform.tfstate -json || true
-      
-          echo ""
-          echo "🌟 All output keys and values individually:"
-          terraform output -state=terraform.tfstate -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"'
-      
-          echo ""
-          echo "🌟 Terraform workspace info:"
-          terraform workspace list
-          terraform workspace show
-      
-          echo ""
-          echo "✅ Full state resource list:"
-          terraform state list
-      
-      - name: Debug Terraform Outputs
-        run: |
-          echo "🌟 Listing all Terraform outputs:"
-          terraform output -state=./infrastructure/terraform.tfstate -json | jq
-      
-      - name: Get Databricks Resource
+      - name: Get Databricks Resource Name
         id: tfoutput_dbw
         run: |
-          DBW_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw databricks_workspace_name 2>/dev/null || echo "unknown-rg")
-          if [ -z "$DBW_NAME" ]; then
-            echo "⚠️ Databricks workspace name not found in Terraform outputs."
-            exit 1
+          RG_BASE=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "")
+          if [ -z "$RG_BASE" ]; then
+            echo "⚠️ No Databricks resource group found. Skipping deletion."
+            echo "DBW_NAME=" >> $GITHUB_ENV
+          else
+            DBW_NAME="${RG_BASE%-rg}-dbw-mrg"
+            echo "DBW_NAME=$DBW_NAME" >> $GITHUB_ENV
           fi
-          echo "DBW_NAME=$DBW_NAME" >> $GITHUB_ENV
 
       # - name: Terraform Destroy
       #   id: tf_destroy
