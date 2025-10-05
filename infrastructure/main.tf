@@ -53,7 +53,5 @@ module "access" {
   bronze_container_id   = module.storage.bronze_container_id
   silver_container_id   = module.storage.silver_container_id
   gold_container_id     = module.storage.gold_container_id
-  data_engineers_group  = module.databricks.data_engineers_group
-  data_analysts_group   = module.databricks.data_analysts_group
   client_id             = var.client_id
 }
