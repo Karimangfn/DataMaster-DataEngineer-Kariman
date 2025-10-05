@@ -57,23 +57,17 @@ jobs:
           terraform_version: 1.5.7
 
       - name: 🔍 List Terraform outputs
+        working-directory: ./infrastructure
         run: |
-          # Garante que o working directory está correto
-          cd ./infrastructure
-      
-          # Lista todos os outputs do Terraform
           echo "📄 Terraform outputs:"
           terraform output
       
-          # Captura o Resource Group se existir como output
           RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || true)
       
           if [ -n "$RG_NAME" ]; then
             echo "✅ Resource Group detectado via Terraform output: $RG_NAME"
-            # Adiciona ao summary
             echo "## ☁️ Resource Group via Terraform" >> $GITHUB_STEP_SUMMARY
             echo "**Nome real:** $RG_NAME" >> $GITHUB_STEP_SUMMARY
-            # Exporta para steps seguintes
             echo "DETECTED_RG=$RG_NAME" >> $GITHUB_ENV
           else
             echo "⚠️ Nenhum output chamado 'resource_group_name' encontrado."
