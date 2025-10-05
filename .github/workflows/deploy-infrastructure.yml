@@ -149,16 +149,6 @@ jobs:
         run: |
           gh secret set RESOURCE_GROUP --repo $REPO --body "$RESOURCE_GROUP_NAME"
 
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-        working-directory: ./infrastructure
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-rg
-          path: terraform_outputs.json
-
   acr:
     name: 🐳 Creating Container Registry (ACR)
     runs-on: ubuntu-latest
@@ -226,15 +216,6 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
-
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-acr
-          path: terraform_outputs.json
           
   aks:
     name: ☸️ Creating AKS Cluster
@@ -309,15 +290,6 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           gh secret set AKS_NAME --repo $REPO --body "$KUBERNETES_SERVICE"
-
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-aks
-          path: terraform_outputs.json
  
   storage-account:
     name: 💾 Creating Storage Account
@@ -391,15 +363,6 @@ jobs:
         run: |
           gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
 
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-sta
-          path: terraform_outputs.json
-
   storage-containers:
     name: 📁 Creating Storage Containers
     runs-on: ubuntu-latest
@@ -459,15 +422,6 @@ jobs:
           name: terraform-state
           path: infrastructure/terraform.tfstate
           overwrite: true
-
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-stac
-          path: terraform_outputs.json
 
   databricks:
     name: 🧪 Creating Databricks Workspace
@@ -572,15 +526,6 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-dtb
-          path: terraform_outputs.json
-
   access:
     name: 🔑 Assign Roles
     runs-on: ubuntu-latest
@@ -637,15 +582,6 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-acs
-          path: terraform_outputs.json
-
   databricks-groups:
     name: 👥 Create Databricks Groups
     runs-on: ubuntu-latest
@@ -696,15 +632,6 @@ jobs:
           name: terraform-state
           path: infrastructure/terraform.tfstate
           overwrite: true
-
-      - name: Export Terraform outputs
-        run: terraform output -json > terraform_outputs.json
-      
-      - name: Upload outputs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs-dtg
-          path: terraform_outputs.json
 
   generate-summary:
     name: 📝 Generate Creation and Update Summary
