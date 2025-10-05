@@ -52,13 +52,3 @@ variable "enable_databricks" {
   type        = bool
   default     = true
 }
-
-variable "data_engineers_group" {
-  type        = string
-  description = "Name of the Data Engineers group in Azure AD"
-}
-
-variable "data_analysts_group" {
-  type        = string
-  description = "Name of the Data Analysts group in Azure AD"
-}
