@@ -57,6 +57,7 @@ jobs:
           terraform_version: 1.5.7
 
       - run: terraform init
+      
       - run: terraform validate
 
       - name: 🧹 Conditionally delete Network Watchers not managed by Terraform
