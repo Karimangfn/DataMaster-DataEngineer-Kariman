@@ -623,7 +623,7 @@ jobs:
       
       - name: 🚀 Create Databricks Schema
         run: |
-          terraform state rm module.databricks.databricks_schema.data_processing_db || true
+          terraform state rm module.databricks.databricks_schema.data_processing_db 2>/dev/null || true
           
           terraform apply -auto-approve \
             -target=module.databricks.databricks_schema.data_processing_db \
