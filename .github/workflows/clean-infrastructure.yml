@@ -56,10 +56,11 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: 🔍 List Terraform outputs
-        working-directory: ./infrastructure
+      - name: 🔍 Detectar Resource Group via Terraform Output
         run: |
-          echo "📄 Terraform outputs:"
+          cd ./infrastructure
+      
+          echo "📄 Listando todos os outputs do Terraform..."
           terraform output
       
           RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || true)
