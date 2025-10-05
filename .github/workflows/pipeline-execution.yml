@@ -1,0 +1,48 @@
+run-name: Orchestrate Data Pipeline
+name: Orchestrate Data Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  aks-job:
+    runs-on: ubuntu-latest
+    outputs:
+      kubeconfig: ${{ steps.set-kubeconfig.outputs.kubeconfig }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set kubeconfig
+        id: set-kubeconfig
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.RESOURCE_GROUP }} --name ${{ secrets.AKS_NAME }} --admin --file kubeconfig
+          echo "::set-output name=kubeconfig::$(cat kubeconfig)"
+
+      - name: Execute Job in AKS
+        run: |
+          export KUBECONFIG=kubeconfig
+          # Exemplo: executar job já instalado
+          kubectl apply -f jobs/my-preinstalled-job.yaml
+          kubectl wait --for=condition=complete job/my-preinstalled-job --timeout=600s
+
+  databricks-job:
+    runs-on: ubuntu-latest
+    needs: aks-job
+    steps:
+      - name: Execute Databricks Job
+        env:
+          DATABRICKS_HOST: https://<workspace-url> # ou pode vir de um secret
+          DATABRICKS_TOKEN: ${{ secrets.DB_KEY }}
+        run: |
+          JOB_PAYLOAD='{
+            "job_id": "<id-do-job-existente>"
+          }'
+          curl -X POST "$DATABRICKS_HOST/api/2.1/jobs/run-now" \
+            -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$JOB_PAYLOAD"
