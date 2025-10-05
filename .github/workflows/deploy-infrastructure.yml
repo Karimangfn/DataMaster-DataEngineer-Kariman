@@ -620,6 +620,32 @@ jobs:
               "git_username": "x-token-auth",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
+
+      - name: 🧩 Normalize Databricks Catalog Name
+        run: |
+          echo "🔍 Checking Databricks catalogs..."
+          catalogs=$(curl -s -X GET \
+            -H "Authorization: Bearer $TOKEN" \
+            "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs")
+      
+          echo "$catalogs" | jq -r '.catalogs[].name' > catalogs.txt
+      
+          while read -r name; do
+            if [[ "$name" =~ _dbw_[0-9]+$ ]]; then
+              new_name="${name%_[0-9]*}"
+              echo "🧠 Found catalog with numeric suffix: $name → renaming to $new_name"
+      
+              curl -s -X PATCH \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"new_name\": \"$new_name\"}" \
+                "$WORKSPACE_URL/api/2.1/unity-catalog/catalogs/$name"
+      
+              echo "✅ Catalog renamed successfully."
+            else
+              echo "ℹ️ Catalog $name does not need renaming."
+            fi
+          done < catalogs.txt
       
       - name: 🚀 Create Databricks Schema
         run: |
