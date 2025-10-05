@@ -187,7 +187,7 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add ../assets/terraform_state/run_id.txt
           git commit -m "Terraform State run_id"
-          git push
+          git push --force-with-lease
 
       - name: 📦 Get Resource Group Name
         id: tfoutput_rg
