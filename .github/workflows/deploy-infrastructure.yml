@@ -158,6 +158,7 @@ jobs:
           overwrite: true
       
       - run: terraform validate
+      
       - run: | 
           terraform apply -auto-approve \
             -target=module.resource_group.azurerm_resource_group.rg \
@@ -249,6 +250,7 @@ jobs:
   #         overwrite: true
 
   #     - run: terraform validate
+  
   #     - run: |
   #         terraform apply -auto-approve \
   #           -target=module.acr.azurerm_container_registry.acr \
@@ -328,6 +330,7 @@ jobs:
   #         overwrite: true
   
   #     - run: terraform validate
+  
   #     - run: |
   #         terraform apply -auto-approve \
   #           -target=module.aks.azurerm_network_watcher.default \
@@ -409,6 +412,7 @@ jobs:
            -var="subscription_id=$(az account show --query id -o tsv)" \
            -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
            terraform show -no-color tfplan >> plan.txt
+      
       - uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-txt
@@ -416,6 +420,7 @@ jobs:
           overwrite: true
       
       - run: terraform validate
+      
       - run: |
           terraform apply -auto-approve \
             -target=module.storage.azurerm_storage_account.lake \
@@ -501,6 +506,7 @@ jobs:
           overwrite: true
       
       - run: terraform validate
+      
       - run: |
           terraform apply -auto-approve \
             -target=module.storage.azurerm_storage_container.raw \
@@ -569,6 +575,15 @@ jobs:
           name: terraform-plan-txt
           path: ./infrastructure/plan.txt
           overwrite: true
+
+      - name: 🧹 Remove stale Databricks schema from state
+        run: |
+          if terraform state list | grep -q "module.databricks.databricks_schema.data_processing_db"; then
+            echo "Removing stale schema from state..."
+            terraform state rm module.databricks.databricks_schema.data_processing_db
+          else
+            echo "Schema not in state, nothing to remove."
+          fi
       
       - run: terraform validate
       
