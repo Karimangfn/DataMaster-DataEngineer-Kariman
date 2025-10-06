@@ -168,8 +168,6 @@ jobs:
           WORKSPACES_JSON=$(az databricks workspace list \
                             --resource-group "${{ secrets.RESOURCE_GROUP }}" \
                             -o json)
-          echo "Workspace JSON keys:"
-          echo "$WORKSPACES_JSON" | jq -r '.[0] | keys[]'
   
           WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
           echo "Workspace URL detectada: $WORKSPACE_URL"
