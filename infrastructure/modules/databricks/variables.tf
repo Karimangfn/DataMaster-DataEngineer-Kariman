@@ -23,6 +23,11 @@ variable "db_access_connector_principal_id" {
   description = "Principal ID da Managed Identity do Access Connector do Databricks"
 }
 
+variable "storage_account_id" {
+  type        = string
+  description = "ID do Storage Account que será usado para role assignment e external locations"
+}
+
 variable "location" {
   description = "Azure region to deploy resources"
   type        = string
