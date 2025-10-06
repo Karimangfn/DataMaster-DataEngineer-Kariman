@@ -133,43 +133,57 @@ jobs:
           path: result.json
 
   databricks-job:
-    name: 🧠 Run Databricks Job (dynamic job_id)
+    name: 🧠 Run Databricks Job (via API)
     runs-on: ubuntu-latest
     needs: aks-jobs
     steps:
-      - uses: azure/login@v1
+      - uses: actions/checkout@v4
+  
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
-      - name: Configure Databricks CLI and run job
+      - name: 🔎 Get Databricks Workspace URL and AAD Token
+        id: get-databricks-info
         run: |
-          az_creds='${{ secrets.AZURE_CREDENTIALS }}'
-          ARM_CLIENT_ID=$(echo "$az_creds" | jq -r '.clientId')
-          ARM_CLIENT_SECRET=$(echo "$az_creds" | jq -r '.clientSecret')
-          ARM_TENANT_ID=$(echo "$az_creds" | jq -r '.tenantId')
-          ARM_SUBSCRIPTION_ID=$(echo "$az_creds" | jq -r '.subscriptionId')
+          tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+          client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          subscription_id=$(az account show --query id -o tsv)
   
-          WORKSPACE_NAME=$(az databricks workspace list --resource-group "${{ secrets.RESOURCE_GROUP }}" --query "[0].name" -o tsv)
-          DATABRICKS_HOST="https://${WORKSPACE_NAME}.azuredatabricks.net"
+          # Workspace URL do Terraform
+          WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
   
-          pip install databricks-cli -q
+          # Token AAD
+          TOKEN=$(curl -s -X POST \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default" \
+            "https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token" | jq -r '.access_token')
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$TOKEN"
   
-          # Gerar token AAD temporário
-          DATABRICKS_AAD_TOKEN=$(az account get-access-token \
-            --resource https://databricks.azure.net/ \
-            --query accessToken -o tsv)
-  
+      - name: 🚀 Run Databricks Job "transform-clean-data-process"
+        run: |
           JOB_NAME="transform-clean-data-process"
-          JOB_ID=$(databricks jobs list --output JSON --host "$DATABRICKS_HOST" --token "$DATABRICKS_AAD_TOKEN" \
-                   | jq -r ".jobs[] | select(.settings.name==\"$JOB_NAME\") | .job_id")
+  
+          JOB_ID=$(curl -s -X GET "$WORKSPACE_URL/api/2.1/jobs/list" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            | jq -r ".jobs[] | select(.settings.name==\"$JOB_NAME\") | .job_id")
   
           if [ -z "$JOB_ID" ]; then
-            echo "❌ Job $JOB_NAME não encontrado na workspace $WORKSPACE_NAME"
+            echo "❌ Job $JOB_NAME não encontrado na workspace $WORKSPACE_URL"
             exit 1
           fi
   
           echo "✅ Job $JOB_NAME encontrado com ID $JOB_ID"
-          databricks jobs run-now --job-id $JOB_ID --host "$DATABRICKS_HOST" --token "$DATABRICKS_AAD_TOKEN"
+          
+          curl -s -X POST "$WORKSPACE_URL/api/2.1/jobs/run-now" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"job_id\": $JOB_ID}"
 
   summary:
     name: 📋 Pipeline Summary
