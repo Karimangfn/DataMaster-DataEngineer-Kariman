@@ -149,18 +149,21 @@ resource "databricks_grants" "use_adls_credential" {
 
 resource "databricks_external_location" "bronze" {
   name            = "bronze_external"
-  url             = "abfss://bronze@${local.lake_name}.dfs.core.windows.net/"
+  url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net/"
   credential_name = databricks_credential.adls_sp.name
+  comment         = "Bronze external location"
 }
 
 resource "databricks_external_location" "silver" {
   name            = "silver_external"
-  url             = "abfss://silver@${local.lake_name}.dfs.core.windows.net/"
+  url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net/"
   credential_name = databricks_credential.adls_sp.name
+  comment         = "Silver external location"
 }
 
 resource "databricks_external_location" "gold" {
   name            = "gold_external"
-  url             = "abfss://gold@${local.lake_name}.dfs.core.windows.net/"
+  url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net/"
   credential_name = databricks_credential.adls_sp.name
+  comment         = "Gold external location"
 }
