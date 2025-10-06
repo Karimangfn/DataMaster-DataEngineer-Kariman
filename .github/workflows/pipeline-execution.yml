@@ -118,11 +118,18 @@ jobs:
           echo "Deleting old artifact: $safe_name-aks-job-result"
           gh run artifact delete "$safe_name-aks-job-result" || true
       
+      - name: 🧹 Normalize artifact name
+        id: normalize-artifact-name
+        run: |
+          service_name=$(basename "${{ matrix.service_path }}")
+          safe_name=${service_name//\//_}
+          echo "safe_name=$safe_name" >> $GITHUB_OUTPUT
+      
       - name: 📤 Upload AKS Job Result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.service_path | basename | replace('/', '_') }}-aks-job-result
+          name: ${{ steps.normalize-artifact-name.outputs.safe_name }}-aks-job-result
           path: result.json
 
   databricks-job:
