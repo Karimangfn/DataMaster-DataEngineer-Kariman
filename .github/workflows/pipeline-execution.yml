@@ -167,7 +167,7 @@ jobs:
           echo "$WORKSPACES_JSON" | jq -r '.[] | select(.properties != null) | .properties | keys[]'
   
           # Pega a URL da primeira workspace válida
-          WORKSPACE_URL=$(echo "$WORKSPACES_JSON" | jq -r '.[0].properties.workspaceUrl')
+          WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
           echo "Workspace URL detectada: $WORKSPACE_URL"
   
           # Gera token AAD via Client Credentials
