@@ -58,6 +58,8 @@ resource "databricks_job" "data_process" {
       custom_tags = {
         "ResourceClass" = "SingleNode"
       }
+
+      data_security_mode = "SINGLE_USER"
     }
   }
 
