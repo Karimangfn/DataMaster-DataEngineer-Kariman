@@ -638,8 +638,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - resource-group
-      - acr
-      - aks
+      # - acr
+      # - aks
       - databricks
       - storage-account
       - storage-containers
