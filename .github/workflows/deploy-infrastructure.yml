@@ -89,39 +89,23 @@ jobs:
 
           echo "✅ Role atribuída com sucesso!"
 
-      - name: 🚀 Create Databricks External Locations
+      - name: 🚀 Debug/Create Databricks External Locations
         run: |
           set -euo pipefail
-          
-          # Diretório onde está o Terraform
-          TF_DIR=./infrastructure
 
-          # Certificar que o token e workspace URL estão presentes
+          # Verificar se temos os valores necessários
           if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.PRINCIPAL_ID }}" ]; then
-            echo "❌ WORKSPACE_URL ou PRINCIPAL_ID ausentes, não é possível criar External Locations."
+            echo "❌ WORKSPACE_URL ou PRINCIPAL_ID ausentes, abortando."
             exit 1
           fi
 
-          echo "🧰 Inicializando Terraform no diretório $TF_DIR..."
-          cd "$TF_DIR"
-          terraform init
+          echo "✅ WORKSPACE_URL e PRINCIPAL_ID disponíveis:"
+          echo "WORKSPACE_URL=${{ env.WORKSPACE_URL }}"
+          echo "PRINCIPAL_ID=${{ env.PRINCIPAL_ID }}"
 
-          echo "🔎 Planejando criação das External Locations..."
-          terraform plan -out=tfplan_external_locations -no-color \
-            -target=module.databricks.databricks_catalog_external_location.bronze \
-            -target=module.databricks.databricks_catalog_external_location.silver \
-            -target=module.databricks.databricks_catalog_external_location.gold \
-            -var="db_access_connector_principal_id=${{ env.PRINCIPAL_ID }}" \
-            -var="subscription_id=$(az account show --query id -o tsv)"
-
-          terraform show -no-color tfplan_external_locations >> plan_external_locations.txt
-
-          echo "✅ Aplicando External Locations no Databricks..."
-          terraform apply -auto-approve tfplan_external_locations
-
-          echo "📤 Upload do Terraform plan e estado"
-          gh run upload-artifact --name terraform-plan-external-locations --path plan_external_locations.txt || true
-          gh run upload-artifact --name terraform-state --path terraform.tfstate || true
+          echo "🧪 Aqui você poderia rodar terraform apply ou curl para criar External Locations"
+          echo "🔹 Exemplo com Terraform (requer pasta/infrastructure com .tf):"
+          echo "terraform apply -target=module.databricks.databricks_catalog_external_location.bronze ..."
             
   # check-gh-pat:
   #   name: 🔐 Check GH_PAT_TOKEN and permissions
