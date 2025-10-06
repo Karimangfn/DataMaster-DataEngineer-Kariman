@@ -15,62 +15,79 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-  
+
       - name: 🚀 Capture Access Connector from Managed Resource Group
         run: |
           set -euo pipefail
-  
+
           echo "===== Databricks Workspace Info ====="
-  
+
           # Listar workspaces no resource group principal
           WORKSPACES_JSON=$(az databricks workspace list \
                             --resource-group "${{ secrets.RESOURCE_GROUP }}" \
                             -o json)
-  
+
           WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
           WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')
           echo "Workspace URL detectada: $WORKSPACE_URL"
           echo "Workspace Name detectada: $WORKSPACE_NAME"
-  
+
           # Mostrar todas as propriedades da workspace
           echo "===== Full Workspace Properties ====="
           az databricks workspace show \
              --name "$WORKSPACE_NAME" \
              --resource-group "${{ secrets.RESOURCE_GROUP }}" \
              -o json | jq '.'
-  
+
           # Derivar Managed Resource Group padrão do Databricks
-          MRG="${{ secrets.RESOURCE_GROUP }}" 
+          MRG="${{ secrets.RESOURCE_GROUP }}"
           MRG="${MRG/-rg/-dbw-mrg}"
           echo "Managed Resource Group detectado: $MRG"
-  
+
           # Listar todos os recursos no MRG
           echo "===== Recursos no Managed Resource Group ====="
           az resource list --resource-group "$MRG" -o json | jq '.[] | {name, type, id}'
-  
+
           # Filtrar Access Connector (Managed Identity)
           ACCESS_CONNECTOR_ID=$(az resource list --resource-group "$MRG" \
                               --query "[?type=='Microsoft.ManagedIdentity/userAssignedIdentities'].id | [0]" \
                               -o tsv || echo "")
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
-  
+
           if [ -n "$ACCESS_CONNECTOR_ID" ]; then
-            # Pegar o objectId do Service Principal associado
-            PRINCIPAL_ID=$(az ad sp list \
-                             --filter "servicePrincipalType eq 'Application'" \
-                             --query "[?contains(appOwnerTenantId,'$ACCESS_CONNECTOR_ID')].id | [0]" \
-                             -o tsv || echo "")
+            # Pegar o principalId direto do recurso (sem Azure AD query)
+            PRINCIPAL_ID=$(az resource show --id "$ACCESS_CONNECTOR_ID" \
+                              --query "properties.principalId" -o tsv)
             echo "PRINCIPAL_ID=$PRINCIPAL_ID"
           else
             echo "⚠️ Access Connector não encontrado no MRG"
             PRINCIPAL_ID=""
           fi
-  
+
           # Exportar variáveis para GitHub Actions
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_ENV
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
           echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+
+      - name: 🏗️ Assign Blob Contributor Role to Storage Account
+        run: |
+          set -euo pipefail
+
+          if [ -z "$PRINCIPAL_ID" ]; then
+            echo "❌ PRINCIPAL_ID não encontrado, não é possível atribuir role."
+            exit 1
+          fi
+
+          STORAGE_ACCOUNT="dtmstr69b1lake"
+          echo "Tentando dar Storage Blob Data Contributor para $PRINCIPAL_ID no storage account $STORAGE_ACCOUNT"
+
+          az role assignment create \
+            --assignee "$PRINCIPAL_ID" \
+            --role "Storage Blob Data Contributor" \
+            --scope "$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)"
+
+          echo "✅ Role atribuída com sucesso!"
             
   # check-gh-pat:
   #   name: 🔐 Check GH_PAT_TOKEN and permissions
