@@ -503,8 +503,6 @@ jobs:
       - name: 🚀 Create Databricks Credential and External Locations
         run: |
           terraform apply -auto-approve \
-            -target=module.databricks.databricks_credential.adls_sp \
-            -target=module.databricks.databricks_grants.use_adls_credential \
             -target=module.databricks.databricks_catalog_external_location.bronze \
             -target=module.databricks.databricks_catalog_external_location.silver \
             -target=module.databricks.databricks_catalog_external_location.gold \
