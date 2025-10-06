@@ -33,7 +33,7 @@ jobs:
           echo "✅ Detectados: $json_array"
 
   aks-jobs:
-    name: 🧩 Run AKS Jobs
+    name: 🧩 Run AKS Jobs (with Image Validation)
     runs-on: ubuntu-latest
     needs: detect_services
     strategy:
@@ -54,10 +54,34 @@ jobs:
             --name ${{ secrets.AKS_NAME }} \
             --admin
 
+      - name: 🧾 Validate Image in ACR before Helm Job
+        id: validate
+        run: |
+          service="${{ matrix.service }}"
+          version_file="microservices/$service/VERSION"
+
+          if [ ! -f "$version_file" ]; then
+            echo "⚠️ Nenhum arquivo VERSION encontrado para $service. Pulando..."
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          version=$(cat "$version_file")
+          acr_name="${{ secrets.ACR_NAME }}"
+
+          echo "🔍 Validando imagem $acr_name.azurecr.io/$service:$version ..."
+          if az acr repository show-tags --name "$acr_name" --repository "$service" --query "[?contains(@, '$version')]" -o tsv | grep -q "$version"; then
+            echo "✅ Imagem encontrada no ACR."
+            echo "valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Imagem $acr_name.azurecr.io/$service:$version não encontrada no ACR."
+            echo "valid=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: 🚀 Execute Helm Job for ${{ matrix.service }}
+        if: steps.validate.outputs.valid == 'true'
         run: |
           echo "🧩 Executando Helm job para ${{ matrix.service }}"
-
           helm upgrade --install ${{ matrix.service }} microservices/${{ matrix.service }}/helm \
             --reuse-values \
             --set job.enabled=true
@@ -69,10 +93,28 @@ jobs:
             exit 1
           }
 
-          echo "✅ Job ${{ matrix.service }} finalizado com sucesso!"
+      - name: 🧾 Record Result
+        if: always()
+        run: |
+          mkdir -p results
+          status="❌ Failed"
+          if [[ "${{ steps.validate.outputs.valid }}" == "true" ]]; then
+            if kubectl get job ${{ matrix.service }}-job &>/dev/null; then
+              status="✅ Success"
+            fi
+          else
+            status="⚠️ Skipped (Image Missing)"
+          fi
+          echo "{\"service\":\"${{ matrix.service }}\", \"status\":\"$status\"}" > results/${{ matrix.service }}.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aks-results
+          path: results/
 
   databricks-job:
-    name: 🧠 Run Databricks Job
+    name: 🧠 Run Databricks Job (AAD Login)
     runs-on: ubuntu-latest
     needs: aks-jobs
     steps:
@@ -83,10 +125,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 📦 Install Databricks CLI (AAD support)
+      - name: 📦 Install Databricks CLI
         run: pip install databricks-cli --upgrade
 
-      - name: ⚙️ Configure Databricks CLI with AAD Auth
+      - name: ⚙️ Configure Databricks CLI (AAD Auth)
         env:
           DATABRICKS_WORKSPACE_URL: ${{ secrets.DATABRICKS_WORKSPACE_URL }}
         run: |
@@ -106,9 +148,28 @@ jobs:
           databricks runs wait --run-id "$RUN_ID"
           echo "✅ Databricks job finalizado!"
 
-      - name: 🧾 Summary
-        if: always()
-        run: |
-          echo "## ☁️ Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **AKS Jobs executados:** ${{ join(fromJson(needs.detect_services.outputs.matrix), ', ') }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Databricks Job:** ${{ secrets.DATABRICKS_JOB_ID }}" >> $GITHUB_STEP_SUMMARY
+  summary:
+    name: 📋 Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [aks-jobs, databricks-job]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: aks-results
+          path: results/
+
+      - run: |
+          echo "## 🚀 AKS Job Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|---------|" >> $GITHUB_STEP_SUMMARY
+
+          for f in results/*.json; do
+            svc=$(jq -r '.service' "$f")
+            st=$(jq -r '.status' "$f")
+            echo "| $svc | $st |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧠 Databricks Job" >> $GITHUB_STEP_SUMMARY
+          echo "- Job ID: **${{ secrets.DATABRICKS_JOB_ID }}**" >> $GITHUB_STEP_SUMMARY
+          echo "- Workspace: **${{ secrets.DATABRICKS_WORKSPACE_URL }}**" >> $GITHUB_STEP_SUMMARY
