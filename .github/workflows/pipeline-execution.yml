@@ -121,6 +121,7 @@ jobs:
 
   databricks-job:
     name: 🧠 Run Databricks Job
+    needs: aks-jobs
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
