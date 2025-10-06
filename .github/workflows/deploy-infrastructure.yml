@@ -524,8 +524,9 @@ jobs:
 
       - name: 🏗️ Apply Role Assignment on Storage
         run: |
-          terraform apply -auto-approve -target=module.databricks.azurerm_role_assignment.databricks_blob_contributor \
-            -var="databricks_access_connector_principal_id=$PRINCIPAL_ID" \
+          terraform apply -auto-approve \
+            -target=module.databricks.azurerm_role_assignment.databricks_blob_contributor \
+            -var="db_access_connector_principal_id=$PRINCIPAL_ID" \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 🚀 Create Databricks Credential and External Locations
