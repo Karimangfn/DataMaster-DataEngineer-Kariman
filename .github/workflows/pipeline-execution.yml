@@ -79,6 +79,12 @@ jobs:
           echo "🧹 Deleting old job if exists..."
           kubectl delete job "$service_name-job" --ignore-not-found
 
+          custom_params=""
+          if [ "$service_name" = "ingest-files" ]; then
+            git_url="https://github.com/$GITHUB_REPOSITORY.git"
+            custom_params="--set source.git.url=$git_url --set source.git.token=${{ secrets.GH_PAT_TOKEN }}"
+          fi
+
           echo "🔧 Installing Helm chart for $service_name..."
           helm upgrade --install "$service_name" "microservices/$service_name/helm" \
             --set image.repository="$acr.azurecr.io/$service_name" \
@@ -88,7 +94,8 @@ jobs:
             --set config.azure.clientSecret="$client_secret" \
             --set config.azure.tenantId="$tenant_id" \
             --set config.azure.subscriptionId="$subscription_id" \
-            --set config.storage.raw.account="$storage_account"
+            --set config.storage.raw.account="$storage_account" \
+            $custom_params
 
           echo "⏳ Waiting job completion (timeout 15min)..."
           if ! kubectl wait --for=condition=complete job/"$service_name-job" --timeout=900s; then
