@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  debug-databricks:
-    name: 🧪 Debug Databricks Access Connector
+  debug-databricks-job:
+    name: 🧪 Debug Databricks Job
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
@@ -16,8 +16,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🚀 Capture Databricks Workspace and Access Connector
-        id: connector-info
+      - name: 🚀 Trigger Debug Job
         run: |
           set -euo pipefail
 
@@ -28,38 +27,36 @@ jobs:
                             --resource-group "${{ secrets.RESOURCE_GROUP }}" \
                             -o json)
 
-          # Pegar URL e nome do primeiro workspace
           WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
           WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')
           echo "Workspace URL detectada: $WORKSPACE_URL"
+          echo "Workspace Name detectada: $WORKSPACE_NAME"
 
-          # Capturar Access Connector ID
+          echo "===== Full Workspace Properties ====="
+          az databricks workspace show \
+             --name "$WORKSPACE_NAME" \
+             --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+             -o json | jq '.'
+
+          # Capturar Access Connector ID (se existir)
           ACCESS_CONNECTOR_ID=$(az databricks workspace show \
                                 --name "$WORKSPACE_NAME" \
                                 --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-                                --query "properties.parameters.accessConnectorId.value" -o tsv)
+                                --query "properties.parameters.accessConnectorId.value" -o tsv || echo "")
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
 
-          # Capturar Principal ID do AAD
-          PRINCIPAL_ID=$(az ad sp show --id "$ACCESS_CONNECTOR_ID" --query "id" -o tsv)
-          echo "PRINCIPAL_ID=$PRINCIPAL_ID"
+          if [ -n "$ACCESS_CONNECTOR_ID" ]; then
+            PRINCIPAL_ID=$(az ad sp show --id "$ACCESS_CONNECTOR_ID" --query "id" -o tsv)
+            echo "PRINCIPAL_ID=$PRINCIPAL_ID"
+          else
+            echo "⚠️ Access Connector ID não encontrado"
+          fi
 
-          # Exportar para outros steps do workflow
+          # Exportar variáveis para outros steps
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_ENV
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
           echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
-
-          echo "✅ Capturado Access Connector Principal ID: $PRINCIPAL_ID"
-          echo "✅ Capturado Access Connector ID: $ACCESS_CONNECTOR_ID"
-
-      - name: 🏗️ Apply Role Assignment (opcional)
-        if: env.PRINCIPAL_ID != ''
-        run: |
-          terraform apply -auto-approve \
-            -target=module.databricks.azurerm_role_assignment.databricks_blob_contributor \
-            -var="db_access_connector_principal_id=$PRINCIPAL_ID" \
-            -var="subscription_id=$(az account show --query id -o tsv)"
             
   # check-gh-pat:
   #   name: 🔐 Check GH_PAT_TOKEN and permissions
