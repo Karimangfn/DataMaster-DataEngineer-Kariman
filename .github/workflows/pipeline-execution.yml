@@ -214,7 +214,7 @@ jobs:
   
             echo "⏱ Run status: $STATUS, result_state: $DISPLAY_STATE"
   
-            if [ "$STATUS" == "TERMINATED" ]; then
+            if [ "$RESULT_STATE" != "null" ]; then
               if [ "$RESULT_STATE" == "SUCCESS" ]; then
                 echo "{\"databricks_job\":\"completed\"}" > databricks_result.json
                 exit 0
