@@ -133,28 +133,43 @@ jobs:
           path: result.json
 
   databricks-job:
-    name: 🧠 Run Databricks Job
+    name: 🧠 Run Databricks Job (dynamic job_id)
     runs-on: ubuntu-latest
     needs: aks-jobs
     steps:
       - uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: 🧩 Configure Databricks CLI (Azure Auth)
+  
+      - name: Configure Databricks CLI and run job
         run: |
           az_creds='${{ secrets.AZURE_CREDENTIALS }}'
-          export ARM_CLIENT_ID=$(echo "$az_creds" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$az_creds" | jq -r '.clientSecret')
-          export ARM_TENANT_ID=$(echo "$az_creds" | jq -r '.tenantId')
-          export ARM_SUBSCRIPTION_ID=$(echo "$az_creds" | jq -r '.subscriptionId')
-          export DATABRICKS_AZURE_RESOURCE_ID="/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${{ secrets.RESOURCE_GROUP }}/providers/Microsoft.Databricks/workspaces/${{ secrets.DATABRICKS_WORKSPACE }}"
-          export DATABRICKS_HOST="https://${{ secrets.DATABRICKS_WORKSPACE }}.azuredatabricks.net"
-
+          ARM_CLIENT_ID=$(echo "$az_creds" | jq -r '.clientId')
+          ARM_CLIENT_SECRET=$(echo "$az_creds" | jq -r '.clientSecret')
+          ARM_TENANT_ID=$(echo "$az_creds" | jq -r '.tenantId')
+          ARM_SUBSCRIPTION_ID=$(echo "$az_creds" | jq -r '.subscriptionId')
+  
+          WORKSPACE_NAME=$(az databricks workspace list --resource-group "${{ secrets.RESOURCE_GROUP }}" --query "[0].name" -o tsv)
+          DATABRICKS_HOST="https://${WORKSPACE_NAME}.azuredatabricks.net"
+  
           pip install databricks-cli -q
-
-          echo "🚀 Running Databricks job..."
-          databricks jobs run-now --job-id ${{ secrets.DATABRICKS_JOB_ID }}
+  
+          # Gerar token AAD temporário
+          DATABRICKS_AAD_TOKEN=$(az account get-access-token \
+            --resource https://databricks.azure.net/ \
+            --query accessToken -o tsv)
+  
+          JOB_NAME="transform-clean-data-process"
+          JOB_ID=$(databricks jobs list --output JSON --host "$DATABRICKS_HOST" --token "$DATABRICKS_AAD_TOKEN" \
+                   | jq -r ".jobs[] | select(.settings.name==\"$JOB_NAME\") | .job_id")
+  
+          if [ -z "$JOB_ID" ]; then
+            echo "❌ Job $JOB_NAME não encontrado na workspace $WORKSPACE_NAME"
+            exit 1
+          fi
+  
+          echo "✅ Job $JOB_NAME encontrado com ID $JOB_ID"
+          databricks jobs run-now --job-id $JOB_ID --host "$DATABRICKS_HOST" --token "$DATABRICKS_AAD_TOKEN"
 
   summary:
     name: 📋 Pipeline Summary
