@@ -500,6 +500,34 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
 
+      - name: 🔐 Capture Access Connector info
+        id: connector-info
+        run: |
+          echo "===== Databricks Workspace Info ====="
+          az databricks workspace show --name ${{ github.workspace_name }} --resource-group ${{ github.rg_name }} -o json
+          
+          ACCESS_CONNECTOR_ID=$(az databricks workspace show --name ${{ github.workspace_name }} --resource-group ${{ github.rg_name }} --query "properties.parameters.accessConnectorId.value" -o tsv)
+          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
+          
+          echo "===== Azure AD Service Principal Info ====="
+          az ad sp show --id $ACCESS_CONNECTOR_ID -o json
+          
+          PRINCIPAL_ID=$(az ad sp show --id $ACCESS_CONNECTOR_ID --query "id" -o tsv)
+          echo "PRINCIPAL_ID=$PRINCIPAL_ID"
+          
+          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
+          echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+
+          set -e
+          echo "Captured Access Connector Principal ID: $PRINCIPAL_ID"
+          echo "Captured Access Connector ID: $ACCESS_CONNECTOR_ID"
+
+      - name: 🏗️ Apply Role Assignment on Storage
+        run: |
+          terraform apply -auto-approve -target=module.databricks.azurerm_role_assignment.databricks_blob_contributor \
+            -var="databricks_access_connector_principal_id=$PRINCIPAL_ID" \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+
       - name: 🚀 Create Databricks Credential and External Locations
         run: |
           terraform apply -auto-approve \
