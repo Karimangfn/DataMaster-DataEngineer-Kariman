@@ -133,54 +133,55 @@ jobs:
           path: result.json
 
   databricks-job:
-    name: 🧠 Run Databricks Job (via API)
+    name: 🧠 Run Databricks Job
     runs-on: ubuntu-latest
     needs: aks-jobs
     steps:
-      - uses: actions/checkout@v4
-  
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
-      - name: 🔎 Get Databricks Workspace URL and AAD Token
-        id: get-databricks-info
+      - name: 🚀 Trigger Databricks Job
         run: |
+          # Credenciais AAD
           tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
           client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          
+          # ID da assinatura
           subscription_id=$(az account show --query id -o tsv)
   
-          # Workspace URL do Terraform
-          WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
-          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          # Obtém a workspace dinamicamente
+          WORKSPACE_NAME=$(az databricks workspace list \
+                            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+                            --query "[0].name" -o tsv)
+          WORKSPACE_URL="https://$WORKSPACE_NAME.azuredatabricks.net"
   
-          # Token AAD
+          echo "Workspace detectada: $WORKSPACE_NAME"
+  
+          # Gera token AAD via Client Credentials
           TOKEN=$(curl -s -X POST \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -d "grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default" \
             "https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token" | jq -r '.access_token')
-          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "::add-mask::$TOKEN"
   
-      - name: 🚀 Run Databricks Job "transform-clean-data-process"
-        run: |
+          # Busca job_id pelo nome fixo
           JOB_NAME="transform-clean-data-process"
-  
-          JOB_ID=$(curl -s -X GET "$WORKSPACE_URL/api/2.1/jobs/list" \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/json" \
-            | jq -r ".jobs[] | select(.settings.name==\"$JOB_NAME\") | .job_id")
+          JOB_ID=$(curl -s -X GET "$WORKSPACE_URL/api/2.0/jobs/list" \
+                     -H "Authorization: Bearer $TOKEN" \
+                     -H "Content-Type: application/json" \
+                   | jq -r ".jobs[] | select(.settings.name==\"$JOB_NAME\") | .job_id")
   
           if [ -z "$JOB_ID" ]; then
-            echo "❌ Job $JOB_NAME não encontrado na workspace $WORKSPACE_URL"
+            echo "❌ Job $JOB_NAME não encontrado"
             exit 1
           fi
   
           echo "✅ Job $JOB_NAME encontrado com ID $JOB_ID"
-          
-          curl -s -X POST "$WORKSPACE_URL/api/2.1/jobs/run-now" \
+  
+          # Dispara o job
+          curl -X POST "$WORKSPACE_URL/api/2.0/jobs/run-now" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"job_id\": $JOB_ID}"
