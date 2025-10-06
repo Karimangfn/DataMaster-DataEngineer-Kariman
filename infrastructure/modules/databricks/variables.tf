@@ -18,6 +18,11 @@ variable "storage_account_name" {
   description = "Name of the Azure Storage Account for Jobs"
 }
 
+variable "databricks_access_connector_principal_id" {
+  type        = string
+  description = "Principal ID da Managed Identity do Access Connector do Databricks"
+}
+
 variable "location" {
   description = "Azure region to deploy resources"
   type        = string
