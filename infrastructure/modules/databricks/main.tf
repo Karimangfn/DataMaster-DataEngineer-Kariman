@@ -129,7 +129,7 @@ resource "databricks_job" "data_process" {
 resource "databricks_external_location" "bronze" {
   provider        = databricks.accounts
   name            = "bronze_external"
-  url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net/"
+  url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = databricks_catalog_name
   comment         = "Bronze external location"
 }
@@ -137,7 +137,7 @@ resource "databricks_external_location" "bronze" {
 resource "databricks_external_location" "silver" {
   provider        = databricks.accounts
   name            = "silver_external"
-  url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net/"
+  url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = databricks_catalog_name
   comment         = "Silver external location"
 }
@@ -145,7 +145,7 @@ resource "databricks_external_location" "silver" {
 resource "databricks_external_location" "gold" {
   provider        = databricks.accounts
   name            = "gold_external"
-  url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net/"
+  url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = databricks_catalog_name
   comment         = "Gold external location"
 }
