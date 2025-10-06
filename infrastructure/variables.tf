@@ -52,8 +52,3 @@ variable "enable_databricks" {
   type        = bool
   default     = true
 }
-
-variable "databricks_access_connector_principal_id" {
-  description = "Principal ID da Managed Identity do Access Connector do Databricks"
-  type        = string
-}
