@@ -114,14 +114,14 @@ jobs:
         if: always()
         uses: geekyeggo/delete-artifact@v4
         with:
-          name: aks-job-result-${{ matrix.service_path }}
+          name: ${{ matrix.service_path | replace('/','_') }}-aks-job-result
           failOnError: false
-
+      
       - name: 📤 Upload AKS Job Result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: aks-job-result-${{ matrix.service_path }}
+          name: ${{ matrix.service_path | replace('/','_') }}-aks-job-result
           path: result.json
 
   databricks-job:
