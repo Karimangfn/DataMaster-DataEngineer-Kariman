@@ -45,7 +45,6 @@ module "databricks" {
   git_repo_url                             = var.git_repo_url
   git_repo_branch                          = var.git_repo_branch
   enable                                   = var.enable_databricks
-  databricks_access_connector_principal_id = var.databricks_access_connector_principal_id
 }
 
 module "access" {
