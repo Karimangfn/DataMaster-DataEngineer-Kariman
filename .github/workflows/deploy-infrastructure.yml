@@ -503,22 +503,34 @@ jobs:
       - name: 🔐 Capture Access Connector info
         id: connector-info
         run: |
+          set -euo pipefail
+      
           echo "===== Databricks Workspace Info ====="
-          az databricks workspace show --name ${{ github.workspace_name }} --resource-group ${{ github.rg_name }} -o json
-          
-          ACCESS_CONNECTOR_ID=$(az databricks workspace show --name ${{ github.workspace_name }} --resource-group ${{ github.rg_name }} --query "properties.parameters.accessConnectorId.value" -o tsv)
+      
+          # Pegar workspace URL automaticamente
+          WORKSPACES_JSON=$(az databricks workspace list \
+                            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+                            -o json)
+          WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
+          echo "Workspace URL detectada: $WORKSPACE_URL"
+      
+          # Capturar Access Connector ID
+          ACCESS_CONNECTOR_ID=$(az databricks workspace show \
+                                --name "$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')" \
+                                --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+                                --query "properties.parameters.accessConnectorId.value" -o tsv)
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
-          
+      
           echo "===== Azure AD Service Principal Info ====="
-          az ad sp show --id $ACCESS_CONNECTOR_ID -o json
-          
-          PRINCIPAL_ID=$(az ad sp show --id $ACCESS_CONNECTOR_ID --query "id" -o tsv)
+          az ad sp show --id "$ACCESS_CONNECTOR_ID" -o json
+      
+          PRINCIPAL_ID=$(az ad sp show --id "$ACCESS_CONNECTOR_ID" --query "id" -o tsv)
           echo "PRINCIPAL_ID=$PRINCIPAL_ID"
-          
+      
+          # Exportar para GitHub Actions
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
           echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
-
-          set -e
+      
           echo "Captured Access Connector Principal ID: $PRINCIPAL_ID"
           echo "Captured Access Connector ID: $ACCESS_CONNECTOR_ID"
 
