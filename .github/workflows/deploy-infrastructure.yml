@@ -88,6 +88,11 @@ jobs:
             --scope "$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)"
 
           echo "✅ Role atribuída com sucesso!"
+      
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
 
       - name: 🚀 Create Databricks External Locations
         run: |
