@@ -125,3 +125,42 @@ resource "databricks_job" "data_process" {
     }
   }
 }
+
+resource "databricks_credential" "adls_sp" {
+  name    = "adls_sp_credential"
+  purpose = "STORAGE"
+
+  azure_service_principal {
+    directory_id   = var.tenant_id
+    application_id = var.client_id
+    client_secret  = var.client_secret
+  }
+
+  comment = "Storage credential using service principal"
+}
+
+resource "databricks_grants" "use_adls_credential" {
+  credential = databricks_credential.adls_sp.id
+  grant {
+    principal  = "users"
+    privileges = ["USE_CREDENTIAL"]
+  }
+}
+
+resource "databricks_catalog_external_location" "bronze" {
+  name            = "bronze_external"
+  url             = "abfss://bronze@${local.lake_name}.dfs.core.windows.net/"
+  credential_name = databricks_credential.adls_sp.name
+}
+
+resource "databricks_catalog_external_location" "silver" {
+  name            = "silver_external"
+  url             = "abfss://silver@${local.lake_name}.dfs.core.windows.net/"
+  credential_name = databricks_credential.adls_sp.name
+}
+
+resource "databricks_catalog_external_location" "gold" {
+  name            = "gold_external"
+  url             = "abfss://gold@${local.lake_name}.dfs.core.windows.net/"
+  credential_name = databricks_credential.adls_sp.name
+}
