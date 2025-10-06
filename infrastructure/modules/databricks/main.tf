@@ -126,34 +126,11 @@ resource "databricks_job" "data_process" {
   }
 }
 
-resource "databricks_credential" "adls_sp" {
-  provider      = databricks.accounts
-  name          = "adls_sp_credential"
-  purpose       = "STORAGE"
-
-  azure_service_principal {
-    directory_id   = var.tenant_id
-    application_id = var.client_id
-    client_secret  = var.client_secret
-  }
-
-  comment = "Storage credential using service principal"
-}
-
-resource "databricks_grants" "use_adls_credential" {
-  provider      = databricks.accounts
-  credential    = databricks_credential.adls_sp.id
-  grant {
-    principal   = "users"
-    privileges  = ["USE_CREDENTIAL"]
-  }
-}
-
 resource "databricks_external_location" "bronze" {
   provider        = databricks.accounts
   name            = "bronze_external"
   url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net/"
-  credential_name = databricks_credential.adls_sp.name
+  credential_name = databricks_catalog_name
   comment         = "Bronze external location"
 }
 
@@ -161,7 +138,7 @@ resource "databricks_external_location" "silver" {
   provider        = databricks.accounts
   name            = "silver_external"
   url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net/"
-  credential_name = databricks_credential.adls_sp.name
+  credential_name = databricks_catalog_name
   comment         = "Silver external location"
 }
 
@@ -169,6 +146,6 @@ resource "databricks_external_location" "gold" {
   provider        = databricks.accounts
   name            = "gold_external"
   url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net/"
-  credential_name = databricks_credential.adls_sp.name
+  credential_name = databricks_catalog_name
   comment         = "Gold external location"
 }
