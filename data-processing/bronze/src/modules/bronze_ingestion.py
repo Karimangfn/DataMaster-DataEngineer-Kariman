@@ -35,14 +35,19 @@ def ingest_bronze_customer_data(
                 f"Table not found at {config['output_path']}. "
                 "Creating Table..."
             )
+
+            spark.sql(f"""
+                CREATE TABLE IF NOT EXISTS {config['catalog']}.{config['database']}.bronze
+                USING DELTA
+                LOCATION '{config['output_path']}'
+            """)
+            
             empty_df = spark.createDataFrame([], schema)
             (
                 empty_df.write
                 .format("delta")
                 .mode("overwrite")
-                .option("path", config["output_path"])
-                .saveAsTable(f"{config['catalog']}.{config['database']}.bronze")
-
+                .toTable(f"{config['catalog']}.{config['database']}.bronze")
             )
 
             grant_access_to_bronze(spark, config['catalog'], config['database'])
