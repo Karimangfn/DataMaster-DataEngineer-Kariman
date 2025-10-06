@@ -60,6 +60,7 @@ jobs:
           else
             echo "⚠️ Image not found in ACR. Skipping job $service_name."
             echo "image_exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: 🚀 Run AKS Job
         if: steps.validate-image.outputs.image_exists == 'true'
