@@ -5,146 +5,146 @@ on:
   workflow_dispatch:
 
 jobs:
-  # detect_services:
-  #   name: 🔍 Detect Microservices
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Identify services with VERSION file
-  #       id: set-matrix
-  #       run: |
-  #         all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
-  #         if [ -z "$all_services" ]; then
-  #           echo 'matrix=[]' >> $GITHUB_OUTPUT
-  #           exit 0
-  #         fi
-  #         json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
-  #         echo "matrix=$json_array" >> $GITHUB_OUTPUT
+  detect_services:
+    name: 🔍 Detect Microservices
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Identify services with VERSION file
+        id: set-matrix
+        run: |
+          all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
+          if [ -z "$all_services" ]; then
+            echo 'matrix=[]' >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
+          echo "matrix=$json_array" >> $GITHUB_OUTPUT
 
-  # aks-jobs:
-  #   name: 🧩 Run AKS Jobs (with Image Validation)
-  #   runs-on: ubuntu-latest
-  #   needs: detect_services
-  #   strategy:
-  #     matrix:
-  #       service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
-  #     max-parallel: 3
-  #   steps:
-  #     - uses: actions/checkout@v4
+  aks-jobs:
+    name: 🧩 Run AKS Jobs (with Image Validation)
+    runs-on: ubuntu-latest
+    needs: detect_services
+    strategy:
+      matrix:
+        service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
+      max-parallel: 3
+    steps:
+      - uses: actions/checkout@v4
 
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 🧭 Get AKS Credentials
-  #       run: |
-  #         az aks get-credentials \
-  #           --resource-group ${{ secrets.RESOURCE_GROUP }} \
-  #           --name ${{ secrets.AKS_NAME }} \
-  #           --admin
+      - name: 🧭 Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_NAME }} \
+            --admin
 
-  #     - name: 🧱 Validate Image in ACR
-  #       id: validate-image
-  #       run: |
-  #         service_name=$(basename "${{ matrix.service_path }}")
-  #         version=$(cat "${{ matrix.service_path }}/VERSION")
-  #         acr="${{ secrets.ACR_NAME }}"
+      - name: 🧱 Validate Image in ACR
+        id: validate-image
+        run: |
+          service_name=$(basename "${{ matrix.service_path }}")
+          version=$(cat "${{ matrix.service_path }}/VERSION")
+          acr="${{ secrets.ACR_NAME }}"
 
-  #         echo "Checking image: $acr.azurecr.io/$service_name:$version"
-  #         if az acr repository show-tags --name "$acr" --repository "$service_name" | grep -q "$version"; then
-  #           echo "✅ Image found: $acr.azurecr.io/$service_name:$version"
-  #           echo "image_exists=true" >> $GITHUB_OUTPUT
-  #         else
-  #           echo "⚠️ Image not found in ACR. Skipping job $service_name."
-  #           echo "image_exists=false" >> $GITHUB_OUTPUT
-  #         fi
+          echo "Checking image: $acr.azurecr.io/$service_name:$version"
+          if az acr repository show-tags --name "$acr" --repository "$service_name" | grep -q "$version"; then
+            echo "✅ Image found: $acr.azurecr.io/$service_name:$version"
+            echo "image_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Image not found in ACR. Skipping job $service_name."
+            echo "image_exists=false" >> $GITHUB_OUTPUT
+          fi
 
-  #     - name: 🚀 Run AKS Job
-  #       if: steps.validate-image.outputs.image_exists == 'true'
-  #       run: |
-  #         set -euo pipefail
-  #         service_name=$(basename "${{ matrix.service_path }}")
-  #         version=$(cat "${{ matrix.service_path }}/VERSION")
-  #         acr="${{ secrets.ACR_NAME }}"
-  #         az_creds='${{ secrets.AZURE_CREDENTIALS }}'
-  #         client_id=$(echo "$az_creds" | jq -r '.clientId')
-  #         client_secret=$(echo "$az_creds" | jq -r '.clientSecret')
-  #         tenant_id=$(echo "$az_creds" | jq -r '.tenantId')
-  #         subscription_id=$(echo "$az_creds" | jq -r '.subscriptionId')
-  #         storage_account="${{ secrets.STORAGE_ACCOUNT }}"
+      - name: 🚀 Run AKS Job
+        if: steps.validate-image.outputs.image_exists == 'true'
+        run: |
+          set -euo pipefail
+          service_name=$(basename "${{ matrix.service_path }}")
+          version=$(cat "${{ matrix.service_path }}/VERSION")
+          acr="${{ secrets.ACR_NAME }}"
+          az_creds='${{ secrets.AZURE_CREDENTIALS }}'
+          client_id=$(echo "$az_creds" | jq -r '.clientId')
+          client_secret=$(echo "$az_creds" | jq -r '.clientSecret')
+          tenant_id=$(echo "$az_creds" | jq -r '.tenantId')
+          subscription_id=$(echo "$az_creds" | jq -r '.subscriptionId')
+          storage_account="${{ secrets.STORAGE_ACCOUNT }}"
 
-  #         echo "🧹 Deleting old job if exists..."
-  #         kubectl delete job "$service_name-job" --ignore-not-found
+          echo "🧹 Deleting old job if exists..."
+          kubectl delete job "$service_name-job" --ignore-not-found
 
-  #         custom_params=""
-  #         if [ "$service_name" = "ingest-files" ]; then
-  #           git_url="github.com/${GITHUB_REPOSITORY}.git"
-  #           custom_params="--set source.git.url=$git_url --set source.git.token=${{ secrets.GH_PAT_TOKEN }}"
-  #         fi
+          custom_params=""
+          if [ "$service_name" = "ingest-files" ]; then
+            git_url="github.com/${GITHUB_REPOSITORY}.git"
+            custom_params="--set source.git.url=$git_url --set source.git.token=${{ secrets.GH_PAT_TOKEN }}"
+          fi
 
-  #         echo "🔧 Installing Helm chart for $service_name..."
-  #         helm upgrade --install "$service_name" "microservices/$service_name/helm" \
-  #           --set image.repository="$acr.azurecr.io/$service_name" \
-  #           --set image.tag="$version" \
-  #           --set job.enabled=true \
-  #           --set config.azure.clientId="$client_id" \
-  #           --set config.azure.clientSecret="$client_secret" \
-  #           --set config.azure.tenantId="$tenant_id" \
-  #           --set config.azure.subscriptionId="$subscription_id" \
-  #           --set config.storage.raw.account="$storage_account" \
-  #           $custom_params
+          echo "🔧 Installing Helm chart for $service_name..."
+          helm upgrade --install "$service_name" "microservices/$service_name/helm" \
+            --set image.repository="$acr.azurecr.io/$service_name" \
+            --set image.tag="$version" \
+            --set job.enabled=true \
+            --set config.azure.clientId="$client_id" \
+            --set config.azure.clientSecret="$client_secret" \
+            --set config.azure.tenantId="$tenant_id" \
+            --set config.azure.subscriptionId="$subscription_id" \
+            --set config.storage.raw.account="$storage_account" \
+            $custom_params
 
-  #         echo "⏳ Waiting job completion (timeout 15min)..."
-  #         if ! kubectl wait --for=condition=complete job/"$service_name-job" --timeout=900s; then
-  #           echo "❌ AKS job $service_name did not complete in time"
-  #           exit 1
-  #         fi
+          echo "⏳ Waiting job completion (timeout 15min)..."
+          if ! kubectl wait --for=condition=complete job/"$service_name-job" --timeout=900s; then
+            echo "❌ AKS job $service_name did not complete in time"
+            exit 1
+          fi
 
-  #     - name: 📄 Save AKS Job Result
-  #       if: always()
-  #       run: |
-  #         service_name=$(basename "${{ matrix.service_path }}")
-  #         status="skipped"
-  #         if [ "${{ steps.validate-image.outputs.image_exists }}" = "true" ]; then
-  #           if kubectl get job "$service_name-job" &>/dev/null; then
-  #             succeeded=$(kubectl get job "$service_name-job" -o jsonpath='{.status.succeeded}')
-  #             if [ "$succeeded" = "1" ]; then
-  #               status="completed"
-  #             else
-  #               status="failed"
-  #             fi
-  #           fi
-  #         fi
-  #         echo "{\"service\":\"$service_name\",\"status\":\"$status\"}" > result.json
+      - name: 📄 Save AKS Job Result
+        if: always()
+        run: |
+          service_name=$(basename "${{ matrix.service_path }}")
+          status="skipped"
+          if [ "${{ steps.validate-image.outputs.image_exists }}" = "true" ]; then
+            if kubectl get job "$service_name-job" &>/dev/null; then
+              succeeded=$(kubectl get job "$service_name-job" -o jsonpath='{.status.succeeded}')
+              if [ "$succeeded" = "1" ]; then
+                status="completed"
+              else
+                status="failed"
+              fi
+            fi
+          fi
+          echo "{\"service\":\"$service_name\",\"status\":\"$status\"}" > result.json
 
-  #     - name: 🧹 Cleanup previous artifact
-  #       if: always()
-  #       run: |
-  #         service_name=$(basename "${{ matrix.service_path }}")
-  #         safe_name=${service_name//\//_}    # substitui '/' por '_'
-  #         echo "Deleting old artifact: $safe_name-aks-job-result"
-  #         gh run artifact delete "$safe_name-aks-job-result" || true
+      - name: 🧹 Cleanup previous artifact
+        if: always()
+        run: |
+          service_name=$(basename "${{ matrix.service_path }}")
+          safe_name=${service_name//\//_}
+          echo "Deleting old artifact: $safe_name-aks-job-result"
+          gh run artifact delete "$safe_name-aks-job-result" || true
 
-  #     - name: 🧹 Normalize artifact name
-  #       id: normalize-artifact-name
-  #       run: |
-  #         service_name=$(basename "${{ matrix.service_path }}")
-  #         safe_name=${service_name//\//_}
-  #         echo "safe_name=$safe_name" >> $GITHUB_OUTPUT
+      - name: 🧹 Normalize artifact name
+        id: normalize-artifact-name
+        run: |
+          service_name=$(basename "${{ matrix.service_path }}")
+          safe_name=${service_name//\//_}
+          echo "safe_name=$safe_name" >> $GITHUB_OUTPUT
 
-  #     - name: 📤 Upload AKS Job Result
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: ${{ steps.normalize-artifact-name.outputs.safe_name }}-aks-job-result
-  #         path: result.json
+      - name: 📤 Upload AKS Job Result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.normalize-artifact-name.outputs.safe_name }}-aks-job-result
+          path: result.json
 
   databricks-job:
     name: 🧠 Run Databricks Job
-    # needs: aks-jobs
+    needs: aks-jobs
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
@@ -152,12 +152,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
-      - name: 🚀 Trigger Databricks Job (with debug)
+      - name: 🚀 Trigger Databricks Job
         run: |
           set -euo pipefail
           echo "=== DEBUG: Starting Databricks Job Trigger ==="
   
-          # Extrai credenciais AAD
           tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
           client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
@@ -166,22 +165,15 @@ jobs:
           echo "Client ID: $client_id"
           echo "Subscription ID: $(az account show --query id -o tsv)"
   
-          # Lista todas as workspaces do resource group e mostra o JSON completo
-          echo "=== DEBUG: Full workspace list JSON ==="
           WORKSPACES_JSON=$(az databricks workspace list \
                             --resource-group "${{ secrets.RESOURCE_GROUP }}" \
                             -o json)
-          echo "$WORKSPACES_JSON" | jq '.'
+          echo "Workspace JSON keys:"
+          echo "$WORKSPACES_JSON" | jq -r '.[0] | keys[]'
   
-          # Mostra todas as chaves de .properties de cada workspace que não for nula
-          echo "=== DEBUG: All keys in .properties ==="
-          echo "$WORKSPACES_JSON" | jq -r '.[] | select(.properties != null) | .properties | keys[]'
-  
-          # Pega a URL da primeira workspace válida
           WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
           echo "Workspace URL detectada: $WORKSPACE_URL"
   
-          # Gera token AAD via Client Credentials
           TOKEN=$(curl -s -X POST \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -d "grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default" \
@@ -190,10 +182,8 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "✅ Token AAD gerado com sucesso"
   
-          # Nome fixo do job
           JOB_NAME="transform-clean-data-process"
   
-          # Busca job_id pelo nome do job
           JOB_ID=$(curl -s -X GET "$WORKSPACE_URL/api/2.0/jobs/list" \
                      -H "Authorization: Bearer $TOKEN" \
                      -H "Content-Type: application/json" \
@@ -203,31 +193,28 @@ jobs:
             echo "❌ Job $JOB_NAME não encontrado na workspace $WORKSPACE_URL"
             exit 1
           fi
-  
           echo "✅ Job $JOB_NAME encontrado com ID $JOB_ID"
   
-          # Dispara o job
           RUN_ID=$(curl -s -X POST "$WORKSPACE_URL/api/2.0/jobs/run-now" \
                      -H "Authorization: Bearer $TOKEN" \
                      -H "Content-Type: application/json" \
                      -d "{\"job_id\": $JOB_ID}" | jq -r '.run_id')
-  
           echo "🚀 Job disparado com run_id: $RUN_ID"
   
-          # Monitoramento do job
           MAX_WAIT=3600
           INTERVAL=15
           ELAPSED=0
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            STATUS=$(curl -s -X GET "$WORKSPACE_URL/api/2.0/jobs/runs/get?run_id=$RUN_ID" \
+            RESPONSE=$(curl -s -X GET "$WORKSPACE_URL/api/2.0/jobs/runs/get?run_id=$RUN_ID" \
                        -H "Authorization: Bearer $TOKEN" \
-                       -H "Content-Type: application/json" \
-                     | jq -r '.state.life_cycle_state')
-            RESULT_STATE=$(curl -s -X GET "$WORKSPACE_URL/api/2.0/jobs/runs/get?run_id=$RUN_ID" \
-                             -H "Authorization: Bearer $TOKEN" \
-                             -H "Content-Type: application/json" \
-                           | jq -r '.state.result_state')
-            echo "⏱ Run status: $STATUS, result_state: $RESULT_STATE"
+                       -H "Content-Type: application/json")
+  
+            STATUS=$(echo "$RESPONSE" | jq -r '.state.life_cycle_state')
+            RESULT_STATE=$(echo "$RESPONSE" | jq -r '.state.result_state')
+  
+            DISPLAY_STATE="${RESULT_STATE:-$STATUS}"
+  
+            echo "⏱ Run status: $STATUS, result_state: $DISPLAY_STATE"
   
             if [ "$STATUS" == "TERMINATED" ]; then
               if [ "$RESULT_STATE" == "SUCCESS" ]; then
@@ -238,6 +225,7 @@ jobs:
                 exit 1
               fi
             fi
+  
             sleep $INTERVAL
             ELAPSED=$((ELAPSED + INTERVAL))
           done
@@ -254,7 +242,7 @@ jobs:
   summary:
     name: 📋 Pipeline Summary
     runs-on: ubuntu-latest
-    needs: databricks-job
+    needs: [databricks-job, aks-jobs]
     steps:
       - uses: actions/download-artifact@v4
         with:
