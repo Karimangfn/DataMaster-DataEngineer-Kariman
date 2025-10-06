@@ -127,7 +127,7 @@ resource "databricks_job" "data_process" {
 }
 
 resource "azurerm_role_assignment" "databricks_blob_contributor" {
-  scope                = azurerm_storage_account.lake.id
+  scope                = module.storage.azurerm_storage_account.lake.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.databricks_access_connector_principal_id
 }
