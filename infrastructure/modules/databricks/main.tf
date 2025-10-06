@@ -147,19 +147,19 @@ resource "databricks_grants" "use_adls_credential" {
   }
 }
 
-resource "databricks_catalog_external_location" "bronze" {
+resource "databricks_external_location" "bronze" {
   name            = "bronze_external"
   url             = "abfss://bronze@${local.lake_name}.dfs.core.windows.net/"
   credential_name = databricks_credential.adls_sp.name
 }
 
-resource "databricks_catalog_external_location" "silver" {
+resource "databricks_external_location" "silver" {
   name            = "silver_external"
   url             = "abfss://silver@${local.lake_name}.dfs.core.windows.net/"
   credential_name = databricks_credential.adls_sp.name
 }
 
-resource "databricks_catalog_external_location" "gold" {
+resource "databricks_external_location" "gold" {
   name            = "gold_external"
   url             = "abfss://gold@${local.lake_name}.dfs.core.windows.net/"
   credential_name = databricks_credential.adls_sp.name
