@@ -162,11 +162,11 @@ jobs:
                             -o json)
           echo "$WORKSPACES_JSON" | jq '.'
   
-          # Mostra todas as chaves de .properties
+          # Mostra todas as chaves de .properties de cada workspace que não for nula
           echo "=== DEBUG: All keys in .properties ==="
-          echo "$WORKSPACES_JSON" | jq -r '.[] | .properties | keys[]'
+          echo "$WORKSPACES_JSON" | jq -r '.[] | select(.properties != null) | .properties | keys[]'
   
-          # Pega a URL da primeira workspace
+          # Pega a URL da primeira workspace válida
           WORKSPACE_URL=$(echo "$WORKSPACES_JSON" | jq -r '.[0].properties.workspaceUrl')
           echo "Workspace URL detectada: $WORKSPACE_URL"
   
