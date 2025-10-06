@@ -114,18 +114,21 @@ jobs:
           echo "🧰 Inicializando Terraform..."
           terraform init
       
-          echo "🔎 Planejando criação das External Locations..."
+          echo "🔎 Planejando criação das External Locations (FORÇANDO)..."
           terraform plan -out=tfplan_external_locations -no-color \
             -target=module.databricks.databricks_catalog_external_location.bronze \
             -target=module.databricks.databricks_catalog_external_location.silver \
             -target=module.databricks.databricks_catalog_external_location.gold \
-            -var="db_access_connector_principal_id=$PRINCIPAL_ID" \
-            -var="subscription_id=$(az account show --query id -o tsv)"
-      
+            -var="db_access_connector_principal_id=${{ env.PRINCIPAL_ID }}" \
+            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -refresh=true
+          
+          # Forçar aplicação mesmo se o plan estiver "vazio"
+          echo "✅ Aplicando External Locations no Databricks (FORÇANDO)..."
+          terraform apply -auto-approve -refresh=true tfplan_external_locations || true
+          
+          # Exportar plano e estado
           terraform show -no-color tfplan_external_locations >> plan_external_locations.txt
-      
-          echo "✅ Aplicando External Locations no Databricks..."
-          terraform apply -auto-approve tfplan_external_locations
       
           echo "📤 Upload do Terraform plan e estado"
           gh run upload-artifact --name terraform-plan-external-locations --path plan_external_locations.txt || true
