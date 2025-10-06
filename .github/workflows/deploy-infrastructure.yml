@@ -500,18 +500,18 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
 
-      - name: 🚀 Create Databricks Credential and External Locations
-        run: |
-          terraform apply -auto-approve \
-            -target=module.databricks.databricks_credential.adls_sp \
-            -target=module.databricks.databricks_grants.use_adls_credential \
-            -target=module.databricks.databricks_catalog_external_location.bronze \
-            -target=module.databricks.databricks_catalog_external_location.silver \
-            -target=module.databricks.databricks_catalog_external_location.gold \
-            -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-            -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
-            -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
-            -var="subscription_id=$(az account show --query id -o tsv)"
+      # - name: 🚀 Create Databricks Credential and External Locations
+      #   run: |
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_credential.adls_sp \
+      #       -target=module.databricks.databricks_grants.use_adls_credential \
+      #       -target=module.databricks.databricks_catalog_external_location.bronze \
+      #       -target=module.databricks.databricks_catalog_external_location.silver \
+      #       -target=module.databricks.databricks_catalog_external_location.gold \
+      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+      #       -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 🚀 Create Databricks Schema
         run: |   
