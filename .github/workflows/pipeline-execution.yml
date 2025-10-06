@@ -5,137 +5,137 @@ on:
   workflow_dispatch:
 
 jobs:
-  detect_services:
-    name: 🔍 Detect Microservices
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
+  # detect_services:
+  #   name: 🔍 Detect Microservices
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Identify services with VERSION file
-        id: set-matrix
-        run: |
-          all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
-          if [ -z "$all_services" ]; then
-            echo 'matrix=[]' >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
-          echo "matrix=$json_array" >> $GITHUB_OUTPUT
+  #     - name: Identify services with VERSION file
+  #       id: set-matrix
+  #       run: |
+  #         all_services=$(find microservices -type f -name 'VERSION' | xargs -n1 dirname | sort -u)
+  #         if [ -z "$all_services" ]; then
+  #           echo 'matrix=[]' >> $GITHUB_OUTPUT
+  #           exit 0
+  #         fi
+  #         json_array=$(printf '%s\n' $all_services | jq -R . | jq -s -c .)
+  #         echo "matrix=$json_array" >> $GITHUB_OUTPUT
 
-  aks-jobs:
-    name: 🧩 Run AKS Jobs (with Image Validation)
-    runs-on: ubuntu-latest
-    needs: detect_services
-    strategy:
-      matrix:
-        service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
-      max-parallel: 3
-    steps:
-      - uses: actions/checkout@v4
+  # aks-jobs:
+  #   name: 🧩 Run AKS Jobs (with Image Validation)
+  #   runs-on: ubuntu-latest
+  #   needs: detect_services
+  #   strategy:
+  #     matrix:
+  #       service_path: ${{ fromJson(needs.detect_services.outputs.matrix) }}
+  #     max-parallel: 3
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: 🔐 Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: 🔐 Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🧭 Get AKS Credentials
-        run: |
-          az aks get-credentials \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --name ${{ secrets.AKS_NAME }} \
-            --admin
+  #     - name: 🧭 Get AKS Credentials
+  #       run: |
+  #         az aks get-credentials \
+  #           --resource-group ${{ secrets.RESOURCE_GROUP }} \
+  #           --name ${{ secrets.AKS_NAME }} \
+  #           --admin
 
-      - name: 🧱 Validate Image in ACR
-        id: validate-image
-        run: |
-          service_name=$(basename "${{ matrix.service_path }}")
-          version=$(cat "${{ matrix.service_path }}/VERSION")
-          acr="${{ secrets.ACR_NAME }}"
+  #     - name: 🧱 Validate Image in ACR
+  #       id: validate-image
+  #       run: |
+  #         service_name=$(basename "${{ matrix.service_path }}")
+  #         version=$(cat "${{ matrix.service_path }}/VERSION")
+  #         acr="${{ secrets.ACR_NAME }}"
 
-          echo "Checking image: $acr.azurecr.io/$service_name:$version"
-          if az acr repository show-tags --name "$acr" --repository "$service_name" | grep -q "$version"; then
-            echo "✅ Image found: $acr.azurecr.io/$service_name:$version"
-            echo "image_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "⚠️ Image not found in ACR. Skipping job $service_name."
-            echo "image_exists=false" >> $GITHUB_OUTPUT
-          fi
+  #         echo "Checking image: $acr.azurecr.io/$service_name:$version"
+  #         if az acr repository show-tags --name "$acr" --repository "$service_name" | grep -q "$version"; then
+  #           echo "✅ Image found: $acr.azurecr.io/$service_name:$version"
+  #           echo "image_exists=true" >> $GITHUB_OUTPUT
+  #         else
+  #           echo "⚠️ Image not found in ACR. Skipping job $service_name."
+  #           echo "image_exists=false" >> $GITHUB_OUTPUT
+  #         fi
 
-      - name: 🚀 Run AKS Job (via Helm)
-        if: steps.validate-image.outputs.image_exists == 'true'
-        run: |
-          service_name=$(basename "${{ matrix.service_path }}")
-          version=$(cat "${{ matrix.service_path }}/VERSION")
-          acr="${{ secrets.ACR_NAME }}"
-          az_creds='${{ secrets.AZURE_CREDENTIALS }}'
-          client_id=$(echo "$az_creds" | jq -r '.clientId')
-          client_secret=$(echo "$az_creds" | jq -r '.clientSecret')
-          tenant_id=$(echo "$az_creds" | jq -r '.tenantId')
-          subscription_id=$(echo "$az_creds" | jq -r '.subscriptionId')
-          storage_account="${{ secrets.STORAGE_ACCOUNT }}"
+  #     - name: 🚀 Run AKS Job (via Helm)
+  #       if: steps.validate-image.outputs.image_exists == 'true'
+  #       run: |
+  #         service_name=$(basename "${{ matrix.service_path }}")
+  #         version=$(cat "${{ matrix.service_path }}/VERSION")
+  #         acr="${{ secrets.ACR_NAME }}"
+  #         az_creds='${{ secrets.AZURE_CREDENTIALS }}'
+  #         client_id=$(echo "$az_creds" | jq -r '.clientId')
+  #         client_secret=$(echo "$az_creds" | jq -r '.clientSecret')
+  #         tenant_id=$(echo "$az_creds" | jq -r '.tenantId')
+  #         subscription_id=$(echo "$az_creds" | jq -r '.subscriptionId')
+  #         storage_account="${{ secrets.STORAGE_ACCOUNT }}"
 
-          echo "🧹 Deleting old job if exists..."
-          kubectl delete job "$service_name-job" --ignore-not-found
+  #         echo "🧹 Deleting old job if exists..."
+  #         kubectl delete job "$service_name-job" --ignore-not-found
 
-          echo "🔧 Installing Helm chart for $service_name..."
-          helm upgrade --install "$service_name" "microservices/$service_name/helm" \
-            --set image.repository="$acr.azurecr.io/$service_name" \
-            --set image.tag="$version" \
-            --set job.enabled=true \
-            --set config.azure.clientId="$client_id" \
-            --set config.azure.clientSecret="$client_secret" \
-            --set config.azure.tenantId="$tenant_id" \
-            --set config.azure.subscriptionId="$subscription_id" \
-            --set config.storage.raw.account="$storage_account"
+  #         echo "🔧 Installing Helm chart for $service_name..."
+  #         helm upgrade --install "$service_name" "microservices/$service_name/helm" \
+  #           --set image.repository="$acr.azurecr.io/$service_name" \
+  #           --set image.tag="$version" \
+  #           --set job.enabled=true \
+  #           --set config.azure.clientId="$client_id" \
+  #           --set config.azure.clientSecret="$client_secret" \
+  #           --set config.azure.tenantId="$tenant_id" \
+  #           --set config.azure.subscriptionId="$subscription_id" \
+  #           --set config.storage.raw.account="$storage_account"
 
-          echo "⏳ Waiting job completion..."
-          kubectl wait --for=condition=complete job/"$service_name-job" --timeout=900s || true
+  #         echo "⏳ Waiting job completion..."
+  #         kubectl wait --for=condition=complete job/"$service_name-job" --timeout=900s || true
 
-      - name: 📄 Save AKS Job Result
-        if: always()
-        run: |
-          service_name=$(basename "${{ matrix.service_path }}")
-          status="skipped"
-          if [ "${{ steps.validate-image.outputs.image_exists }}" = "true" ]; then
-            if kubectl get job "$service_name-job" &>/dev/null; then
-              succeeded=$(kubectl get job "$service_name-job" -o jsonpath='{.status.succeeded}')
-              if [ "$succeeded" = "1" ]; then
-                status="completed"
-              else
-                status="failed"
-              fi
-            fi
-          fi
-          echo "{\"service\":\"$service_name\",\"status\":\"$status\"}" > result.json
+  #     - name: 📄 Save AKS Job Result
+  #       if: always()
+  #       run: |
+  #         service_name=$(basename "${{ matrix.service_path }}")
+  #         status="skipped"
+  #         if [ "${{ steps.validate-image.outputs.image_exists }}" = "true" ]; then
+  #           if kubectl get job "$service_name-job" &>/dev/null; then
+  #             succeeded=$(kubectl get job "$service_name-job" -o jsonpath='{.status.succeeded}')
+  #             if [ "$succeeded" = "1" ]; then
+  #               status="completed"
+  #             else
+  #               status="failed"
+  #             fi
+  #           fi
+  #         fi
+  #         echo "{\"service\":\"$service_name\",\"status\":\"$status\"}" > result.json
 
-      - name: 🧹 Cleanup previous artifact
-        if: always()
-        run: |
-          service_name=$(basename "${{ matrix.service_path }}")
-          safe_name=${service_name//\//_}    # substitui '/' por '_'
-          echo "Deleting old artifact: $safe_name-aks-job-result"
-          gh run artifact delete "$safe_name-aks-job-result" || true
+  #     - name: 🧹 Cleanup previous artifact
+  #       if: always()
+  #       run: |
+  #         service_name=$(basename "${{ matrix.service_path }}")
+  #         safe_name=${service_name//\//_}    # substitui '/' por '_'
+  #         echo "Deleting old artifact: $safe_name-aks-job-result"
+  #         gh run artifact delete "$safe_name-aks-job-result" || true
       
-      - name: 🧹 Normalize artifact name
-        id: normalize-artifact-name
-        run: |
-          service_name=$(basename "${{ matrix.service_path }}")
-          safe_name=${service_name//\//_}
-          echo "safe_name=$safe_name" >> $GITHUB_OUTPUT
+  #     - name: 🧹 Normalize artifact name
+  #       id: normalize-artifact-name
+  #       run: |
+  #         service_name=$(basename "${{ matrix.service_path }}")
+  #         safe_name=${service_name//\//_}
+  #         echo "safe_name=$safe_name" >> $GITHUB_OUTPUT
       
-      - name: 📤 Upload AKS Job Result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.normalize-artifact-name.outputs.safe_name }}-aks-job-result
-          path: result.json
+  #     - name: 📤 Upload AKS Job Result
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: ${{ steps.normalize-artifact-name.outputs.safe_name }}-aks-job-result
+  #         path: result.json
 
   databricks-job:
     name: 🧠 Run Databricks Job
     runs-on: ubuntu-latest
-    needs: aks-jobs
+    # needs: aks-jobs
     steps:
       - name: 🔐 Azure Login
         uses: azure/login@v1
