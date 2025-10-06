@@ -4,45 +4,111 @@ name: Orchestrate Data Pipeline
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
-  aks-job:
+  detect_services:
+    name: 🔍 Detect Microservices
     runs-on: ubuntu-latest
     outputs:
-      kubeconfig: ${{ steps.set-kubeconfig.outputs.kubeconfig }}
+      matrix: ${{ steps.detect.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - id: detect
+        run: |
+          echo "📦 Detectando microserviços com Helm charts..."
+          services=$(find microservices -type f -path "*/helm/Chart.yaml" -exec dirname {} \; | awk -F'/' '{print $2}' | sort -u)
+          
+          if [ -z "$services" ]; then
+            echo "❌ Nenhum microserviço encontrado!"
+            echo 'matrix=[]' >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          json_array=$(printf '%s\n' $services | jq -R . | jq -s -c .)
+          echo "matrix=$json_array" >> $GITHUB_OUTPUT
+          echo "✅ Detectados: $json_array"
+
+  aks-jobs:
+    name: 🧩 Run AKS Jobs
+    runs-on: ubuntu-latest
+    needs: detect_services
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect_services.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
 
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set kubeconfig
-        id: set-kubeconfig
+      - name: ⚙️ Get AKS Credentials
         run: |
-          az aks get-credentials --resource-group ${{ secrets.RESOURCE_GROUP }} --name ${{ secrets.AKS_NAME }} --admin --file kubeconfig
-          echo "::set-output name=kubeconfig::$(cat kubeconfig)"
+          az aks get-credentials \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_NAME }} \
+            --admin
 
-      - name: Execute Job in AKS
+      - name: 🚀 Execute Helm Job for ${{ matrix.service }}
         run: |
-          export KUBECONFIG=kubeconfig
-          # Exemplo: executar job já instalado
-          kubectl apply -f jobs/my-preinstalled-job.yaml
-          kubectl wait --for=condition=complete job/my-preinstalled-job --timeout=600s
+          echo "🧩 Executando Helm job para ${{ matrix.service }}"
+
+          helm upgrade --install ${{ matrix.service }} microservices/${{ matrix.service }}/helm \
+            --reuse-values \
+            --set job.enabled=true
+
+          echo "⏳ Aguardando job terminar..."
+          kubectl wait --for=condition=complete job/${{ matrix.service }}-job --timeout=900s || {
+            echo "❌ Job ${{ matrix.service }} falhou ou expirou"
+            kubectl logs job/${{ matrix.service }}-job || true
+            exit 1
+          }
+
+          echo "✅ Job ${{ matrix.service }} finalizado com sucesso!"
 
   databricks-job:
+    name: 🧠 Run Databricks Job
     runs-on: ubuntu-latest
-    needs: aks-job
+    needs: aks-jobs
     steps:
-      - name: Execute Databricks Job
+      - uses: actions/checkout@v4
+
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📦 Install Databricks CLI (AAD support)
+        run: pip install databricks-cli --upgrade
+
+      - name: ⚙️ Configure Databricks CLI with AAD Auth
         env:
-          DATABRICKS_HOST: https://<workspace-url> # ou pode vir de um secret
-          DATABRICKS_TOKEN: ${{ secrets.DB_KEY }}
+          DATABRICKS_WORKSPACE_URL: ${{ secrets.DATABRICKS_WORKSPACE_URL }}
         run: |
-          JOB_PAYLOAD='{
-            "job_id": "<id-do-job-existente>"
-          }'
-          curl -X POST "$DATABRICKS_HOST/api/2.1/jobs/run-now" \
-            -H "Authorization: Bearer $DATABRICKS_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$JOB_PAYLOAD"
+          mkdir -p ~/.databricks
+          cat <<EOF > ~/.databricks/config
+          [DEFAULT]
+          host = $DATABRICKS_WORKSPACE_URL
+          auth_type = azure-cli
+          EOF
+
+      - name: 🚀 Execute Databricks Job
+        env:
+          JOB_ID: ${{ secrets.DATABRICKS_JOB_ID }}
+        run: |
+          echo "▶️ Rodando job Databricks $JOB_ID"
+          RUN_ID=$(databricks jobs run-now --job-id "$JOB_ID" --output | jq -r '.run_id')
+          databricks runs wait --run-id "$RUN_ID"
+          echo "✅ Databricks job finalizado!"
+
+      - name: 🧾 Summary
+        if: always()
+        run: |
+          echo "## ☁️ Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **AKS Jobs executados:** ${{ join(fromJson(needs.detect_services.outputs.matrix), ', ') }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Databricks Job:** ${{ secrets.DATABRICKS_JOB_ID }}" >> $GITHUB_STEP_SUMMARY
