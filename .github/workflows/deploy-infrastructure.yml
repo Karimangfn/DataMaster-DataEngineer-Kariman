@@ -499,6 +499,8 @@ jobs:
           WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "workspace_url=$WORKSPACE_URL" >> $GITHUB_OUTPUT
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
           echo "::add-mask::$TOKEN"
 
       - name: 🔧 Create Git Credential on Databricks
@@ -700,6 +702,9 @@ jobs:
     name: 👥 Create Databricks Groups
     runs-on: ubuntu-latest
     needs: databricks
+    env:
+      WORKSPACE_URL: ${{ needs.databricks.outputs.workspace_url }}
+      TOKEN: ${{ needs.databricks.outputs.token }}
     defaults:
       run:
         working-directory: ./infrastructure
