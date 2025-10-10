@@ -145,8 +145,6 @@ resource "databricks_storage_credential" "credential" {
   }
 
   comment         = "Managed identity credential for Databricks Access Connector"
-  skip_validation = true
-  force_update    = true
 }
 
 resource "azurerm_role_assignment" "databricks_blob_contributor" {
