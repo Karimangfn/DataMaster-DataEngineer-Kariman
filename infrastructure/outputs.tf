@@ -28,3 +28,11 @@ output "databricks_workspace_url" {
   description = "URL of the Databricks workspace"
   value       = module.databricks.databricks_workspace_url
 }
+
+output "databricks_access_connector_id" {
+  value = module.databricks.databricks_access_connector_id
+}
+
+output "databricks_access_connector_principal_id" {
+  value = module.databricks.databricks_access_connector_principal_id
+}
