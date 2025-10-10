@@ -143,6 +143,7 @@ resource "databricks_storage_credential" "credential" {
   azure_managed_identity {
     access_connector_id = azurerm_databricks_access_connector.connect-unity.id
   }
+  
   skip_validation = true
   force_update    = true
   comment         = "Managed identity credential for Databricks Access Connector"
