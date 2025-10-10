@@ -642,103 +642,52 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-  access:
-    name: 🔑 Assign Roles
-    runs-on: ubuntu-latest
-    needs: databricks
-    defaults:
-      run:
-        working-directory: ./infrastructure
-    steps:
-      - uses: actions/checkout@v3
-  
-      - name: 🔐 Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: 📥 Download Terraform state
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
-  
-      - name: 🧰 Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
-  
-      - run: terraform init
-  
-      - run: |
-          terraform plan -out=tfplan -no-color \
-            -target=module.access.azurerm_role_assignment.raw_access \
-            -target=module.access.azurerm_role_assignment.bronze_access \
-            -target=module.access.azurerm_role_assignment.silver_access \
-            -target=module.access.azurerm_role_assignment.gold_access \
-            -var="subscription_id=$(az account show --query id -o tsv)"
-          terraform show -no-color tfplan >> plan.txt
-  
-      - run: terraform validate
-  
-      - run: |
-          terraform apply -auto-approve \
-            -target=module.access.azurerm_role_assignment.raw_access \
-            -target=module.access.azurerm_role_assignment.bronze_access \
-            -target=module.access.azurerm_role_assignment.silver_access \
-            -target=module.access.azurerm_role_assignment.gold_access \
-            -var="subscription_id=$(az account show --query id -o tsv)"
-
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
-
-  # databricks-groups:
-  #   name: 👥 Create Databricks Groups
+  # access:
+  #   name: 🔑 Assign Roles
   #   runs-on: ubuntu-latest
-  #   needs: access
+  #   needs: databricks
   #   defaults:
   #     run:
   #       working-directory: ./infrastructure
   #   steps:
   #     - uses: actions/checkout@v3
+  
+  #     - name: 🔐 Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
   #     - name: 📥 Download Terraform state
   #       uses: actions/download-artifact@v4
   #       with:
   #         name: terraform-state
   #         path: ./infrastructure
-
-  #     - name: 🔎 Ensure Databricks Workspace Info
-  #       run: |
-  #         if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.TOKEN }}" ]; then
-  #           echo "Databricks workspace URL or token is missing!"
-  #           exit 1
-  #         fi
   
-  #     - name: 👥 Create data_engineers group
-  #       run: |
-  #         curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
-  #           -H "Authorization: Bearer $TOKEN" \
-  #           -H "Content-Type: application/scim+json" \
-  #           -d '{"displayName":"data_engineers"}' || echo "Group may already exist"
+  #     - name: 🧰 Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
   
-  #     - name: 👥 Create data_scientists group
-  #       run: |
-  #         curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
-  #           -H "Authorization: Bearer $TOKEN" \
-  #           -H "Content-Type: application/scim+json" \
-  #           -d '{"displayName":"data_scientists"}' || echo "Group may already exist"
+  #     - run: terraform init
   
-  #     - name: 👥 Create data_analysts group
-  #       run: |
-  #         curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
-  #           -H "Authorization: Bearer $TOKEN" \
-  #           -H "Content-Type: application/scim+json" \
-  #           -d '{"displayName":"data_analysts"}' || echo "Group may already exist"
+  #     - run: |
+  #         terraform plan -out=tfplan -no-color \
+  #           -target=module.access.azurerm_role_assignment.raw_access \
+  #           -target=module.access.azurerm_role_assignment.bronze_access \
+  #           -target=module.access.azurerm_role_assignment.silver_access \
+  #           -target=module.access.azurerm_role_assignment.gold_access \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
+  #         terraform show -no-color tfplan >> plan.txt
+  
+  #     - run: terraform validate
+  
+  #     - run: |
+  #         terraform apply -auto-approve \
+  #           -target=module.access.azurerm_role_assignment.raw_access \
+  #           -target=module.access.azurerm_role_assignment.bronze_access \
+  #           -target=module.access.azurerm_role_assignment.silver_access \
+  #           -target=module.access.azurerm_role_assignment.gold_access \
+  #           -var="subscription_id=$(az account show --query id -o tsv)"
 
   #     - name: 📤 Upload Terraform state
   #       uses: actions/upload-artifact@v4
@@ -746,6 +695,57 @@ jobs:
   #         name: terraform-state
   #         path: infrastructure/terraform.tfstate
   #         overwrite: true
+
+  databricks-groups:
+    name: 👥 Create Databricks Groups
+    runs-on: ubuntu-latest
+    needs: databricks
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
+
+      - name: 🔎 Ensure Databricks Workspace Info
+        run: |
+          if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.TOKEN }}" ]; then
+            echo "Databricks workspace URL or token is missing!"
+            exit 1
+          fi
+  
+      - name: 👥 Create data_engineers group
+        run: |
+          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/scim+json" \
+            -d '{"displayName":"data_engineers"}' || echo "Group may already exist"
+  
+      - name: 👥 Create data_scientists group
+        run: |
+          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/scim+json" \
+            -d '{"displayName":"data_scientists"}' || echo "Group may already exist"
+  
+      - name: 👥 Create data_analysts group
+        run: |
+          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/scim+json" \
+            -d '{"displayName":"data_analysts"}' || echo "Group may already exist"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
   # generate-summary:
   #   name: 📝 Generate Creation and Update Summary
