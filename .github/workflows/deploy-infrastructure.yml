@@ -657,11 +657,6 @@ jobs:
             -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
-      - run : |
-          terraform apply -auto-approve \
-            -target=module.databricks.databricks_storage_credential.credential \
-            -var="subscription_id=$(az account show --query id -o tsv)"
-
       - name: 🔎 Get workspace URL and AAD token
         id: get-databricks-info
         run: |
@@ -686,6 +681,22 @@ jobs:
               "git_username": "x-token-auth",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
+      
+      - name: 🧹 Delete old Databricks credentials if they exist
+        run: |
+          echo "🧹 Checking for existing credential 'connector_cred'..."
+          if curl -s -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/connector_cred" | grep -q '"name"'; then
+            echo "🗑️ Deleting existing credential 'connector_cred'"
+            curl -X DELETE -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/connector_cred"
+            sleep 5
+          else
+            echo "✅ No existing credential found"
+          fi
+
+      - run : |
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_storage_credential.credential \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 🔍 Capture Access Connector Info (from terraform outputs)
         id: connector-info
