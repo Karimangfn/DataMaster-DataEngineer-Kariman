@@ -7,8 +7,188 @@ on:
   workflow_dispatch:
 
 jobs:
-  debug-databricks-job:
-    name: 🧪 Debug Databricks Job
+  # debug-databricks-job:
+  #   name: 🧪 Debug Databricks Job
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 🔐 Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+  #     - name: 🚀 Capture Access Connector from Managed Resource Group
+  #       run: |
+  #         set -euo pipefail
+
+  #         echo "===== Databricks Workspace Info ====="
+
+  #         # Listar workspaces no resource group principal
+  #         WORKSPACES_JSON=$(az databricks workspace list \
+  #                           --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+  #                           -o json)
+
+  #         WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
+  #         WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')
+  #         echo "Workspace URL detectada: $WORKSPACE_URL"
+  #         echo "Workspace Name detectada: $WORKSPACE_NAME"
+
+  #         # Mostrar todas as propriedades da workspace
+  #         echo "===== Full Workspace Properties ====="
+  #         az databricks workspace show \
+  #            --name "$WORKSPACE_NAME" \
+  #            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+  #            -o json | jq '.'
+
+  #         # Derivar Managed Resource Group padrão do Databricks
+  #         MRG="${{ secrets.RESOURCE_GROUP }}"
+  #         MRG="${MRG/-rg/-dbw-mrg}"
+  #         echo "Managed Resource Group detectado: $MRG"
+
+  #         # Listar todos os recursos no MRG
+  #         echo "===== Recursos no Managed Resource Group ====="
+  #         az resource list --resource-group "$MRG" -o json | jq '.[] | {name, type, id}'
+
+  #         # Filtrar Access Connector (Managed Identity)
+  #         ACCESS_CONNECTOR_ID=$(az resource list --resource-group "$MRG" \
+  #                             --query "[?type=='Microsoft.ManagedIdentity/userAssignedIdentities'].id | [0]" \
+  #                             -o tsv || echo "")
+  #         echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
+
+  #         if [ -n "$ACCESS_CONNECTOR_ID" ]; then
+  #           # Pegar o principalId direto do recurso (sem Azure AD query)
+  #           PRINCIPAL_ID=$(az resource show --id "$ACCESS_CONNECTOR_ID" \
+  #                             --query "properties.principalId" -o tsv)
+  #           echo "PRINCIPAL_ID=$PRINCIPAL_ID"
+  #         else
+  #           echo "⚠️ Access Connector não encontrado no MRG"
+  #           PRINCIPAL_ID=""
+  #         fi
+
+  #         # Exportar variáveis para GitHub Actions
+  #         echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+  #         echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_ENV
+  #         echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
+  #         echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+
+  #     - name: 🏗️ Assign Blob Contributor Role to Storage Account
+  #       run: |
+  #         set -euo pipefail
+
+  #         if [ -z "$PRINCIPAL_ID" ]; then
+  #           echo "❌ PRINCIPAL_ID não encontrado, não é possível atribuir role."
+  #           exit 1
+  #         fi
+
+  #         STORAGE_ACCOUNT="dtmstr69b1lake"
+  #         echo "Tentando dar Storage Blob Data Contributor para $PRINCIPAL_ID no storage account $STORAGE_ACCOUNT"
+
+  #         az role assignment create \
+  #           --assignee "$PRINCIPAL_ID" \
+  #           --role "Storage Blob Data Contributor" \
+  #           --scope "$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)"
+
+  #         echo "✅ Role atribuída com sucesso!"
+      
+  #     - name: 🧰 Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.7
+      
+  #     - name: 📥 Checkout repo for Terraform modules
+  #       uses: actions/checkout@v4
+      
+  #     - name: 🚀 Create Databricks External Locations
+  #       working-directory: ./infrastructure   # Ajuste para o diretório do Terraform
+  #       run: |
+  #         set -euo pipefail
+      
+  #         echo "🔐 Validando variáveis obrigatórias..."
+  #         if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.PRINCIPAL_ID }}" ]; then
+  #           echo "❌ WORKSPACE_URL ou PRINCIPAL_ID ausentes, abortando."
+  #           exit 1
+  #         fi
+      
+  #         export WORKSPACE_URL="${{ env.WORKSPACE_URL }}"
+  #         export PRINCIPAL_ID="${{ env.PRINCIPAL_ID }}"
+      
+  #         echo "🧰 Inicializando Terraform..."
+  #         terraform init
+      
+  #         echo "🔎 Planejando criação das External Locations (FORÇANDO)..."
+  #         terraform plan -out=tfplan_external_locations -no-color \
+  #           -target=module.databricks.databricks_catalog_external_location.bronze \
+  #           -target=module.databricks.databricks_catalog_external_location.silver \
+  #           -target=module.databricks.databricks_catalog_external_location.gold \
+  #           -var="db_access_connector_principal_id=${{ env.PRINCIPAL_ID }}" \
+  #           -var="subscription_id=$(az account show --query id -o tsv)" \
+  #           -refresh=true
+          
+  #         # Forçar aplicação mesmo se o plan estiver "vazio"
+  #         echo "✅ Aplicando External Locations no Databricks (FORÇANDO)..."
+  #         terraform apply -auto-approve -refresh=true tfplan_external_locations || true
+          
+  #         # Exportar plano e estado
+  #         terraform show -no-color tfplan_external_locations >> plan_external_locations.txt
+      
+  #         echo "📤 Upload do Terraform plan e estado"
+  #         gh run upload-artifact --name terraform-plan-external-locations --path plan_external_locations.txt || true
+  #         gh run upload-artifact --name terraform-state --path terraform.tfstate || true
+            
+  check-gh-pat:
+    name: 🔐 Check GH_PAT_TOKEN and permissions
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔎 Check if GH_PAT_TOKEN is present
+        run: |
+          if [ -z "${{ secrets.GH_PAT_TOKEN }}" ]; then
+            echo "Error: the GH_PAT_TOKEN secret is not defined in the repository."
+            exit 1
+          else
+            echo "Secret GH_PAT_TOKEN found."
+          fi
+
+      - name: 🔗 Test token permission via API (checks if it can access the current repository)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Testing API access with GH_PAT_TOKEN..."
+          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/$REPO)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Error: GH_PAT_TOKEN does not have permission to access the repository $REPO."
+            echo "API response:"
+            cat response.json
+            exit 1
+          else
+            echo "Valid token with access to the repository."
+          fi
+
+      - name: 🧪 Test if token can access secrets API
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Checking if the token can access the secrets API..."
+          HTTP_CODE=$(curl -s -o secrets_response.json -w "%{http_code}" \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/$REPO/actions/secrets)
+  
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Error: the GH_PAT_TOKEN token does not have permission to access the secrets API in the repository $REPO."
+            echo "API response:"
+            cat secrets_response.json
+            exit 1
+          else
+            echo "Token has access to the secrets API. It can probably create secrets as well."
+          fi
+
+  check-azure-role-assignments:
+    name: 📜 Check Azure Role Assignments
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
@@ -16,265 +196,85 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🚀 Capture Access Connector from Managed Resource Group
+      - name: 🔎 Check Role Assignments
         run: |
-          set -euo pipefail
+          set -e
 
-          echo "===== Databricks Workspace Info ====="
+          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
+          SCOPE="/subscriptions/$SUBSCRIPTION_ID"
 
-          # Listar workspaces no resource group principal
-          WORKSPACES_JSON=$(az databricks workspace list \
-                            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-                            -o json)
+          echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
 
-          WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
-          WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')
-          echo "Workspace URL detectada: $WORKSPACE_URL"
-          echo "Workspace Name detectada: $WORKSPACE_NAME"
+          ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
 
-          # Mostrar todas as propriedades da workspace
-          echo "===== Full Workspace Properties ====="
-          az databricks workspace show \
-             --name "$WORKSPACE_NAME" \
-             --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-             -o json | jq '.'
-
-          # Derivar Managed Resource Group padrão do Databricks
-          MRG="${{ secrets.RESOURCE_GROUP }}"
-          MRG="${MRG/-rg/-dbw-mrg}"
-          echo "Managed Resource Group detectado: $MRG"
-
-          # Listar todos os recursos no MRG
-          echo "===== Recursos no Managed Resource Group ====="
-          az resource list --resource-group "$MRG" -o json | jq '.[] | {name, type, id}'
-
-          # Filtrar Access Connector (Managed Identity)
-          ACCESS_CONNECTOR_ID=$(az resource list --resource-group "$MRG" \
-                              --query "[?type=='Microsoft.ManagedIdentity/userAssignedIdentities'].id | [0]" \
-                              -o tsv || echo "")
-          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
-
-          if [ -n "$ACCESS_CONNECTOR_ID" ]; then
-            # Pegar o principalId direto do recurso (sem Azure AD query)
-            PRINCIPAL_ID=$(az resource show --id "$ACCESS_CONNECTOR_ID" \
-                              --query "properties.principalId" -o tsv)
-            echo "PRINCIPAL_ID=$PRINCIPAL_ID"
-          else
-            echo "⚠️ Access Connector não encontrado no MRG"
-            PRINCIPAL_ID=""
-          fi
-
-          # Exportar variáveis para GitHub Actions
-          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_ENV
-          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
-          echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
-
-      - name: 🏗️ Assign Blob Contributor Role to Storage Account
-        run: |
-          set -euo pipefail
-
-          if [ -z "$PRINCIPAL_ID" ]; then
-            echo "❌ PRINCIPAL_ID não encontrado, não é possível atribuir role."
+          echo "$ROLES" | grep -q "Contributor" || {
+            echo "❌ Service Principal does not have the 'Contributor' role"
             exit 1
-          fi
+          }
 
-          STORAGE_ACCOUNT="dtmstr69b1lake"
-          echo "Tentando dar Storage Blob Data Contributor para $PRINCIPAL_ID no storage account $STORAGE_ACCOUNT"
+          echo "$ROLES" | grep -q "User Access Administrator" || {
+            echo "❌ Service Principal does not have the 'User Access Administrator' role"
+            exit 1
+          }
 
-          az role assignment create \
-            --assignee "$PRINCIPAL_ID" \
-            --role "Storage Blob Data Contributor" \
-            --scope "$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)"
+          echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
+          
+  resource-group:
+    name: 🏗️ Creating Resource Group
+    runs-on: ubuntu-latest
+    needs: [check-azure-role-assignments, check-gh-pat]
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
 
-          echo "✅ Role atribuída com sucesso!"
-      
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
+
+      - run: terraform init
+
+      - run: |
+           terraform plan -out=tfplan -no-color \
+           -target=module.resource_group.azurerm_resource_group.rg \
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
       
-      - name: 📥 Checkout repo for Terraform modules
-        uses: actions/checkout@v4
+      - run: terraform validate
       
-      - name: 🚀 Create Databricks External Locations
-        working-directory: ./infrastructure   # Ajuste para o diretório do Terraform
+      - run: | 
+          terraform apply -auto-approve \
+            -target=module.resource_group.azurerm_resource_group.rg \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
+
+      - name: 📦 Get Resource Group Name
+        id: tfoutput_rg
         run: |
-          set -euo pipefail
-      
-          echo "🔐 Validando variáveis obrigatórias..."
-          if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.PRINCIPAL_ID }}" ]; then
-            echo "❌ WORKSPACE_URL ou PRINCIPAL_ID ausentes, abortando."
-            exit 1
-          fi
-      
-          export WORKSPACE_URL="${{ env.WORKSPACE_URL }}"
-          export PRINCIPAL_ID="${{ env.PRINCIPAL_ID }}"
-      
-          echo "🧰 Inicializando Terraform..."
-          terraform init
-      
-          echo "🔎 Planejando criação das External Locations (FORÇANDO)..."
-          terraform plan -out=tfplan_external_locations -no-color \
-            -target=module.databricks.databricks_catalog_external_location.bronze \
-            -target=module.databricks.databricks_catalog_external_location.silver \
-            -target=module.databricks.databricks_catalog_external_location.gold \
-            -var="db_access_connector_principal_id=${{ env.PRINCIPAL_ID }}" \
-            -var="subscription_id=$(az account show --query id -o tsv)" \
-            -refresh=true
-          
-          # Forçar aplicação mesmo se o plan estiver "vazio"
-          echo "✅ Aplicando External Locations no Databricks (FORÇANDO)..."
-          terraform apply -auto-approve -refresh=true tfplan_external_locations || true
-          
-          # Exportar plano e estado
-          terraform show -no-color tfplan_external_locations >> plan_external_locations.txt
-      
-          echo "📤 Upload do Terraform plan e estado"
-          gh run upload-artifact --name terraform-plan-external-locations --path plan_external_locations.txt || true
-          gh run upload-artifact --name terraform-state --path terraform.tfstate || true
-            
-  # check-gh-pat:
-  #   name: 🔐 Check GH_PAT_TOKEN and permissions
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: 🔎 Check if GH_PAT_TOKEN is present
-  #       run: |
-  #         if [ -z "${{ secrets.GH_PAT_TOKEN }}" ]; then
-  #           echo "Error: the GH_PAT_TOKEN secret is not defined in the repository."
-  #           exit 1
-  #         else
-  #           echo "Secret GH_PAT_TOKEN found."
-  #         fi
+          RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
 
-  #     - name: 🔗 Test token permission via API (checks if it can access the current repository)
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
-  #         REPO: ${{ github.repository }}
-  #       run: |
-  #         echo "Testing API access with GH_PAT_TOKEN..."
-  #         HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
-  #           -H "Authorization: token $GH_TOKEN" \
-  #           -H "Accept: application/vnd.github+json" \
-  #           https://api.github.com/repos/$REPO)
-
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "Error: GH_PAT_TOKEN does not have permission to access the repository $REPO."
-  #           echo "API response:"
-  #           cat response.json
-  #           exit 1
-  #         else
-  #           echo "Valid token with access to the repository."
-  #         fi
-
-  #     - name: 🧪 Test if token can access secrets API
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
-  #         REPO: ${{ github.repository }}
-  #       run: |
-  #         echo "Checking if the token can access the secrets API..."
-  #         HTTP_CODE=$(curl -s -o secrets_response.json -w "%{http_code}" \
-  #           -H "Authorization: token $GH_TOKEN" \
-  #           -H "Accept: application/vnd.github+json" \
-  #           https://api.github.com/repos/$REPO/actions/secrets)
-  
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "Error: the GH_PAT_TOKEN token does not have permission to access the secrets API in the repository $REPO."
-  #           echo "API response:"
-  #           cat secrets_response.json
-  #           exit 1
-  #         else
-  #           echo "Token has access to the secrets API. It can probably create secrets as well."
-  #         fi
-
-  # check-azure-role-assignments:
-  #   name: 📜 Check Azure Role Assignments
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-  #     - name: 🔎 Check Role Assignments
-  #       run: |
-  #         set -e
-
-  #         CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-  #         SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
-  #         SCOPE="/subscriptions/$SUBSCRIPTION_ID"
-
-  #         echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
-
-  #         ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
-
-  #         echo "$ROLES" | grep -q "Contributor" || {
-  #           echo "❌ Service Principal does not have the 'Contributor' role"
-  #           exit 1
-  #         }
-
-  #         echo "$ROLES" | grep -q "User Access Administrator" || {
-  #           echo "❌ Service Principal does not have the 'User Access Administrator' role"
-  #           exit 1
-  #         }
-
-  #         echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
-          
-  # resource-group:
-  #   name: 🏗️ Creating Resource Group
-  #   runs-on: ubuntu-latest
-  #   needs: [check-azure-role-assignments, check-gh-pat]
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
-
-  #     - run: terraform init
-
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #          -target=module.resource_group.azurerm_resource_group.rg \
-  #          -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
-      
-  #     - run: terraform validate
-      
-  #     - run: | 
-  #         terraform apply -auto-approve \
-  #           -target=module.resource_group.azurerm_resource_group.rg \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
-
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
-
-  #     - name: 📦 Get Resource Group Name
-  #       id: tfoutput_rg
-  #       run: |
-  #         RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
-  #         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
-
-  #     - name: 🧾 Set RESOURCE_GROUP_NAME secret via gh CLI
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
-  #         RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}
-  #         REPO: ${{ github.repository }}
-  #       run: |
-  #         gh secret set RESOURCE_GROUP --repo $REPO --body "$RESOURCE_GROUP_NAME"
+      - name: 🧾 Set RESOURCE_GROUP_NAME secret via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh secret set RESOURCE_GROUP --repo $REPO --body "$RESOURCE_GROUP_NAME"
 
   # acr:
   #   name: 🐳 Creating Container Registry (ACR)
@@ -418,292 +418,339 @@ jobs:
   #       run: |
   #         gh secret set AKS_NAME --repo $REPO --body "$KUBERNETES_SERVICE"
  
-  # storage-account:
-  #   name: 💾 Creating Storage Account
-  #   runs-on: ubuntu-latest
-  #   needs: resource-group
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  storage-account:
+    name: 💾 Creating Storage Account
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #          -target=module.storage.azurerm_storage_account.lake \
-  #          -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
-  #          -var="subscription_id=$(az account show --query id -o tsv)" \
-  #          -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-  #          terraform show -no-color tfplan >> plan.txt
+      - run: |
+           terraform plan -out=tfplan -no-color \
+           -target=module.storage.azurerm_storage_account.lake \
+           -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
+           -var="subscription_id=$(az account show --query id -o tsv)" \
+           -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+           terraform show -no-color tfplan >> plan.txt
       
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
+      - run: terraform validate
       
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=module.storage.azurerm_storage_account.lake \
-  #           -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
-  #           -var="subscription_id=$(az account show --query id -o tsv)" \
-  #           -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+      - run: |
+          terraform apply -auto-approve \
+            -target=module.storage.azurerm_storage_account.lake \
+            -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
+            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
-  #     - name: 📦 Get Storage Account Name
-  #       id: tfoutput_storage
-  #       run: |
-  #         STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
-  #         echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
+      - name: 📦 Get Storage Account Name
+        id: tfoutput_storage
+        run: |
+          STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
+          echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
   
-  #     - name: 🧾 Set STORAGE_ACCOUNT secret via gh CLI
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
-  #         STORAGE_ACCOUNT_NAME: ${{ env.STORAGE_ACCOUNT_NAME }}
-  #         REPO: ${{ github.repository }}
-  #       run: |
-  #         gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
+      - name: 🧾 Set STORAGE_ACCOUNT secret via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          STORAGE_ACCOUNT_NAME: ${{ env.STORAGE_ACCOUNT_NAME }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
 
-  # storage-containers:
-  #   name: 📁 Creating Storage Containers
-  #   runs-on: ubuntu-latest
-  #   needs: storage-account
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  storage-containers:
+    name: 📁 Creating Storage Containers
+    runs-on: ubuntu-latest
+    needs: storage-account
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #           -target=module.storage.azurerm_storage_container.raw \
-  #           -target=module.storage.azurerm_storage_container.bronze \
-  #           -target=module.storage.azurerm_storage_container.silver \
-  #           -target=module.storage.azurerm_storage_container.gold \
-  #          -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
+      - run: |
+           terraform plan -out=tfplan -no-color \
+            -target=module.storage.azurerm_storage_container.raw \
+            -target=module.storage.azurerm_storage_container.bronze \
+            -target=module.storage.azurerm_storage_container.silver \
+            -target=module.storage.azurerm_storage_container.gold \
+           -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
       
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
+      - run: terraform validate
       
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=module.storage.azurerm_storage_container.raw \
-  #           -target=module.storage.azurerm_storage_container.bronze \
-  #           -target=module.storage.azurerm_storage_container.silver \
-  #           -target=module.storage.azurerm_storage_container.gold \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+      - run: |
+          terraform apply -auto-approve \
+            -target=module.storage.azurerm_storage_container.raw \
+            -target=module.storage.azurerm_storage_container.bronze \
+            -target=module.storage.azurerm_storage_container.silver \
+            -target=module.storage.azurerm_storage_container.gold \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
-  # databricks:
-  #   name: 🧪 Creating Databricks Workspace
-  #   runs-on: ubuntu-latest
-  #   needs: storage-containers
-  #   defaults:
-  #     run:
-  #       working-directory: ./infrastructure
-  #   steps:
-  #     - uses: actions/checkout@v3
+  databricks:
+    name: 🧪 Creating Databricks Workspace
+    runs-on: ubuntu-latest
+    needs: storage-containers
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
       
-  #     - name: 🔐 Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: 📥 Download Terraform state
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: ./infrastructure
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
       
-  #     - name: 🧰 Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.7
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
       
-  #     - run: terraform init
+      - run: terraform init
 
-  #     - run: |
-  #          terraform plan -out=tfplan -no-color \
-  #            -target=module.databricks.azurerm_databricks_workspace.dbw \
-  #            -var="subscription_id=$(az account show --query id -o tsv)"
-  #          terraform show -no-color tfplan >> plan.txt
+      - run: |
+           terraform plan -out=tfplan -no-color \
+             -target=module.databricks.azurerm_databricks_workspace.dbw \
+             -var="subscription_id=$(az account show --query id -o tsv)"
+           terraform show -no-color tfplan >> plan.txt
       
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-plan-txt
-  #         path: ./infrastructure/plan.txt
-  #         overwrite: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-txt
+          path: ./infrastructure/plan.txt
+          overwrite: true
       
-  #     - run: terraform validate
+      - run: terraform validate
       
-  #     - run: |
-  #         terraform apply -auto-approve \
-  #           -target=module.aks.azurerm_network_watcher.default \
-  #           -target=module.databricks.azurerm_databricks_workspace.dbw \
-  #           -var="subscription_id=$(az account show --query id -o tsv)" \
+      - run: |
+          terraform apply -auto-approve \
+            -target=module.aks.azurerm_network_watcher.default \
+            -target=module.databricks.azurerm_databricks_workspace.dbw \
+            -var="subscription_id=$(az account show --query id -o tsv)" \
 
-  #         terraform destroy -auto-approve \
-  #           -target=module.aks.azurerm_network_watcher.default \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+          terraform destroy -auto-approve \
+            -target=module.aks.azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 🔎 Get workspace URL and AAD token
-  #       id: get-databricks-info
-  #       run: |
-  #         tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
-  #         client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
-  #         client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
-  #         uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
-  #         post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
-  #         TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
-  #         WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
-  #         echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
-  #         echo "TOKEN=$TOKEN" >> $GITHUB_ENV
-  #         echo "::add-mask::$TOKEN"
+      - name: 🔎 Get workspace URL and AAD token
+        id: get-databricks-info
+        run: |
+          tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+          client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
+          post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
+          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
+          WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$TOKEN"
 
-  #     - name: 🔧 Create Git Credential on Databricks
-  #       run: |
-  #         curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
-  #           -H "Authorization: Bearer $TOKEN" \
-  #           -H "Content-Type: application/json" \
-  #           -d '{
-  #             "git_provider": "gitHub",
-  #             "git_username": "x-token-auth",
-  #             "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
-  #           }'
+      - name: 🔧 Create Git Credential on Databricks
+        run: |
+          curl -X POST "$WORKSPACE_URL/api/2.0/git-credentials" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "git_provider": "gitHub",
+              "git_username": "x-token-auth",
+              "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
+            }'
 
-  #     - name: 🔐 Capture Access Connector info
-  #       id: connector-info
-  #       run: |
-  #         set -euo pipefail
-      
-  #         echo "===== Databricks Workspace Info ====="
-      
-  #         # Pegar workspace URL automaticamente
-  #         WORKSPACES_JSON=$(az databricks workspace list \
-  #                           --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-  #                           -o json)
-  #         WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
-  #         echo "Workspace URL detectada: $WORKSPACE_URL"
-      
-  #         # Capturar Access Connector ID
-  #         ACCESS_CONNECTOR_ID=$(az databricks workspace show \
-  #                               --name "$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')" \
-  #                               --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-  #                               --query "properties.parameters.accessConnectorId.value" -o tsv)
-  #         echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
-      
-  #         echo "===== Azure AD Service Principal Info ====="
-  #         az ad sp show --id "$ACCESS_CONNECTOR_ID" -o json
-      
-  #         PRINCIPAL_ID=$(az ad sp show --id "$ACCESS_CONNECTOR_ID" --query "id" -o tsv)
-  #         echo "PRINCIPAL_ID=$PRINCIPAL_ID"
-      
-  #         # Exportar para GitHub Actions
-  #         echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
-  #         echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
-      
-  #         echo "Captured Access Connector Principal ID: $PRINCIPAL_ID"
-  #         echo "Captured Access Connector ID: $ACCESS_CONNECTOR_ID"
+      - name: 🔍 Capture Access Connector Info
+        id: connector-info
+        run: |
+          set -euo pipefail
+  
+          echo "===== Databricks Workspace Info ====="
+          WORKSPACES_JSON=$(az databricks workspace list \
+                            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+                            -o json)
+  
+          WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
+          WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')
+          echo "Detected Workspace URL: $WORKSPACE_URL"
+  
+          MRG="${{ secrets.RESOURCE_GROUP }}"
+          MRG="${MRG/-rg/-dbw-mrg}"
+          echo "Detected Managed Resource Group: $MRG"
+  
+          ACCESS_CONNECTOR_ID=$(az resource list --resource-group "$MRG" \
+                              --query "[?type=='Microsoft.ManagedIdentity/userAssignedIdentities'].id | [0]" \
+                              -o tsv || echo "")
+          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
+  
+          if [ -n "$ACCESS_CONNECTOR_ID" ]; then
+            PRINCIPAL_ID=$(az resource show --id "$ACCESS_CONNECTOR_ID" \
+                              --query "properties.principalId" -o tsv)
+            echo "PRINCIPAL_ID=$PRINCIPAL_ID"
+          else
+            echo "⚠️ Access Connector not found"
+            PRINCIPAL_ID=""
+          fi
+  
+          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+          echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_ENV
+          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
+          echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+  
+      - name: 🏗️ Assign Blob Contributor Role to Storage Account
+        run: |
+          set -euo pipefail
+          if [ -z "$PRINCIPAL_ID" ]; then
+            echo "❌ PRINCIPAL_ID not found."
+            exit 1
+          fi
+  
+          STORAGE_ACCOUNT="${{ secrets.STORAGE_ACCOUNT }}"
+          echo "🔗 Assigning 'Storage Blob Data Contributor' role to $PRINCIPAL_ID on $STORAGE_ACCOUNT"
+  
+          az role assignment create \
+            --assignee "$PRINCIPAL_ID" \
+            --role "Storage Blob Data Contributor" \
+            --scope "$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)"
+  
+          echo "✅ Role successfully assigned!"
 
-  #     - name: 🏗️ Apply Role Assignment on Storage
-  #       run: |
-  #         terraform apply -auto-approve \
-  #           -target=module.databricks.azurerm_role_assignment.databricks_blob_contributor \
-  #           -var="db_access_connector_principal_id=$PRINCIPAL_ID" \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
-
-  #     - name: 🚀 Create Databricks Credential and External Locations
-  #       run: |
-  #         terraform apply -auto-approve \
-  #           -target=module.databricks.databricks_catalog_external_location.bronze \
-  #           -target=module.databricks.databricks_catalog_external_location.silver \
-  #           -target=module.databricks.databricks_catalog_external_location.gold \
-  #           -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-  #           -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
-  #           -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
-
-  #     - name: 🚀 Create Databricks Schema
-  #       run: |   
-  #         terraform apply -auto-approve \
-  #           -target=module.databricks.databricks_schema.data_processing_db \
-  #           -var="subscription_id=$(az account show --query id -o tsv)"
+      - name: 🚀 Create Databricks External Locations
+        run: |
+          set -euo pipefail
+  
+          echo "🔐 Validating required variables..."
+          if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.PRINCIPAL_ID }}" ]; then
+            echo "❌ Missing WORKSPACE_URL or PRINCIPAL_ID."
+            exit 1
+          fi
+  
+          export WORKSPACE_URL="${{ env.WORKSPACE_URL }}"
+          export PRINCIPAL_ID="${{ env.PRINCIPAL_ID }}"
+  
+          # echo "🧰 Initializing Terraform..."
+          # terraform init -input=false
+  
+          echo "🔎 Planning External Locations (FORCED)..."
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_catalog_external_location.bronze \
+            -target=module.databricks.databricks_catalog_external_location.silver \
+            -target=module.databricks.databricks_catalog_external_location.gold \
+            -var="db_access_connector_principal_id=${{ env.PRINCIPAL_ID }}" \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+  
+          # echo "✅ Applying External Locations (FORCED)..."
+          # terraform apply -auto-approve -refresh=true tfplan_external_locations || true
+  
+          # terraform show -no-color tfplan_external_locations >> plan_external_locations.txt
+  
+          # echo "📤 Uploading Terraform plan and state..."
+          # gh run upload-artifact --name terraform-plan-external-locations --path plan_external_locations.txt || true
+          # gh run upload-artifact --name terraform-state --path terraform.tfstate || true
         
-  #     - name: 🚀 Create Databricks Job
-  #       run: |
-  #         terraform apply -auto-approve \
-  #           -refresh=false \
-  #           -target=module.databricks.databricks_job.data_process \
-  #           -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
-  #           -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
-  #           -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-  #           -var="subscription_id=$(az account show --query id -o tsv)" \
-  #           -var="git_repo_branch=${{ github.ref_name }}" \
-  #           -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
-  #           -var="enable_databricks=true"
+      # - name: 🚀 Create Databricks Credential and External Locations
+      #   run: |
+      #     terraform apply -auto-approve \
+      #       -target=module.databricks.databricks_catalog_external_location.bronze \
+      #       -target=module.databricks.databricks_catalog_external_location.silver \
+      #       -target=module.databricks.databricks_catalog_external_location.gold \
+      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+      #       -var="subscription_id=$(az account show --query id -o tsv)"
 
-  #     - name: 📤 Upload Terraform state
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: terraform-state
-  #         path: infrastructure/terraform.tfstate
-  #         overwrite: true
+      - name: 🚀 Create Databricks Schema
+        run: |   
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_schema.data_processing_db \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+        
+      - name: 🚀 Create Databricks Job
+        run: |
+          terraform apply -auto-approve \
+            -refresh=false \
+            -target=module.databricks.databricks_job.data_process \
+            -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
+            -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
+            -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
+            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -var="git_repo_branch=${{ github.ref_name }}" \
+            -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
+            -var="enable_databricks=true"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
   # access:
   #   name: 🔑 Assign Roles
