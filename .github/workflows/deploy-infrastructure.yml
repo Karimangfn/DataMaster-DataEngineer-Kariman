@@ -309,7 +309,7 @@ jobs:
         id: tfoutput_debug
         run: |
           RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
-          echo "✅ Detected Resource Group from Terraform"
+          echo "✅ Detected Resource Group from Terraform: $RESOURCE_GROUP_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
 
   # acr:
