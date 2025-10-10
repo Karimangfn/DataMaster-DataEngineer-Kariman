@@ -612,12 +612,15 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: 📦 Get Resource Group Name
+      - name: 📦 Get Terraform Outputs
         id: tfoutput_rg
         run: |
           RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
           echo "✅ Detected Resource Group from Terraform: $RESOURCE_GROUP_NAME"
+          echo "✅ Detected Storage Account from Terraform: $STORAGE_ACCOUNT_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
+          echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
       
       - run: terraform init
 
@@ -716,7 +719,7 @@ jobs:
             exit 1
           fi
   
-          STORAGE_ACCOUNT="${{ secrets.STORAGE_ACCOUNT }}"
+          STORAGE_ACCOUNT="${{ env.STORAGE_ACCOUNT_NAME }}"
           echo "🔗 Assigning 'Storage Blob Data Contributor' role to $PRINCIPAL_ID on $STORAGE_ACCOUNT"
   
           az role assignment create \
