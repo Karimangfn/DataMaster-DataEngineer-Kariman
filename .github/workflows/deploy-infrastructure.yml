@@ -266,6 +266,7 @@ jobs:
         id: tfoutput_rg
         run: |
           RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          echo "Detected Resource Group from Terraform: $RESOURCE_GROUP_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
 
       - name: 🧾 Set RESOURCE_GROUP_NAME secret via gh CLI
