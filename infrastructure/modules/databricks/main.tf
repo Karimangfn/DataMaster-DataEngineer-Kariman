@@ -137,6 +137,8 @@ resource "databricks_external_location" "bronze" {
   name            = "bronze_external"
   url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = local.databricks_catalog_name
+  skip_validation = true
+  force_update    = true
   comment         = "Bronze external location"
 }
 
@@ -145,6 +147,8 @@ resource "databricks_external_location" "silver" {
   name            = "silver_external"
   url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = local.databricks_catalog_name
+  skip_validation = true
+  force_update    = true
   comment         = "Silver external location"
 }
 
@@ -153,5 +157,7 @@ resource "databricks_external_location" "gold" {
   name            = "gold_external"
   url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = local.databricks_catalog_name
+  skip_validation = true
+  force_update    = true
   comment         = "Gold external location"
 }
