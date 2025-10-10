@@ -146,6 +146,7 @@ resource "databricks_storage_credential" "credential" {
   
   skip_validation = true
   force_update    = true
+  force_destroy   = true
   comment         = "Managed identity credential for Databricks Access Connector"
 }
 
