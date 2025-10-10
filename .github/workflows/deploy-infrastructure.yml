@@ -718,34 +718,64 @@ jobs:
             echo "Databricks workspace URL or token is missing!"
             exit 1
           fi
-  
+
       - name: 👥 Create data_engineers group
         run: |
-          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+          echo "📡 Creating group data_engineers..."
+          RESPONSE=$(curl -i -w "\nStatus: %{http_code}\n" -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/scim+json" \
-            -d '{"displayName":"data_engineers"}' || echo "Group may already exist"
-  
+            -d '{"displayName":"data_engineers"}')
+          echo "🔍 API Response:"
+          echo "$RESPONSE"
+    
       - name: 👥 Create data_scientists group
         run: |
-          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+          echo "📡 Creating group data_scientists..."
+          RESPONSE=$(curl -i -w "\nStatus: %{http_code}\n" -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/scim+json" \
-            -d '{"displayName":"data_scientists"}' || echo "Group may already exist"
-  
+            -d '{"displayName":"data_scientists"}')
+          echo "🔍 API Response:"
+          echo "$RESPONSE"
+    
       - name: 👥 Create data_analysts group
         run: |
-          curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+          echo "📡 Creating group data_analysts..."
+          RESPONSE=$(curl -i -w "\nStatus: %{http_code}\n" -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/scim+json" \
-            -d '{"displayName":"data_analysts"}' || echo "Group may already exist"
+            -d '{"displayName":"data_analysts"}')
+          echo "🔍 API Response:"
+          echo "$RESPONSE"
+      
+      # - name: 👥 Create data_engineers group
+      #   run: |
+      #     curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/scim+json" \
+      #       -d '{"displayName":"data_engineers"}' || echo "Group may already exist"
+  
+      # - name: 👥 Create data_scientists group
+      #   run: |
+      #     curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/scim+json" \
+      #       -d '{"displayName":"data_scientists"}' || echo "Group may already exist"
+  
+      # - name: 👥 Create data_analysts group
+      #   run: |
+      #     curl -s -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/scim+json" \
+      #       -d '{"displayName":"data_analysts"}' || echo "Group may already exist"
 
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
+      # - name: 📤 Upload Terraform state
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: terraform-state
+      #     path: infrastructure/terraform.tfstate
+      #     overwrite: true
 
   # generate-summary:
   #   name: 📝 Generate Creation and Update Summary
