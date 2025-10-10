@@ -650,10 +650,16 @@ jobs:
           terraform apply -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -target=module.databricks.azurerm_databricks_workspace.dbw \
-            -var="subscription_id=$(az account show --query id -o tsv)" \
+            -target=module.databricks.azurerm_databricks_access_connector.connect-unity \
+            -var="subscription_id=$(az account show --query id -o tsv)"
 
           terraform destroy -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - run : |
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_storage_credential.credential \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 🔎 Get workspace URL and AAD token
@@ -681,116 +687,81 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
 
-      - name: 🔍 Capture Access Connector Info
+      - name: 🔍 Capture Access Connector Info (from terraform outputs)
         id: connector-info
         run: |
           set -euo pipefail
-  
-          echo "===== Databricks Workspace Info ====="
-          WORKSPACES_JSON=$(az databricks workspace list \
-                            --resource-group "${{ env.RESOURCE_GROUP_NAME }}" \
-                            -o json)
-  
-          WORKSPACE_URL="https://$(echo "$WORKSPACES_JSON" | jq -r '.[0].workspaceUrl')"
-          WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r '.[0].name')
-          echo "Detected Workspace URL: $WORKSPACE_URL"
-          echo "Workspace Name detectada: $WORKSPACE_NAME"
-  
-          MRG="${{ env.RESOURCE_GROUP_NAME }}"
-          MRG="${MRG/-rg/-dbw-mrg}"
-          echo "Detected Managed Resource Group: $MRG"
-  
-          ACCESS_CONNECTOR_ID=$(az resource list --resource-group "$MRG" \
-                              --query "[?type=='Microsoft.ManagedIdentity/userAssignedIdentities'].id | [0]" \
-                              -o tsv || echo "")
-          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID"
-  
-          if [ -n "$ACCESS_CONNECTOR_ID" ]; then
-            PRINCIPAL_ID=$(az resource show --id "$ACCESS_CONNECTOR_ID" \
-                              --query "properties.principalId" -o tsv)
-            echo "PRINCIPAL_ID=$PRINCIPAL_ID"
-          else
-            echo "⚠️ Access Connector not found"
-            PRINCIPAL_ID=""
+      
+          ACCESS_CONNECTOR_ID=$(terraform output -raw databricks_access_connector_id 2>/dev/null || true)
+          PRINCIPAL_ID=$(terraform output -raw databricks_access_connector_principal_id 2>/dev/null || true)
+      
+          if [ -z "$ACCESS_CONNECTOR_ID" ] || [ -z "$PRINCIPAL_ID" ]; then
+            echo "❌ Terraform outputs for access connector are missing. Make sure the connector was applied."
+            echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
+            echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+            exit 1
           fi
-  
-          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
-          echo "WORKSPACE_NAME=$WORKSPACE_NAME" >> $GITHUB_ENV
+      
+          echo "✅ Access Connector ID: $ACCESS_CONNECTOR_ID"
+          echo "✅ Principal ID: $PRINCIPAL_ID"
+      
           echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
           echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
   
-      - name: 🏗️ Assign Blob Contributor Role to Storage Account
+      - name: 🏗️ Assign Blob Contributor Role to Storage Account (with retries)
         run: |
           set -euo pipefail
-          if [ -z "$PRINCIPAL_ID" ]; then
-            echo "❌ PRINCIPAL_ID not found."
+      
+          STORAGE_ACCOUNT="${{ env.STORAGE_ACCOUNT_NAME }}"
+          PRINCIPAL_ID="${{ env.PRINCIPAL_ID }}"
+          SCOPE=$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)
+      
+          if [ -z "$SCOPE" ]; then
+            echo "❌ Could not find storage account $STORAGE_ACCOUNT"
             exit 1
           fi
-  
-          STORAGE_ACCOUNT="${{ env.STORAGE_ACCOUNT_NAME }}"
-          echo "🔗 Assigning 'Storage Blob Data Contributor' role to $PRINCIPAL_ID on $STORAGE_ACCOUNT"
-  
-          az role assignment create \
-            --assignee "$PRINCIPAL_ID" \
-            --role "Storage Blob Data Contributor" \
-            --scope "$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)"
-  
-          echo "✅ Role successfully assigned!"
+      
+          for i in 1 2 3 4 5; do
+            echo "Attempt #$i to assign 'Storage Blob Data Contributor'..."
+            if az role assignment create --assignee "$PRINCIPAL_ID" --role "Storage Blob Data Contributor" --scope "$SCOPE" >/dev/null 2>&1; then
+              echo "✅ Role assigned"
+              break
+            fi
+            echo "⏳ Role assign failed, sleeping 10s before retry..."
+            sleep 10
+          done
 
-      - name: 🛠️ Set ADLS Gen2 ACLs for Databricks Managed Identity
+      - name: 🛠️ Set ADLS Gen2 ACLs for Databricks Managed Identity (with retries)
         run: |
+          set -euo pipefail
+      
+          ACCOUNT="${{ env.STORAGE_ACCOUNT_NAME }}"
+          PRINCIPAL="${{ env.PRINCIPAL_ID }}"
+      
           for container in bronze silver gold; do
-            echo "🔑 Setting ACLs for container $container"
-            az storage fs access set \
-              --account-name "${{ env.STORAGE_ACCOUNT_NAME }}" \
-              --file-system $container \
-              --path / \
-              --acl "user:${{ env.PRINCIPAL_ID }}:rwx"
+            echo "🔑 Setting ACL on $container"
+            for i in 1 2 3 4; do
+              if az storage fs access set \
+                   --account-name "$ACCOUNT" \
+                   --file-system "$container" \
+                   --path / \
+                   --acl "user:${PRINCIPAL}:rwx" \
+                   >/dev/null 2>&1; then
+                echo "✅ ACL set on $container"
+                break
+              fi
+              echo "ACL failed for $container. Retry #$i in 10s..."
+              sleep 10
+            done
           done
 
       - name: 🚀 Create Databricks External Locations
         run: |
-          set -euo pipefail
-  
-          echo "🔐 Validating required variables..."
-          if [ -z "${{ env.WORKSPACE_URL }}" ] || [ -z "${{ env.PRINCIPAL_ID }}" ]; then
-            echo "❌ Missing WORKSPACE_URL or PRINCIPAL_ID."
-            exit 1
-          fi
-  
-          export WORKSPACE_URL="${{ env.WORKSPACE_URL }}"
-          export PRINCIPAL_ID="${{ env.PRINCIPAL_ID }}"
-  
-          # echo "🧰 Initializing Terraform..."
-          # terraform init -input=false
-  
-          echo "🔎 Planning External Locations (FORCED)..."
           terraform apply -auto-approve \
             -target=module.databricks.databricks_external_location.bronze \
             -target=module.databricks.databricks_external_location.silver \
             -target=module.databricks.databricks_external_location.gold \
-            -var="db_access_connector_principal_id=${{ env.PRINCIPAL_ID }}" \
             -var="subscription_id=$(az account show --query id -o tsv)"
-  
-          # echo "✅ Applying External Locations (FORCED)..."
-          # terraform apply -auto-approve -refresh=true tfplan_external_locations || true
-  
-          # terraform show -no-color tfplan_external_locations >> plan_external_locations.txt
-  
-          # echo "📤 Uploading Terraform plan and state..."
-          # gh run upload-artifact --name terraform-plan-external-locations --path plan_external_locations.txt || true
-          # gh run upload-artifact --name terraform-state --path terraform.tfstate || true
-        
-      # - name: 🚀 Create Databricks Credential and External Locations
-      #   run: |
-      #     terraform apply -auto-approve \
-      #       -target=module.databricks.databricks_external_location.bronze \
-      #       -target=module.databricks.databricks__external_location.silver \
-      #       -target=module.databricks.databricks_external_location.gold \
-      #       -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
-      #       -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
-      #       -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
-      #       -var="subscription_id=$(az account show --query id -o tsv)"
 
       - name: 🚀 Create Databricks Schema
         run: |   
