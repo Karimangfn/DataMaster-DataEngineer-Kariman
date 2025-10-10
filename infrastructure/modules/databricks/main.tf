@@ -126,17 +126,40 @@ resource "databricks_job" "data_process" {
   }
 }
 
+resource "azurerm_databricks_access_connector" "connect-unity" {
+  name                = "${var.prefix}-${var.random_id}-cnct"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "databricks_storage_credential" "credential" {
+  provider = databricks.accounts
+  name     = "connector_cred"
+
+  azure_managed_identity {
+    access_connector_id = azurerm_databricks_access_connector.connect-unity.id
+  }
+
+  comment         = "Managed identity credential for Databricks Access Connector"
+  skip_validation = true
+  force_update    = true
+}
+
 resource "azurerm_role_assignment" "databricks_blob_contributor" {
   scope                = var.storage_account_id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = var.db_access_connector_principal_id
+  principal_id         = azurerm_databricks_access_connector.connect-unity.identity[0].principal_id
 }
 
 resource "databricks_external_location" "bronze" {
   provider        = databricks.accounts
   name            = "bronze_external"
   url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net"
-  credential_name = local.databricks_catalog_name
+  credential_name = databricks_storage_credential.credential.name
   fallback        = true
   skip_validation = true
   force_update    = true
@@ -147,7 +170,7 @@ resource "databricks_external_location" "silver" {
   provider        = databricks.accounts
   name            = "silver_external"
   url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net"
-  credential_name = local.databricks_catalog_name
+  credential_name = databricks_storage_credential.credential.name
   fallback        = true
   skip_validation = true
   force_update    = true
@@ -158,7 +181,7 @@ resource "databricks_external_location" "gold" {
   provider        = databricks.accounts
   name            = "gold_external"
   url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net"
-  credential_name = local.databricks_catalog_name
+  credential_name = databricks_storage_credential.credential.name
   fallback        = true
   skip_validation = true
   force_update    = true
