@@ -277,27 +277,34 @@ jobs:
         run: |
           gh secret set RESOURCE_GROUP --repo $REPO --body "$RESOURCE_GROUP_NAME"
 
-      - name: 🧩 Debug Azure Environment
+  resource-group-debug:
+    name: 🐛 Debug Resource Group
+    runs-on: ubuntu-latest
+    needs: resource-group
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
+  
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+  
+      - run: terraform init
+  
+      - name: 📦 Get Resource Group Name from Terraform
+        id: tfoutput_debug
         run: |
-          set -euo pipefail
-  
-          echo "===== Azure Environment Debug ====="
-          echo "Subscription info:"
-          az account show -o table || echo "⚠️ Could not fetch subscription info"
-  
-          echo "Listing available resource groups..."
-          az group list -o table || echo "⚠️ Failed to list resource groups"
-  
-          echo "Checking if provided resource group exists..."
-          RG_NAME="${{ secrets.RESOURCE_GROUP }}"
-          if az group show --name "$RG_NAME" -o json > /dev/null 2>&1; then
-            echo "✅ Resource group '$RG_NAME' exists."
-          else
-            echo "❌ Resource group '$RG_NAME' not found!"
-            echo "Here are all RGs in this subscription:"
-            az group list --query "[].name" -o tsv
-            exit 1
-          fi
+          RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          echo "✅ Detected Resource Group from Terraform"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
 
   # acr:
   #   name: 🐳 Creating Container Registry (ACR)
