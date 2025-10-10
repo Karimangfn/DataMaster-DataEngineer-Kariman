@@ -18,9 +18,12 @@ jobs:
 
       - name: 🛠️ Set ADLS Gen2 ACL for Databricks Managed Identity
         run: |
-          az storage fs access set --account-name dtmstr-420e-rg \
-                                  --file-system bronze \
-                                  --acl "user:a408e01e-b604-4cf9-9856-33b2755db521:rwx"
+          az storage fs access set \
+            --account-name dtmstr420elake \
+            --file-system bronze \
+            --path / \
+            --acl "user:a408e01e-b604-4cf9-9856-33b2755db521:rwx"
+
 
   #     - name: 🚀 Capture Access Connector from Managed Resource Group
   #       run: |
