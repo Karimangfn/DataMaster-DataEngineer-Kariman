@@ -512,12 +512,24 @@ jobs:
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
       
-      - name: 🧹 Delete old Databricks credentials if they exist
+      - name: 🧹 Clean up old external locations
+        run: |
+          for loc in bronze_external silver_external gold_external; do
+            echo "🧹 Checking if $loc exists..."
+            if curl -s -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc" | grep -q '"name"'; then
+              echo "🗑️ Deleting existing $loc"
+              curl -X DELETE -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc"
+            fi
+          done
+      
+      - name: 🧹 Delete old Databricks credentials if they exist (force delete)
         run: |
           echo "🧹 Checking for existing credential 'connector_cred'..."
           if curl -s -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/connector_cred" | grep -q '"name"'; then
-            echo "🗑️ Deleting existing credential 'connector_cred'"
-            curl -X DELETE -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/connector_cred"
+            echo "🗑️ Deleting existing credential 'connector_cred' with force=true"
+            curl -X DELETE \
+              -H "Authorization: Bearer $TOKEN" \
+              "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/connector_cred?force=true"
             sleep 5
           else
             echo "✅ No existing credential found"
@@ -594,16 +606,6 @@ jobs:
               echo "ACL failed for $container. Retry #$i in 10s..."
               sleep 10
             done
-          done
-
-      - name: 🧹 Clean up old external locations
-        run: |
-          for loc in bronze_external silver_external gold_external; do
-            echo "🧹 Checking if $loc exists..."
-            if curl -s -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc" | grep -q '"name"'; then
-              echo "🗑️ Deleting existing $loc"
-              curl -X DELETE -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc"
-            fi
           done
 
       - name: 🚀 Create Databricks External Locations
