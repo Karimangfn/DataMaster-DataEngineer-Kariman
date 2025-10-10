@@ -755,6 +755,16 @@ jobs:
             done
           done
 
+      - name: 🧹 Clean up old external locations
+        run: |
+          for loc in bronze_external silver_external gold_external; do
+            echo "🧹 Checking if $loc exists..."
+            if curl -s -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc" | grep -q '"name"'; then
+              echo "🗑️ Deleting existing $loc"
+              curl -X DELETE -H "Authorization: Bearer $TOKEN" "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc"
+            fi
+          done
+
       - name: 🚀 Create Databricks External Locations
         run: |
           terraform apply -auto-approve \
