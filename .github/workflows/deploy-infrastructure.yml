@@ -104,9 +104,11 @@ jobs:
   
       - name: 🔎 Validate SPN Graph Permissions
         run: |
-          TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
-          CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
-          CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          TENANT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
+          CLIENT_SECRET="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}"
+  
+          echo "🔍 Validating Service Principal permissions via Microsoft Graph..."
   
           TOKEN=$(curl -s -X POST \
             "https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token" \
@@ -127,9 +129,7 @@ jobs:
             -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/json")
   
-          HAS_PERMISSION=$(echo "$PERMISSIONS" | \
-            jq -r '.value[].appRoleAssignedTo[].appRoleId' | \
-            grep -i 'Group.ReadWrite.All' || true)
+          HAS_PERMISSION=$(echo "$PERMISSIONS" | jq -r '.value[].appRoleAssignedTo[].appRoleId' | grep -i 'Group.ReadWrite.All' || true)
   
           if [ -z "$HAS_PERMISSION" ]; then
             echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
