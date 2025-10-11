@@ -102,21 +102,29 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
-      - name: 🔎 Validate SPN Graph Permissions
+      - name: 🔎 Validate SPN Graph Permissions with Debug
+        shell: bash
         run: |
+          set -x  # Habilita debug para ver cada comando executado
+  
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
           TENANT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
           CLIENT_SECRET="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}"
   
-          echo "🔍 Validating Service Principal permissions via Microsoft Graph..."
+          echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
+          echo "🔍 Debug: TENANT_ID=$TENANT_ID"
+          # Não imprimir CLIENT_SECRET por segurança
   
+          echo "🔍 Obtendo token de acesso via Microsoft Graph..."
           TOKEN=$(curl -s -X POST \
             "https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -d "grant_type=client_credentials&client_id=$CLIENT_ID&client_secret=$CLIENT_SECRET&scope=https://graph.microsoft.com/.default" \
             | jq -r '.access_token')
   
-          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+          echo "🔍 Debug: TOKEN obtido? ${TOKEN:0:10}..."  # imprime apenas os 10 primeiros caracteres
+  
+          if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
             echo "❌ Could not obtain Microsoft Graph token."
             exit 1
           fi
@@ -124,20 +132,26 @@ jobs:
           GRAPH_URL="https://graph.microsoft.com/v1.0/servicePrincipals"
           FILTER="?%24filter=appId eq '$CLIENT_ID'&%24expand=appRoleAssignedTo"
   
+          echo "🔍 Requisitando permissões do Service Principal..."
           PERMISSIONS=$(curl -s -X GET \
             "$GRAPH_URL$FILTER" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/json")
   
-          HAS_PERMISSION=$(echo "$PERMISSIONS" | \
-            jq -r '.value[].appRoleAssignedTo // [] | .[].appRoleId' | grep -i 'Group.ReadWrite.All' || true)
+          echo "🔍 Debug: PERMISSIONS recebidas:"
+          echo "$PERMISSIONS" | jq '.'  # imprime o JSON formatado para debug
   
-          if [ -z "$HAS_PERMISSION" ]; then
+          ROLE_IDS=$(echo "$PERMISSIONS" | jq -r '.value[].appRoleAssignedTo // [] | .[].appRoleId')
+  
+          echo "🔍 Debug: ROLE_IDS extraídos:"
+          echo "$ROLE_IDS"
+  
+          if echo "$ROLE_IDS" | grep -iq 'Group.ReadWrite.All'; then
+            echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
+          else
             echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
             exit 1
           fi
-  
-          echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
           
   resource-group:
     name: 🏗️ Creating Resource Group
