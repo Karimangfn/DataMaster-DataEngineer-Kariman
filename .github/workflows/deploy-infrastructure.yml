@@ -60,38 +60,35 @@ jobs:
             echo "Token has access to the secrets API. It can probably create secrets as well."
           fi
 
-  check-azure-role-assignments:
-    name: 🔐 Check Azure Role Assignments
+  check-azuread-group-permissions:
+    name: 🔐 Check Azure AD Group Permissions
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: 🔎 Check Role Assignments
+  
+      - name: 🔎 Check SPN Graph Permissions with Debug
         run: |
           set -e
-
+  
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
-          SCOPE="/subscriptions/$SUBSCRIPTION_ID"
-
-          echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
-
-          ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
-
-          echo "$ROLES" | grep -q "Contributor" || {
-            echo "❌ Service Principal does not have the 'Contributor' role"
+  
+          echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
+          echo "🔍 Checking Graph API permissions for Service Principal: $CLIENT_ID..."
+  
+          APP_ROLES=$(az ad sp show --id "$CLIENT_ID" --query "appRoleAssignments[].appRoleId" -o tsv || true)
+  
+          echo "🔍 Debug: APP_ROLES extracted:"
+          echo "$APP_ROLES"
+  
+          if echo "$APP_ROLES" | grep -iq "Group.ReadWrite.All"; then
+            echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
+          else
+            echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
             exit 1
-          }
-
-          echo "$ROLES" | grep -q "User Access Administrator" || {
-            echo "❌ Service Principal does not have the 'User Access Administrator' role"
-            exit 1
-          }
-
-          echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
+          fi
 
   check-azuread-group-permissions:
     name: 🔐 Check Azure AD Group Permissions
