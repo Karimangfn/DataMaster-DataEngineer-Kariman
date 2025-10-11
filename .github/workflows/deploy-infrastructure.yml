@@ -835,22 +835,58 @@ jobs:
       - azure-groups-and-access
       - databricks-groups
     steps:
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: 📝 Generate Summary Table
         run: |
-          echo "## 🚀 Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+
+          echo "## 🚀 Terraform Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Resource Name | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          cd infrastructure
+          terraform init -input=false -no-color >/dev/null
+
+          RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || echo "N/A")
+          ACR_NAME=$(terraform output -raw container_registry_name 2>/dev/null || echo "N/A")
+          AKS_NAME=$(terraform output -raw kubernetes_service_name 2>/dev/null || echo "N/A")
+          STORAGE_ACCOUNT=$(terraform output -raw storage_account_name 2>/dev/null || echo "N/A")
+          DB_WORKSPACE=$(terraform output -raw databricks_workspace_url 2>/dev/null || echo "N/A")
 
           declare -A JOBS
+          declare -A RESOURCES
+
           JOBS["🏗️ Resource Group"]="${{ needs.resource-group.result }}"
+          RESOURCES["🏗️ Resource Group"]="$RG_NAME"
+
           JOBS["🐳 Azure Container Registry (ACR)"]="${{ needs.acr.result }}"
+          RESOURCES["🐳 Azure Container Registry (ACR)"]="$ACR_NAME"
+
           JOBS["☸️ Azure Kubernetes Service (AKS)"]="${{ needs.aks.result }}"
+          RESOURCES["☸️ Azure Kubernetes Service (AKS)"]="$AKS_NAME"
+
           JOBS["💾 Storage Account"]="${{ needs.storage-account.result }}"
+          RESOURCES["💾 Storage Account"]="$STORAGE_ACCOUNT"
+
           JOBS["📁 Storage Containers"]="${{ needs.storage-containers.result }}"
+          RESOURCES["📁 Storage Containers"]="raw, bronze, silver, gold"
+
           JOBS["🧪 Databricks Workspace"]="${{ needs.databricks.result }}"
+          RESOURCES["🧪 Databricks Workspace"]="$DB_WORKSPACE"
+
           JOBS["🔑 Azure AD Groups & Access"]="${{ needs.azure-groups-and-access.result }}"
+          RESOURCES["🔑 Azure AD Groups & Access"]="data_engineers, data_scientists, data_analysts"
+
           JOBS["👥 Databricks Groups"]="${{ needs.databricks-groups.result }}"
+          RESOURCES["👥 Databricks Groups"]="data_engineers, data_scientists, data_analysts"
 
           STOP=false
           for STAGE in "🏗️ Resource Group" \
@@ -867,6 +903,8 @@ jobs:
             fi
 
             RESULT="${JOBS[$STAGE]}"
+            NAME="${RESOURCES[$STAGE]}"
+
             if [ "$RESULT" = "success" ]; then
               STATUS="✅"
             else
@@ -874,5 +912,12 @@ jobs:
               STOP=true
             fi
 
-            echo "| $STAGE | $STATUS |" >> $GITHUB_STEP_SUMMARY
-          done     
+            echo "| $STAGE | $NAME | $STATUS |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$STOP" = true ]; then
+            echo "❌ **Pipeline stopped due to failure in one or more stages.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All Terraform-managed resources were successfully created and configured.**" >> $GITHUB_STEP_SUMMARY
+          fi
