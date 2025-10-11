@@ -120,7 +120,7 @@ jobs:
           fi
   
           GRAPH_URL="https://graph.microsoft.com/v1.0/servicePrincipals"
-          FILTER="?$filter=appId eq '$CLIENT_ID'&$expand=appRoleAssignedTo"
+          FILTER="?%24filter=appId eq '$CLIENT_ID'&%24expand=appRoleAssignedTo"
   
           PERMISSIONS=$(curl -s -X GET \
             "$GRAPH_URL$FILTER" \
