@@ -21,45 +21,93 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🔎 Get workspace URL and AAD token
-        id: get-databricks-info
+      - name: 🔐 Generate AAD Token
+        id: get-token
         run: |
+          set -e
           tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
           client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+
           uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
-          post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
-          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
-          WORKSPACE_URL="https://adb-3536511084591671.11.azuredatabricks.net"
-          echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
-          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "workspace_url=$WORKSPACE_URL" >> $GITHUB_OUTPUT
-          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+          post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=https://graph.microsoft.com/.default"
+
+          TOKEN=$(curl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" \
+                  -d "$post_data" $uri | jq -r '.access_token')
+
+          if [ -z "$TOKEN" ] || [ "$TOKEN" == "null" ]; then
+            echo "❌ Failed to obtain token"
+            exit 1
+          fi
+
           echo "::add-mask::$TOKEN"
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "✅ Token obtained successfully"
 
-      - name: 👥 Create data_engineers group
+      - name: 🧪 Create Test Group in Microsoft Entra ID
         run: |
-          echo "📡 Creating group data_engineers..."
-          curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+          set -e
+          echo "📡 Creating test group via Microsoft Graph API..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}\n" \
+            -X POST "https://graph.microsoft.com/v1.0/groups" \
             -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/scim+json" \
-            -d '{"displayName":"data_engineers"}'
+            -H "Content-Type: application/json" \
+            -d '{
+              "displayName": "ci_test_group",
+              "mailEnabled": false,
+              "mailNickname": "ci_test_group",
+              "securityEnabled": true
+            }')
 
-      - name: 👥 Create data_scientists group
-        run: |
-          echo "📡 Creating group data_scientists..."
-          curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/scim+json" \
-            -d '{"displayName":"data_scientists"}'
+          echo "$RESPONSE"
 
-      - name: 👥 Create data_analysts group
-        run: |
-          echo "📡 Creating group data_analysts..."
-          curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/scim+json" \
-            -d '{"displayName":"data_analysts"}'
+          STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d':' -f2)
+          if [ "$STATUS" != "201" ]; then
+            echo "❌ Failed to create group (HTTP $STATUS)"
+            exit 1
+          fi
+
+          echo "✅ Group created successfully!"
+
+      # - name: 🔎 Get workspace URL and AAD token
+      #   id: get-databricks-info
+      #   run: |
+      #     tenant_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+      #     client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+      #     client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+      #     uri="https://login.microsoftonline.com/$tenant_ID/oauth2/v2.0/token"
+      #     post_data="grant_type=client_credentials&client_id=$client_id&client_secret=$client_secret&scope=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
+      #     TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" $uri --data "$post_data" | jq -r '.access_token')
+      #     WORKSPACE_URL="https://adb-3536511084591671.11.azuredatabricks.net"
+      #     echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
+      #     echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+      #     echo "workspace_url=$WORKSPACE_URL" >> $GITHUB_OUTPUT
+      #     echo "token=$TOKEN" >> $GITHUB_OUTPUT
+      #     echo "::add-mask::$TOKEN"
+
+      # - name: 👥 Create data_engineers group
+      #   run: |
+      #     echo "📡 Creating group data_engineers..."
+      #     curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/scim+json" \
+      #       -d '{"displayName":"data_engineers"}'
+
+      # - name: 👥 Create data_scientists group
+      #   run: |
+      #     echo "📡 Creating group data_scientists..."
+      #     curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/scim+json" \
+      #       -d '{"displayName":"data_scientists"}'
+
+      # - name: 👥 Create data_analysts group
+      #   run: |
+      #     echo "📡 Creating group data_analysts..."
+      #     curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+      #       -H "Authorization: Bearer $TOKEN" \
+      #       -H "Content-Type: application/scim+json" \
+      #       -d '{"displayName":"data_analysts"}'
 
   # check-gh-pat:
   #   name: 🔐 Check GH_PAT_TOKEN and permissions
