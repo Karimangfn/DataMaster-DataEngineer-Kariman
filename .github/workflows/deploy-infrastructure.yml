@@ -104,8 +104,6 @@ jobs:
   
       - name: 🔎 Validate SPN Graph Permissions
         run: |
-          set -euo pipefail
-  
           TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
           CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
