@@ -87,8 +87,8 @@ jobs:
           
           echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
 
-  check-azuread-group-permissions:
-    name: 🔐 Check Azure AD Group Permissions
+  check-azuread-graph-permissions:
+    name: 🔐 Check Azure AD Graph Permissions
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
@@ -96,23 +96,29 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
-      - name: 🔎 Check SPN Graph Permissions
+      - name: 🔎 Validate SPN Graph Permissions
         run: |
           set -e
   
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
   
           echo "🔍 Checking Graph API permissions for Service Principal: $CLIENT_ID..."
   
-          # lista os app roles atribuídos ao SP
-          APP_ROLES=$(az ad sp show --id "$CLIENT_ID" --query "appRoleAssignments[].appRoleId" -o tsv || true)
+          # lista todas as permissões concedidas ao SP para o Microsoft Graph
+          PERMS=$(az ad app permission list --id "$CLIENT_ID" --query "[?resourceAppId=='00000003-0000-0000-c000-000000000000'].resourceAccess[].id" -o tsv)
+          echo "🔍 Debug: PERMISSIONS IDs retrieved:"
+          echo "$PERMS"
   
-          # checa se o role Group.ReadWrite.All está presente
-          if echo "$APP_ROLES" | grep -iq "Group.ReadWrite.All"; then
-            echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
+          # ID da permissão Group.ReadWrite.All no Microsoft Graph
+          GROUP_RW_ID=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query "appRoles[?value=='Group.ReadWrite.All'].id" -o tsv)
+          echo "🔍 Debug: Group.ReadWrite.All ID=$GROUP_RW_ID"
+  
+          if echo "$PERMS" | grep -iq "$GROUP_RW_ID"; then
+              echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
           else
-            echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
-            exit 1
+              echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
+              exit 1
           fi
           
   resource-group:
