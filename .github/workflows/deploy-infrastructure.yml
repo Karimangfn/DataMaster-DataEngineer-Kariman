@@ -129,7 +129,8 @@ jobs:
             -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/json")
   
-          HAS_PERMISSION=$(echo "$PERMISSIONS" | jq -r '.value[].appRoleAssignedTo[].appRoleId' | grep -i 'Group.ReadWrite.All' || true)
+          HAS_PERMISSION=$(echo "$PERMISSIONS" | \
+            jq -r '.value[].appRoleAssignedTo // [] | .[].appRoleId' | grep -i 'Group.ReadWrite.All' || true)
   
           if [ -z "$HAS_PERMISSION" ]; then
             echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
