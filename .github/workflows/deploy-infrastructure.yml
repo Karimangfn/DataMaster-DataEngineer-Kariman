@@ -95,25 +95,29 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-  
+
       - name: 🔎 Validate SPN Graph Permissions
         run: |
           set -e
-  
+
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
           echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
-  
-          echo "🔍 Checking Graph API permissions for Service Principal: $CLIENT_ID..."
-  
-          # lista todas as permissões concedidas ao SP para o Microsoft Graph
+
+          echo "🔍 Validating SPN has Application.Read.All permission..."
+          if ! az ad app permission list --id "$CLIENT_ID" -o tsv >/dev/null 2>&1; then
+            echo "❌ Service Principal does NOT have Application.Read.All permission."
+            exit 1
+          fi
+          echo "✅ SPN has Application.Read.All permission."
+
+          echo "🔍 Checking Group.ReadWrite.All permission..."
           PERMS=$(az ad app permission list --id "$CLIENT_ID" --query "[?resourceAppId=='00000003-0000-0000-c000-000000000000'].resourceAccess[].id" -o tsv)
           echo "🔍 Debug: PERMISSIONS IDs retrieved:"
           echo "$PERMS"
-  
-          # ID da permissão Group.ReadWrite.All no Microsoft Graph
+
           GROUP_RW_ID=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query "appRoles[?value=='Group.ReadWrite.All'].id" -o tsv)
           echo "🔍 Debug: Group.ReadWrite.All ID=$GROUP_RW_ID"
-  
+
           if echo "$PERMS" | grep -iq "$GROUP_RW_ID"; then
               echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
           else
