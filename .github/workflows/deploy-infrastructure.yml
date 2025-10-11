@@ -72,7 +72,7 @@ jobs:
       - name: 👥 Create data_engineers group
         run: |
           echo "📡 Creating group data_engineers..."
-          curl -i -X POST "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+          curl -i -X POST "https://adb-35153522988857.17.azuredatabricks.net/api/2.0/preview/scim/v2/Groups" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/scim+json" \
             -d '{"displayName":"data_engineers","externalId":"dd1f8451-e24c-41a6-a697-113f19e46372"}'
