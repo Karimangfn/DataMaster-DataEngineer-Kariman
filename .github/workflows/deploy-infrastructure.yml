@@ -87,7 +87,7 @@ jobs:
           
           echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
 
-  check-azuread-graph-permissions:
+  check-azuread-group-permissions:
     name: 🔐 Check Azure AD Graph Permissions
     runs-on: ubuntu-latest
     steps:
