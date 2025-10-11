@@ -60,35 +60,32 @@ jobs:
             echo "Token has access to the secrets API. It can probably create secrets as well."
           fi
 
-  check-azuread-group-permissions:
-    name: 🔐 Check Azure AD Group Permissions
+  check-azure-role-assignments:
+    name: 🔐 Check Azure Role Assignments
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-  
-      - name: 🔎 Check SPN Graph Permissions with Debug
+      - name: 🔎 Check Role Assignments
         run: |
           set -e
-  
+          
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-  
-          echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
-          echo "🔍 Checking Graph API permissions for Service Principal: $CLIENT_ID..."
-  
-          APP_ROLES=$(az ad sp show --id "$CLIENT_ID" --query "appRoleAssignments[].appRoleId" -o tsv || true)
-  
-          echo "🔍 Debug: APP_ROLES extracted:"
-          echo "$APP_ROLES"
-  
-          if echo "$APP_ROLES" | grep -iq "Group.ReadWrite.All"; then
-            echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
-          else
-            echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
-            exit 1
-          fi
+          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
+          SCOPE="/subscriptions/$SUBSCRIPTION_ID"
+          
+          echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
+          ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
+          
+          echo "$ROLES" | grep -q "Contributor" || \
+               { echo "❌ Service Principal does not have the 'Contributor' role"; exit 1; }
+          
+          echo "$ROLES" | grep -q "User Access Administrator" || \
+               { echo "❌ Service Principal does not have the 'User Access Administrator' role"; exit 1; }
+          
+          echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
 
   check-azuread-group-permissions:
     name: 🔐 Check Azure AD Group Permissions
@@ -99,51 +96,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
   
-      - name: 🔎 Validate SPN Graph Permissions with Debug
-        shell: bash
+      - name: 🔎 Check SPN Graph Permissions
         run: |
-          set -x  # Habilita debug para ver cada comando executado
+          set -e
   
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-          TENANT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}"
-          CLIENT_SECRET="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}"
   
-          echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
-          echo "🔍 Debug: TENANT_ID=$TENANT_ID"
-          # Não imprimir CLIENT_SECRET por segurança
+          echo "🔍 Checking Graph API permissions for Service Principal: $CLIENT_ID..."
   
-          echo "🔍 Obtendo token de acesso via Microsoft Graph..."
-          TOKEN=$(curl -s -X POST \
-            "https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "grant_type=client_credentials&client_id=$CLIENT_ID&client_secret=$CLIENT_SECRET&scope=https://graph.microsoft.com/.default" \
-            | jq -r '.access_token')
+          # lista os app roles atribuídos ao SP
+          APP_ROLES=$(az ad sp show --id "$CLIENT_ID" --query "appRoleAssignments[].appRoleId" -o tsv || true)
   
-          echo "🔍 Debug: TOKEN obtido? ${TOKEN:0:10}..."  # imprime apenas os 10 primeiros caracteres
-  
-          if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
-            echo "❌ Could not obtain Microsoft Graph token."
-            exit 1
-          fi
-  
-          GRAPH_URL="https://graph.microsoft.com/v1.0/servicePrincipals"
-          FILTER="?%24filter=appId eq '$CLIENT_ID'&%24expand=appRoleAssignedTo"
-  
-          echo "🔍 Requisitando permissões do Service Principal..."
-          PERMISSIONS=$(curl -s -X GET \
-            "$GRAPH_URL$FILTER" \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/json")
-  
-          echo "🔍 Debug: PERMISSIONS recebidas:"
-          echo "$PERMISSIONS" | jq '.'  # imprime o JSON formatado para debug
-  
-          ROLE_IDS=$(echo "$PERMISSIONS" | jq -r '.value[].appRoleAssignedTo // [] | .[].appRoleId')
-  
-          echo "🔍 Debug: ROLE_IDS extraídos:"
-          echo "$ROLE_IDS"
-  
-          if echo "$ROLE_IDS" | grep -iq 'Group.ReadWrite.All'; then
+          # checa se o role Group.ReadWrite.All está presente
+          if echo "$APP_ROLES" | grep -iq "Group.ReadWrite.All"; then
             echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
           else
             echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
