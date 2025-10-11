@@ -8,6 +8,11 @@ resource "azuread_group" "data_analysts" {
   security_enabled = true
 }
 
+resource "azuread_group" "data_scientists" {
+  display_name = "data_scientists"
+  security_enabled = true
+}
+
 resource "azurerm_role_assignment" "raw_access" {
   scope                = var.raw_container_id
   role_definition_name = "Storage Blob Data Contributor"
