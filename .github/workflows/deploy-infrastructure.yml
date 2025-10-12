@@ -665,7 +665,7 @@ jobs:
         working-directory: ./infrastructure
     steps:
       - uses: actions/checkout@v3
-  
+
       - name: 🔐 Azure Login
         uses: azure/login@v1
         with:
@@ -676,24 +676,63 @@ jobs:
         with:
           name: terraform-state
           path: ./infrastructure
-  
+
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-  
+
       - name: 🧰 Initialize Terraform
         run: terraform init
 
       - name: ✅ Validate Terraform Configuration
         run: terraform validate
 
-      - name: 🚀 Apply Azure AD Groups and Role Assignments
+      - name: 🔎 Check if Azure AD groups exist
+        id: check-groups
         run: |
+          groups=("data_engineers" "data_analysts" "data_scientists")
+          missing=()
+
+          echo "🔍 Checking existing Azure AD groups..."
+          for group in "${groups[@]}"; do
+            echo "🔹 Checking: $group"
+            if az ad group show --group "$group" --query "id" -o tsv >/dev/null 2>&1; then
+              echo "✅ Group '$group' already exists."
+            else
+              echo "❌ Group '$group' does not exist and will be created."
+              missing+=("$group")
+            fi
+          done
+
+          # Save missing groups as JSON output
+          missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
+          echo "missing_groups=$missing_json" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Create missing Azure AD groups with Terraform
+        if: ${{ steps.check-groups.outputs.missing_groups != '[]' }}
+        run: |
+          echo "🛠️ Creating missing Azure AD groups..."
+          groups=$(echo '${{ steps.check-groups.outputs.missing_groups }}' | jq -r '.[]')
+          for group in $groups; do
+            case "$group" in
+              data_engineers)
+                terraform apply -auto-approve -target=module.access.azuread_group.data_engineers
+                ;;
+              data_analysts)
+                terraform apply -auto-approve -target=module.access.azuread_group.data_analysts
+                ;;
+              data_scientists)
+                terraform apply -auto-approve -target=module.access.azuread_group.data_scientists
+                ;;
+            esac
+          done
+          echo "✅ Missing groups created successfully."
+
+      - name: 🧩 Apply Azure Role Assignments
+        run: |
+          echo "🔗 Applying role assignments..."
           terraform apply -auto-approve \
-            -target=module.access.azuread_group.data_engineers \
-            -target=module.access.azuread_group.data_analysts \
-            -target=module.access.azuread_group.data_scientists \
             -target=module.access.azurerm_role_assignment.raw_access \
             -target=module.access.azurerm_role_assignment.bronze_access \
             -target=module.access.azurerm_role_assignment.silver_access \
