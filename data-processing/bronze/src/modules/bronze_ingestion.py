@@ -36,18 +36,12 @@ def ingest_bronze_customer_data(
                 "Creating Table..."
             )
 
-            spark.sql(f"""
-                CREATE TABLE IF NOT EXISTS {config['catalog']}.{config['database']}.bronze
-                USING DELTA
-                LOCATION '{config['output_path']}'
-            """)
-            
             empty_df = spark.createDataFrame([], schema)
             (
                 empty_df.write
                 .format("delta")
                 .mode("overwrite")
-                .toTable(f"{config['catalog']}.{config['database']}.bronze")
+                .saveAsTable(f"{config['catalog']}.{config['database']}.bronze")
             )
 
             grant_access_to_bronze(spark, config['catalog'], config['database'])
@@ -101,7 +95,7 @@ def ingest_bronze_customer_data(
                 .outputMode("append")
                 .trigger(once=True)
                 .option("checkpointLocation", checkpoint_path_for_path)
-                .toTable(f"{config['catalog']}.{config['database']}.bronze")
+                .saveAsTable(f"{config['catalog']}.{config['database']}.bronze")
             )
 
             queries.append(query)
