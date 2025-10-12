@@ -20,10 +20,11 @@ locals {
   storage_account = var.storage_account_name
 
   base_spark_conf = {
-    "spark.databricks.cluster.profile"             = "singleNode"
-    "spark.master"                                 = "local[*]"
-    "spark.databricks.delta.optimizeWrite.enabled" = "true"
-    "spark.databricks.delta.autoCompact.enabled"   = "true"
+    "spark.databricks.cluster.profile"                = "singleNode"
+    "spark.master"                                    = "local[*]"
+    "spark.databricks.delta.optimizeWrite.enabled"    = "true"
+    "spark.databricks.delta.autoCompact.enabled"      = "true"
+    "spark.databricks.delta.schema.autoMerge.enabled" = "true"
   }
 
   dynamic_spark_conf = {
