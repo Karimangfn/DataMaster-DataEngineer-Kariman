@@ -1,6 +1,6 @@
 import json
-
 from datetime import datetime
+
 from src.application.helpers.serialization import load_json
 from src.application.services.api_ingestion_service import APIIngestionService
 from src.application.validators.env_vars_validator import validate_env_vars
