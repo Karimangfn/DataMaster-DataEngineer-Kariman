@@ -72,7 +72,10 @@ def main():
         json_str = json.dumps(parsed_data)
 
         blob_uploader = AzureBlobUploader()
-        blob_name = f"{storage_folder}/data_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.json"
+        blob_name = (
+            f"{storage_folder}/data_"
+            f"{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.json"
+        )
         blob_uploader.upload_json(
             container_name=storage_container,
             blob_name=blob_name,
