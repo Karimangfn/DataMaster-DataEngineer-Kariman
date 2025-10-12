@@ -96,6 +96,7 @@ def ingest_bronze_customer_data(
                 .start(config["output_path"])
             )
 
+            query.awaitTermination()
             queries.append(query)
         except Exception as e:
             logger.error(f"Failed ingestion from path {path}: {e}")
