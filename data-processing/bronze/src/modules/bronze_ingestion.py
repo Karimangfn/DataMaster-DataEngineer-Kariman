@@ -95,11 +95,10 @@ def ingest_bronze_customer_data(
                 .outputMode("append")
                 .trigger(once=True)
                 .option("checkpointLocation", checkpoint_path_for_path)
-                .saveAsTable(f"{config['catalog']}.{config['database']}.bronze")
+                .start(config["output_path"])
             )
 
             queries.append(query)
-
         except Exception as e:
             logger.error(f"Failed ingestion from path {path}: {e}")
 
