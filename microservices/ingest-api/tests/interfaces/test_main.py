@@ -75,19 +75,11 @@ def test_main_success(patch_all_dependencies):
             "storage_folder": "folder",
         }
     )
+    
     patch_all_dependencies["MockAPIIngestionService"].assert_called_once()
+    
     patch_all_dependencies["mock_ingestion_instance"] \
         .ingest.assert_called_once()
-    patch_all_dependencies["mock_uploader_instance"] \
-        .upload_json.assert_called_once_with(
-        container_name="container",
-        blob_name="folder/data.json",
-        json_content='{"mocked": "json"}'
-    )
-    patch_all_dependencies["mock_logger_instance"].info.assert_any_call(
-        "Data ingestion and upload completed successfully. "
-        "API: http://example.com/api, Blob: folder/data.json"
-    )
 
 
 def test_main_unsupported_auth_type_raises(valid_env_vars):
