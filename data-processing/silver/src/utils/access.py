@@ -21,21 +21,24 @@ def grant_access_to_silver(spark: SparkSession, catalog: str, database: str):
         silver_table = f"{catalog}.{database}.silver"
 
         logger.info(
-            f"Granting ALL PRIVILEGES on table {silver_table} to the data_engineers group..."
+            f"Granting ALL PRIVILEGES on table {silver_table} "
+            "to the data_engineers group..."
         )
         spark.sql(f"""
             GRANT ALL PRIVILEGES ON TABLE {silver_table} TO `data_engineers`
         """)
 
         logger.info(
-            f"Granting SELECT on table {silver_table} to the data_scientists group..."
+            f"Granting SELECT on table {silver_table} "
+            "to the data_scientists group..."
         )
         spark.sql(f"""
             GRANT SELECT ON TABLE {silver_table} TO `data_scientists`
         """)
 
         logger.info(
-            f"Granting SELECT on table {silver_table} to the data_analysts group..."
+            f"Granting SELECT on table {silver_table} "
+            "to the data_analysts group..."
         )
         spark.sql(f"""
             GRANT SELECT ON TABLE {silver_table} TO `data_analysts`
