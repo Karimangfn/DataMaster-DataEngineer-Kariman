@@ -1,4 +1,4 @@
-{{/* if .Values.job.enabled */}}
+{{ if .Values.job.enabled }}
 
 apiVersion: batch/v1
 kind: Job
@@ -66,4 +66,4 @@ spec:
         - name: source-data
           emptyDir: {}
 
-{{/* end */}}
+{{ end }}

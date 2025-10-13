@@ -7,7 +7,12 @@ def test_settings_dataset_config(monkeypatch):
     Test that settings.py correctly parses the --storage-account argument
     and populates DATASET_CONFIG paths with the provided storage account.
     """
-    test_args = ["program", "--storage-account", "mystorage"]
+    test_args = [
+        "program",
+        "--storage-account", "mystorage",
+        "--catalog", "mock_catalog",
+        "--database", "mock_database"
+    ]
     monkeypatch.setattr(sys, "argv", test_args)
 
     settings = importlib.reload(importlib.import_module("src.config.settings"))

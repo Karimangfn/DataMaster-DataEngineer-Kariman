@@ -3,7 +3,11 @@ import types
 import importlib
 from unittest.mock import patch, MagicMock
 
-mock_args = types.SimpleNamespace(storage_account="mock")
+mock_args = types.SimpleNamespace(
+    storage_account="mock",
+    catalog="mock_catalog",
+    database="mock_database"
+)
 
 
 def test_main_pipeline():

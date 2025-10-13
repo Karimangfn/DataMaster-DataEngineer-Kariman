@@ -15,6 +15,12 @@ def env_vars():
         "DB_TYPE": "postgres",
         "DB_CONN_STRING": "user=foo password=bar host=localhost dbname=test",
         "DB_QUERY": "SELECT 1",
+        "STORAGE_CONTAINER": "container",
+        "STORAGE_FOLDER": "folder",
+        "STORAGE_ACCOUNT": "account",
+        "AZURE_TENANT_ID": "tenant",
+        "AZURE_CLIENT_ID": "client",
+        "AZURE_CLIENT_SECRET": "secret",
     }
 
 
@@ -33,15 +39,6 @@ def mock_strategies():
     return mock_conn_cls, mock_ingestion_cls, mock_ingestion_instance
 
 
-@pytest.fixture(autouse=True)
-def patch_print():
-    """
-    Patch built-in print function for all tests.
-    """
-    with patch("builtins.print") as mock_print:
-        yield mock_print
-
-
 @pytest.fixture
 def patch_service():
     """
@@ -51,6 +48,14 @@ def patch_service():
         "src.interfaces.main.DatabaseIngestionService"
     ) as mock_service_cls:
         yield mock_service_cls
+
+
+@pytest.fixture
+def patch_blob_uploader():
+    with patch("src.interfaces.main.AzureBlobUploader") as mock_cls:
+        mock_instance = MagicMock()
+        mock_cls.return_value = mock_instance
+        yield mock_cls, mock_instance
 
 
 @pytest.fixture
@@ -85,11 +90,12 @@ def test_main_success(
     patch_validate_env_vars,
     patch_strategy_registries,
     patch_service,
-    patch_print,
+    patch_blob_uploader,
 ):
     """
     Test main function success path with valid inputs and strategies.
     """
+    mock_blob_cls, mock_blob_instance = patch_blob_uploader
     mock_conn_cls, mock_ingestion_cls = patch_strategy_registries
     mock_service_cls = patch_service
 
@@ -100,8 +106,12 @@ def test_main_success(
     main()
 
     patch_validate_env_vars.assert_called_once_with(
-        ["DB_TYPE", "DB_CONN_STRING", "DB_QUERY"]
+        [
+            "DB_TYPE", "DB_CONN_STRING", "DB_QUERY",
+            "STORAGE_CONTAINER", "STORAGE_FOLDER"
+        ]
     )
+
     mock_conn_cls.assert_called_once_with(
         "user=foo password=bar host=localhost dbname=test"
     )
@@ -111,7 +121,6 @@ def test_main_success(
     )
     mock_service_cls.assert_called_once_with(mock_ingestion_cls.return_value)
     mock_service_instance.ingest.assert_called_once()
-    patch_print.assert_called_once_with([{"result": 123}])
 
 
 @patch(
@@ -136,6 +145,8 @@ def test_main_unsupported_db_type(mock_validate_env_vars):
         "DB_TYPE": "unsupported_db",
         "DB_CONN_STRING": "user=foo password=bar host=localhost dbname=test",
         "DB_QUERY": "query",
+        "STORAGE_CONTAINER": "container",
+        "STORAGE_FOLDER": "folder",
     }
     with pytest.raises(ValueError):
         main()
@@ -152,6 +163,8 @@ def test_main_unexpected_error(mock_validate_env_vars, mock_service_cls):
         "DB_TYPE": "postgres",
         "DB_CONN_STRING": "user=foo password=bar host=localhost dbname=test",
         "DB_QUERY": "query",
+        "STORAGE_CONTAINER": "container",
+        "STORAGE_FOLDER": "folder",
     }
 
     mock_conn_cls = MagicMock()

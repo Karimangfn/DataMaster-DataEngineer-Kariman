@@ -10,9 +10,21 @@ parser.add_argument(
     required=True,
     help='Storage Account Name'
 )
+parser.add_argument(
+    '--catalog',
+    required=True,
+    help='Databricks Catalog Name'
+)
+parser.add_argument(
+    '--database',
+    required=True,
+    help='Databricks Database Name'
+)
 args = parser.parse_args()
 
 storage_account = args.storage_account
+catalog = args.catalog
+database = args.database
 
 DATASET_CONFIG = {
     "input_path": [
@@ -30,5 +42,11 @@ DATASET_CONFIG = {
     "checkpoint_path": (
         f"abfss://bronze@{storage_account}.dfs.core.windows.net/"
         "checkpoints/"
+    ),
+    "catalog": (
+        catalog
+    ),
+    "database": (
+        database
     )
 }

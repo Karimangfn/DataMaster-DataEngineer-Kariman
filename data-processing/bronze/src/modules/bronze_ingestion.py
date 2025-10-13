@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
+from utils.access import grant_access_to_bronze
 from utils.utils import add_metadata_columns, generate_batch_id
 
 logger = logging.getLogger(__name__)
@@ -34,12 +35,17 @@ def ingest_bronze_customer_data(
                 f"Table not found at {config['output_path']}. "
                 "Creating Table..."
             )
-            empty_df = spark.createDataFrame([], schema)
-            (
-                empty_df.write
-                .format("delta")
-                .mode("overwrite")
-                .save(config["output_path"])
+
+            table_name = f"{config['catalog']}.{config['database']}.bronze"
+
+            spark.sql(
+                f"CREATE TABLE IF NOT EXISTS {table_name} "
+                f"USING DELTA "
+                f"LOCATION '{config['output_path']}'"
+            )
+
+            grant_access_to_bronze(
+                spark, config['catalog'], config['database']
             )
         else:
             pass
@@ -94,8 +100,8 @@ def ingest_bronze_customer_data(
                 .start(config["output_path"])
             )
 
+            query.awaitTermination()
             queries.append(query)
-
         except Exception as e:
             logger.error(f"Failed ingestion from path {path}: {e}")
 

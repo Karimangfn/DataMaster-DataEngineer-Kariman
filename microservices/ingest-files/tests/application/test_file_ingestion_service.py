@@ -24,6 +24,7 @@ def valid_config(tmp_path):
                 "raw": {
                     "account": "mockaccount",
                     "container": "mockcontainer",
+                    "folder": "raw-folder",
                 }
             }
         },

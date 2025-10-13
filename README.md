@@ -72,34 +72,44 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
   <summary>📚 7. Referências</summary>
 </details>
 
-##  📌 1. Objetivo do Projeto
+## 📌 1. Visão Geral do Projeto
 
-Este projeto busca integrar dados de clientes espalhados em diferentes fontes e formatos, que dificultam a integração, padronização e análise unificada em um único repositório estruturado, permitindo que os dados sejam processados, transformados e analisados de maneira consistente e confiável, seguindo boas práticas de engenharia de dados e de software.
+Este projeto consiste em uma **plataforma de engenharia e experimentação de dados** desenvolvida para demonstrar, em um ambiente controlado e reproduzível, as principais práticas de **ingestão, processamento, governança e automação de dados em nuvem**.
 
-### 1.1 Problema
+A solução foi concebida como uma **infraestrutura completa**, que une conceitos de **engenharia de dados**, **engenharia de software** e **arquitetura em nuvem** para sustentar fluxos de dados **escaláveis, auditáveis e seguros**.
 
-Atualmente, os dados de clientes encontram-se distribuídos em diversas fontes, como bancos de dados, APIs e arquivos CSV. Essa fragmentação gera dificuldades como:  
-- Redundância e inconsistência entre registros.  
-- Dificuldade de padronização e integração dos dados.  
-- Falta de rastreabilidade e governança.  
-- Barreiras para análises unificadas e confiáveis.
+### 1.1 Propósito
 
-### 1.2 Solução
+A plataforma busca resolver um conjunto mais amplo de desafios enfrentados em ambientes de dados modernos, incluindo:
 
-A solução proposta é construir um pipeline de dados baseado na arquitetura medalhão (Raw → Bronze → Silver → Gold), que:  
-- Faz a ingestão dados de múltiplas fontes por meio de microserviços.  
-- Centraliza e organiza as informações em um Data Lake na Azure.
-- Processa e transforma os dados utilizando Databricks e Delta Lake. 
-- Aplica limpeza, padronização e mascaramento de dados sensíveis.  
-- Disponibiliza camadas de dados confiáveis e prontas para consumo analítico.
+* Fragmentação de dados em múltiplas origens e formatos.
+* Falta de padronização e governança no ciclo de vida dos dados.
+* Dificuldade de reprodutibilidade e versionamento de ambientes.
+* Baixa automação nos processos de ingestão, transformação e deploy.
+* Necessidade de garantir segurança, qualidade e rastreabilidade ponta a ponta.
+
+### 1.2 Abordagem
+
+A solução foi projetada para atender a esses desafios de forma **modular e integrada**, combinando:
+
+* **Arquitetura Medalhão (Raw → Bronze → Silver → Gold)** para organizar e evoluir os dados em camadas de qualidade.
+* **Infraestrutura como Código (Terraform)** para provisionar automaticamente os recursos na Azure.
+* **Microserviços de Ingestão** para integrar múltiplas fontes de dados de forma independente e escalável.
+* **Databricks e Delta Lake** para processamento distribuído, versionamento e confiabilidade transacional.
+* **Automação com GitHub Actions** para CI/CD de infraestrutura, código e pipelines.
+* **Governança e Segurança** via RBAC, Service Principals e mascaramento de dados sensíveis.
+* **Observabilidade e Monitoramento** para acompanhamento de execuções e detecção de falhas.
+* **Boas práticas de Engenharia de Software**, como Clean Architecture, testes automatizados e validações de qualidade de código.
 
 ##  🏗️ 2. Arquitetura de Solução
 
 ### 2.1 Visão Geral
 
-A arquitetura do case foi projetada para integrar dados de diferentes fontes e garantir que eles estejam disponíveis de forma consistente e confiável para análise. Os dados são ingeridos de três origens distintas (banco de dados, API e arquivos CSV) por meio de microserviços, processados e transformados em camadas de dados estruturadas (Bronze → Silver → Gold) e armazenados em um Data Lake na Azure.
+A arquitetura foi projetada para sustentar uma plataforma modular de engenharia de dados, capaz de integrar, processar e disponibilizar informações de forma escalável e governada na nuvem.
 
-O fluxo de dados segue a arquitetura medalhão, garantindo que cada camada tenha dados com níveis crescentes de qualidade e consistência, desde a ingestão bruta até a camada pronta para análise.
+No centro da solução, encontra-se um pipeline de dados estruturado na arquitetura medalhão (Raw → Bronze → Silver → Gold), responsável por orquestrar o fluxo de dados desde a ingestão até a camada analítica. Esse pipeline é suportado por uma infraestrutura automatizada e reprodutível, provisionada via Terraform, e integrada a componentes de observabilidade, segurança e automação contínua.
+
+Os dados são ingeridos de três origens distintas (banco de dados, API e arquivos) por meio de microserviços independentes, processados no Databricks e armazenados em um Data Lake na Azure.
 
 ### 2.2 Diagrama da Arquitetura de Solução
 
@@ -109,89 +119,145 @@ O fluxo de dados segue a arquitetura medalhão, garantindo que cada camada tenha
 
 ### 2.3 Componentes Principais
 
-- **Microserviços de Ingestão**: Cada microserviço é responsável por extrair dados de uma fonte específica e gravá-los na camada raw do Data Lake. Eles podem ser detalhados posteriormente quanto à linguagem, endpoints e bibliotecas utilizadas.  
-- **Data Lake (Azure Storage Account)**: Armazena os dados em diferentes camadas de processamento (Raw, Bronze, Silver e Gold), seguindo a arquitetura medalhão e permitindo rastreabilidade e governança.  
-- **Databricks**: realiza o processamento e a transformação dos dados. A camada Bronze utiliza o Auto Loader para ingestão automatizada, a camada Silver aplica limpeza, padronização e mascaramento de dados, e a camada Gold gera tabelas prontas para análise.  
-- **Infraestrutura como Código (Terraform)**: Provisiona todos os recursos necessários, incluindo AKS, Storage Account, Databricks e demais componentes da arquitetura.  
+- **Microserviços de Ingestão**: Cada microserviço é responsável por extrair dados de uma fonte específica e gravá-los na camada raw do Data Lake.
+- **Data Lake (Azure Storage Account)**: Armazena os dados em diferentes camadas de processamento (Raw, Bronze, Silver e Gold), seguindo a arquitetura medalhão e permitindo rastreabilidade.
+- **Databricks**: realiza o processamento e a transformação dos dados. A camada Bronze utiliza o Auto Loader para ingestão automatizada, a camada Silver aplica limpeza, padronização e mascaramento de dados, e a camada Gold gera a tabela pronta para análise.
+- **Infraestrutura como Código (Terraform)**: Provisiona todos os recursos necessários, incluindo ACR, AKS, Storage Account, Databricks e demais componentes da arquitetura.
 - **Automação (GitHub Actions)**: Gerencia a criação, o deploy dos microserviços e verificação de qualidade de código.
 
 ## ⚙️ 3. Arquitetura Técnica
 
-### 3.1 Visão Geral Técnica
-
-O projeto utiliza uma arquitetura em nuvem na Azure, combinando práticas de engenharia de dados e engenharia de software. A infraestrutura é provisionada via Terraform e composta por microserviços para ingestão, Data Lake para armazenamento estruturado, Databricks para processamento e pipelines automatizados com GitHub Actions. O objetivo técnico é permitir a ingestão, transformação e disponibilização de dados confiáveis e padronizados em um ambiente reproduzível e escalável.
-
-### 3.2 Descrição do Fluxo de Dados
+### 3.1 Descrição do Fluxo de Dados
 
 1. **Ingestão**: Os microserviços consomem dados das fontes (Banco de Dados, API, Arquivos) e gravam na camada raw do Data Lake. 
-2. **Bronze**: Databricks lê os dados da raw e cria tabelas Delta, mantendo a integridade das informações.  
+2. **Bronze**: Databricks lê os dados da raw e cria a tabela Delta, mantendo a integridade das informações.
 3. **Silver**: Aplica transformações de limpeza, padronização e mascaramento de dados sensíveis.  
-4. **Gold**: Gera tabelas prontas para consumo por ferramentas de BI ou análises avançadas.  
+4. **Gold**: Gera tabelas prontas para consumo ou análises.
 
-### 3.3 Tecnologias e Serviços Utilizados
+### 3.2 Tecnologias e Serviços Utilizados
 
 - **Resource Group**: Agrupa todos os recursos provisionados na Azure. 
-- **Storage Account**: Armazenamento do Data Lake com camadas Raw, Bronze, Silver e Gold.
 - **ACR (Azure Container Service)**: Repositório para armazenar e versionar as imagens Docker dos microserviços.  
 - **AKS (Azure Kubernetes Service)**: Execução dos microserviços de ingestão.
+- **Storage Account**: Armazenamento do Data Lake com camadas Raw, Bronze, Silver e Gold.
 - **Databricks**: Processamento e transformação dos dados.
 - **Delta Lake**: Garantia de consistência, versionamento e ACID nas tabelas.
-- **Auto Loader**: Responsável por ingestão contínua dos dados da camada Raw para a Bronze.
 - **Terraform**: Provisionamento de toda a infraestrutura na Azure.
 - **GitHub Actions**: Automação de criação de infraestrutura, deploy de microserviços e execução de jobs.
 
-### 3.4 Infraestrutura como Código
+### 3.3 Infraestrutura como Código
 
 ![Figura 2 — Infraestrutura CI/CD](assets/images/Arquitetura-Infrastructure-CI-CD.png)  
 
 *Figura 2 — Arquitetura de infraestrutura com Terraform e principais recursos provisionados na Azure.*
 
-Toda a infraestrutura do projeto é criada com uso de **Terraform**, que também salva o estado das criações para permitir atualizações ou exclusão da infraestrutura.
+Toda a infraestrutura do projeto é criada com uso de **Terraform**, que também salva o estado das criações em artefatos para garantir a consistência do ambiente e a persistência do estado entre execuções, evitando perdas ou divergências durante atualizações.
 
 ### Validações (CI)
 - **Check Github Token**: Antes da criação dos recursos, é verificado se o *Personal Access Token* do GitHub está criado e configurado com os acessos necessários.
-- **Check Azure Role Assignments**: Valida se o *Service Principal* necessário para a criação dos recursos está configurado corretamente com as permissões adequadas.  
+
+- **Check Azure Role Assignments**: Valida se o *Service Principal* necessário para a criação dos recursos está configurado corretamente com as permissões adequadas para atribuir acesso a outro recursos.
+
+- **check Azure Group Permissions**: Valida se o *Service Principal* necessário para a criação dos recursos está configurado corretamente com as permissões adequadas para criar grupos na Azure.
 
 ### Criação de Recursos (CD)
 - **Resource Group**: Responsável por armazenar os recursos.  
 - **Azure Container Registry (ACR)**: Armazena as imagens dos microserviços.  
-- **Azure Kubernetes Service (AKS)**: Cluster responsável pela execução dos microserviços.  
-- **Storage Account**: Armazenamento das tabelas de dados.  
+- **Azure Kubernetes Service (AKS)**: Cluster responsável pela execução dos microserviços.
+  - Criação de **role assignment** para permitir que o AKS faça pull das imagens.  
+- **Storage Account**: Armazenamento das tabelas de dados.
+  - Criação de **role assignment** do Service Principal com permissão de Storage Blob Data Contributor.
 - **Storage Containers**: Containers específicos para as camadas de dados Raw, Bronze, Silver e Gold.  
-- **Databricks**: Utilizado para o processamento de dados, desde a camada Raw até a camada Gold.
+- **Databricks**: Criação de recursos e configuração do workspace, incluindo:
+  - Workspace Databricks
+  - Conector de acesso (Access Connector)
+  - Criação de External Locations (Bronze, Silver, Gold)
+  - Criação de Schema
+  - Criação de Job de processamento
+  - Criação de Grupos de acesso na workspace
+- **Access Groups**: Criação de grupos de acesso para governança na Azure.
 
-### 3.5 GitHub Actions
+#### Estrutura
+
+```bash
+infrastructure/
+├── main.tf              # Chama os módulos e define os recursos principais
+├── variables.tf         # Variáveis globais usadas pelos módulos
+├── outputs.tf           # Saídas de recursos criados
+├── providers.tf         # Providers (Azure, Databricks, etc.)
+└── modules/             # Módulos reutilizáveis
+    ├── access/          # Grupos e permissões (Azure AD / IAM)
+    │   ├── main.tf
+    │   ├── variables.tf
+    ├── acr/             # Azure Container Registry
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    ├── aks/             # Azure Kubernetes Service
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    ├── databricks/      # Databricks workspace
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    │   └── providers.tf
+    ├── resource_group/  # Resource Group
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    └── storage/         # Storage Account e containers
+        ├── main.tf
+        ├── variables.tf
+        └── outputs.tf
+        └── providers.tf
+```
+
+### 3.4 GitHub Actions
 
 O GitHub Actions é responsável por orquestrar e automatizar todas as etapas do projeto, incluindo:
 
-- **Provisionamento de Infraestrutura**: executa o Terraform para criação e atualização de recursos na Azure.  
+- **Provisionamento de Infraestrutura**: executa o Terraform para criação e atualização de recursos na Azure.
+- **Orquestração de Pipeline**: coordena a execução de todos os passos, incluindo o disparo dos microserviços de ingestão no AKS e dos jobs de transformação no Databricks.
 - **Deploy de Microserviços**: build e publicação de imagens Docker no ACR, seguido de deploy no AKS.  
-- **Transformação de Dados**: integração com Databricks para execução dos pipelines de Bronze, Silver e Gold.  
+- **Transformação de Dados**: integração com Databricks para execução dos pipelines de Bronze, Silver e Gold. 
 
 #### Resumo de Execução (Summary)
 Cada execução de workflow gera automaticamente um **summary** dentro do GitHub Actions, contendo:  
-- Recursos criados/atualizados pelo Terraform.  
-- Status de execução das etapas (Infra, Ingestão, Transformação).  
-- Outputs importantes do Terraform.  
-- Links para logs detalhados de cada job.  
+- Recursos criados/atualizados pelo Terraform.
+- Status de execução das etapas (Infra, Ingestão, Transformação).
 
 **Colocar imagem aqui dos summaries depois**
 
-Esse resumo facilita a **auditoria** e permite acompanhar rapidamente o resultado das execuções sem precisar navegar em todos os logs.
-
 #### Fluxo dos Workflows
-1. **Infraestrutura** → Provisionamento completo via Terraform.  
-2. **Ingestão** → Deploy automático de microserviços no AKS.  
-3. **Transformação** → Execução dos notebooks no Databricks.  
-4. **Exclusão** → Workflow específico para destruição segura da infraestrutura.  
 
-Todos os workflows podem ser acionados manualmente (`workflow_dispatch`) ou automaticamente via `push` na branch principal.
+**A. Workflows Principais**
+1. **Infraestrutura** → Provisionamento completo via Terraform  
+   1.1 - Deploy Cloud Infrastructure  
+2. **Setup de Ingestão** → Setup de Microserviços no ACR e AKS  
+   2.1 - Build and Push to ACR  
+   2.2 - AKS Setup and Deploy  
+3. **Orquestração** → Execução dos Microserviços e Job no Databricks  
+   3.1 - Orchestrate Data Pipeline  
 
-### 3.6 Orquestração de Pipelines
+**B. Workflows de Qualidade (Pull Requests)**  
+1. **Validação de Microserviço** → Executa lint, pré-commit hooks e testes para os microserviços.
+  1.1 - Microservice Quality
+2. **Validação de Data Processing** → Executa lint, pré-commit hooks e testes para o job de Data Processing.
+  2.1 - Data Processing Quality
 
-Orquestração ainda em desenvolvimento
+### 3.5 Orquestração de Pipelines
 
-### 3.7 Extração e Ingestão de Dados
+A orquestração dos pipelines é realizada por um **workflow do GitHub Actions**, que atua como coordenador central da execução de todo o processo de dados. O workflow realiza as seguintes funções:
+
+- Detecta os microserviços que precisam ser executados, lendo arquivos de versão nos repositórios.
+- Dispara os **jobs de ingestão no AKS**, validando previamente a existência das imagens no ACR.
+- Dispara o **job de transformação no Databricks**, garantindo a execução dos pipelines Bronze, Silver e Gold.
+- Coleta os resultados das execuções, tanto do AKS quanto do Databricks, e gera um resumo consolidado da execução.
+
+- **Colocar Desenho?**
+
+### 3.6 Extração e Ingestão de Dados
 
 ![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)  
 
@@ -254,7 +320,7 @@ Arquivos de Configuração:
 - **.pre-commit-config.yaml** -> Hooks para validações automáticas antes do commit.
 - **pytest.ini** -> Configurações para execução dos testes com Pytest.
 
-### 3.8 Armazenamento de Dados
+### 3.7 Armazenamento de Dados
 
 O armazenamento dos dados é realizado em uma **Azure Storage Account**, estruturada segundo a arquitetura medalhão.
 Cada camada possui um **container dedicado**, garantindo organização e isolamento entre os estágios do pipeline:
@@ -264,7 +330,7 @@ Cada camada possui um **container dedicado**, garantindo organização e isolame
 - **Silver**: Camada que contém dados limpos, padronizados e com mascaramento de informações sensíveis.  
 - **Gold**: Camada final com dados prontos para consumo em análises e dashboards. 
 
-### 3.9 Processamento e Transformação dos Dados
+### 3.8 Processamento e Transformação dos Dados
 
 ![Figura 4 — Data Processing CI](assets/images/Arquitetura-Data-Processing-CI.png)
 
@@ -275,18 +341,32 @@ Cada job é dividido em três etapas principais, alinhadas à arquitetura medalh
 
 1. **Bronze**  
    - Leitura dos dados da camada Raw por meio do **Auto Loader** do Databricks.  
-   - Criação de tabelas **Delta Lake**, preservando os dados ingeridos com histórico e versionamento.  
-   - Registro de metadados iniciais para rastreabilidade.  
+   - Criação de tabela **Delta**, preservando os dados ingeridos com histórico e versionamento.
+   - Registro de metadados de rastreabilidade: source_file_name, ingestion_timestamp e raw_ingestion_id (UUID único por execução).
+   - Aplicação de controle de acesso garantindo permissões adequadas a grupos de usuários.
+
+  > 💡 O processamento incremental é realizado com o **Auto Loader**, que detecta novos arquivos na camada Raw e processa apenas dados novos.
 
 2. **Silver**  
    - Aplicação de regras de **limpeza e padronização** (ex.: normalização de formatos, remoção de inconsistências).  
-   - **Mascaramento de informações sensíveis**, como CPF e número de cartão de crédito.  
-   - Enriquecimento dos dados quando necessário.  
+   - Deduplicação baseada em customer_id e purchase_date, preservando o registro mais recente.
+   - Mascaramento de informações sensíveis:
+      - cpf → SHA-256 → coluna cpf_masked
+      - credit_card_number → SHA-256 → coluna credit_card_masked
+      - email → ofuscação parcial mantendo domínio
+   - Enriquecimento dos dados, como a coluna high_value_purchase (flag de compras de alto valor).
+   - Preservação das colunas de metadados da Bronze (source_file_name, ingestion_timestamp, raw_ingestion_id).
+   - Aplicação de controle de acesso garantindo permissões adequadas a grupos de usuários.
 
 3. **Gold**  
-   - Estruturação dos dados em modelos analíticos.  
-   - Preparação das tabelas para consumo em ferramentas de BI e relatórios.  
-   - Disponibilização de dados consistentes e confiáveis para análise.
+   - Agregação dos dados Silver em tabelas analíticas, prontas para consumo em BI.
+   - Criação da coluna derivada purchase_month (formato yyyy-MM) para análises mensais.
+   - Cálculo de métricas agregadas por store_location e purchase_month:
+      - total_purchases → número de compras
+      - total_revenue → soma do valor total
+      - average_purchase_value → valor médio de compra
+      - high_value_purchases → contagem de compras de alto valor
+   - Aplicação de controle de acesso garantindo permissões adequadas a grupos de usuários.
 
 #### Estrutura
 
@@ -303,39 +383,40 @@ processing_job/
 
 Arquivos de Configuração
 - **.flake8** → Regras de lint para garantir padrão de código.
-- **.gitignore** -> Define arquivos ignorados no versionamento.
+- **.gitignore** → Define arquivos ignorados no versionamento.
 - **.pre-commit-config.yaml** → Hooks para validações automáticas antes do commit.  
 - **pytest.ini** → Configurações para execução dos testes com Pytest.
 
-### 3.10 Qualidade e Validação de Dados
+### 3.9 Qualidade e Validação de Dados
 
-A qualidade dos dados é garantida a partir da camada **Silver**, onde são aplicadas regras de validação e consistência antes de disponibilizar as informações para consumo.  
-O processo combina verificações automatizadas e padronizações implementadas nos notebooks do Databricks.
+A qualidade dos dados é garantida a partir da camada **Silver**, onde são aplicadas regras de validação e consistência antes de disponibilizar as informações para consumo. O processo combina verificações automatizadas e padronizações implementadas nos microserviços do Databricks.
 
 Principais validações aplicadas:  
 - **Integridade de schema**: checagem se os dados seguem o schema esperado.  
-- **Valores obrigatórios**: verificação de colunas críticas que não podem estar nulas (ex.: `customer_id`, `cpf`).  
-- **Formatos válidos**: conferência de padrões, como CPF válido ou formato correto de e-mail.  
-- **Valores de domínio**: validação de atributos contra listas pré-definidas (ex.: localização de lojas).  
+- **Valores obrigatórios**: verificação de colunas críticas que não podem estar nulas (`customer_id`, `cpf`).
+- **Conversão de tipos**: purchase_date → DateType, total_amount → DoubleType.
+- **Formatos válidos**: conferência de padrões, como CPF válido ou formato correto de e-mail.
+- **Deduplicação**: remoção de registros duplicados mantendo o mais recente por customer_id e purchase_date.
+- **Validação de formatos**: emails válidos, datas consistentes, valores numéricos coerentes.
+- **Valores de domínio**: conferência de atributos contra listas pré-definidas (ex.: store_location). 
 
-Ferramentas e práticas:  
-- **Delta Lake** para versionamento e rollback em caso de ingestão incorreta.  
-- **Microserviço Python no Databricks** com funções de validação.    
+Ferramentas e práticas:
+- Delta Lake → versionamento, histórico, rollback e rastreabilidade.
+- Microserviços Python no Databricks → implementam todas as validações, limpeza, deduplicação e mascaramento.   
 
 **Benefícios principais**:  
 - Evita propagação de dados inconsistentes para as camadas analíticas.  
 - Garante confiabilidade e consistência para relatórios e dashboards.  
 - Facilita auditoria e rastreabilidade em caso de erros de ingestão ou transformação.
 
-### 3.11 Mascaramento e Segurança dos Dados
+### 3.10 Mascaramento e Segurança dos Dados
 
 O projeto adota práticas de **segurança e privacidade** para proteger informações sensíveis dos clientes durante o ciclo de vida dos dados.  
 O foco principal está no **mascaramento de dados pessoais**, realizado na transição da camada **Bronze → Silver**.
 
 #### Mascaramento de Dados
-- **CPF**: substituição parcial dos dígitos, preservando apenas os últimos 3 para rastreabilidade.  
-- **Número de cartão de crédito**: ocultação de todos os dígitos, exceto os 4 últimos.  
-- **E-mail**: ofuscação parcial do endereço, mantendo o domínio visível.  
+- **CPF**: aplicação de hash criptográfico (SHA-256), preservando apenas parte para rastreabilidade.
+- **Número de cartão de crédito**: aplicação de hash criptográfico (SHA-256), garantindo que os dados originais não sejam expostos. 
 
 Essas transformações são aplicadas através dos **Microserviços Python**, garantindo que os dados sensíveis não avancem para a camada Gold.
 
@@ -348,7 +429,41 @@ Essas transformações são aplicadas através dos **Microserviços Python**, ga
 **Benefícios principais**:  
 - Proteção de informações sensíveis em conformidade com boas práticas de governança.  
 - Redução de riscos em auditorias e conformidade regulatória (LGPD).  
-- Garantia de que dados analíticos não exponham informações pessoais desnecessárias.  
+- Garantia de que dados analíticos não exponham informações pessoais desnecessárias.
+
+### 3.11 Governança
+
+Nesse projeto, o tema de governança de dados é tratado para garantir que cada usuário tenha acesso apenas às informações necessárias, de acordo com sua função, promovendo segurança, rastreabilidade e compliance.
+
+| Persona             | Nível de Acesso                   | Objetivo do Acesso                                              |
+|---------------------|-----------------------------------|-----------------------------------------------------------------|
+| Engenheiro de Dados | Leitura e Escrita na Raw e Bronze | Implementar e manter pipelines de ingestão e transformação.     |
+| Cientista de Dados  | Leitura na Silver e Gold          | Realizar análises e modelagem preditiva sobre dados confiáveis. |
+| Analista de Dados   | Leitura na Gold                   | Construir dashboards e relatórios para tomada de decisão.       |
+| Administrador       | Controle Total                    | Gerenciar usuários, permissões e monitorar segurança.           |
+
+- Todos os acessos são concedidos seguindo o princípio do **menor privilégio**.  
+- O controle é feito via **RBAC** da Azure Storage Account e Service Principals.   
+
+#### Azure Storage Account (RBAC)
+
+- Engenheiros de dados recebem Storage Blob Data Contributor nos containers Raw e Bronze.
+- Cientistas e analistas recebem Storage Blob Data Reader ou Reader parcial nos containers Silver e Gold.
+
+#### Databricks
+
+- Engenheiros de dados configuram e executam os jobs que processam os dados entre os layers (Raw → Bronze → Silver → Gold).
+- Cientistas de dados podem acessar resultados processados nos jobs em Silver e Gold.
+- Analistas de dados podem executar queries e montar dashboards apenas sobre os dados Gold gerados pelos jobs.
+- Administradores têm controle total sobre a Storage Account e podem gerenciar jobs, permissões e auditoria no Databricks.
+
+#### Unity Catalog
+
+- O Unity Catalog gerencia tabelas, views, esquemas e funções, garantindo controle de acesso, incluindo permissões em nível de objeto, linha e coluna.
+- Rastreamento e auditoria: permite registrar lineage completo, histórico de alterações e acessos aos dados.
+- Democratização de dados: usuários podem descobrir e acessar dados de forma segura sem depender de pipelines específicos ou da intervenção de engenheiros de dados.
+- Compartilhamento seguro de dados: tabelas e views podem ser compartilhadas entre diferentes equipes, unidades de negócio ou até parceiros externos, mantendo o controle sobre quem pode visualizar ou alterar os dados.
+- Padronização e organização: centraliza metadados, schemas e nomenclaturas, garantindo consistência em todo o Data Lake e em múltiplas camadas de processamento.
 
 ### 3.12 Observabilidade e Monitoramento
 
@@ -409,8 +524,6 @@ Principais práticas adotadas:
 - **Feature branches** → criadas a partir de `develop` para desenvolvimento de funcionalidades específicas.  
 - **Release branches** → usadas para preparar versões estáveis antes de ir para produção.  
 - **Hotfix branches** → permitem correções rápidas diretamente na `main`.
-
-**Adicionar imagens das Branchs**
 
 ##  🚀 4. Guia de Configuração e Execução
 
@@ -587,13 +700,15 @@ Durante a execução do Job, é possível acompanhar:
 ###  5.1 Melhorias Futuras
 
 - **Segurança de Rede (VNet e Private Endpoints):** inclusão de Virtual Networks e Private Endpoints para isolar os recursos da Azure e garantir maior segurança no tráfego de dados. 
-- **Fluxo de Ambientes (Dev / Pre / Prod):** implementação de múltiplos ambientes com pipelines de deploy independentes, possibilitando testes e validações antes de subir em produção.  
-- **Governança de Dados:** integração com catálogos de dados (ex.: **Unity Catalog**, **Purview**) para melhor rastreabilidade, versionamento e gestão de acesso.  
-- **Qualidade e Validação de Dados:** uso de ferramentas como **Great Expectations** para validar schemas, detectar anomalias e garantir consistência antes de promover dados para Silver/Gold.  
-- **Orquestração Completa:** adotar um orquestrador dedicado (ex.: **Airflow**, **Prefect**, ou **Azure Data Factory**) para controlar tanto ingestão quanto processamento, permitindo maior automação e dependências entre pipelines.  
-- **Observabilidade e Alertas:** centralizar métricas, logs e alertas em ferramentas como **Azure Monitor** ou **Grafana**, possibilitando detecção proativa de falhas.  
-- **Testes Automatizados:** expandir o uso de testes unitários e de integração para notebooks e microserviços, garantindo maior confiabilidade nas mudanças de código.  
-- **Custo e Performance:** analisar otimizações de custo (storage tiers, autoscaling de clusters no Databricks) e desempenho (particionamento e otimização de tabelas Delta).  
+- **Fluxo de Ambientes (Dev / Pre / Prod):** implementação de múltiplos ambientes com pipelines de deploy independentes, possibilitando testes e validações antes de subir em produção.    
+- **Observabilidade e Alertas:** centralizar métricas, logs e alertas em ferramentas como **Azure Monitor** ou **Grafana**, possibilitando detecção proativa de falhas. 
+- **Infraestrutura como Código Dinâmica:** permitir que a própria GitHub Action altere a infraestrutura via Terraform ou equivalente, utilizando um backend para salvar estado.
+- **Sincronização de Grupos AD e Databricks:** automatizar a sincronização de grupos do Azure AD com os grupos de Databricks, reduzindo etapas manuais de configuração de permissões e acesso.
+- **Contratos de Dados:** adoção de contratos de dados para permitir ingestão de múltiplos tipos de schemas.
+- **Pipelines Versionáveis e End-to-End:** possibilitar desenvolvimento de múltiplos pipelines versionáveis, desacoplados do Terraform fixo, integrados com os contratos de dados, permitindo criar novos fluxos de ingestão.
+- **Expurgo da Camada Raw** : remover dados da camada Raw após a ingestão e validação, reduzindo custos de armazenamento.
+- **Suporte a Streaming**: estender a arquitetura atual para incluir pipelines de ingestão e processamento streaming, tornando a plataforma híbrida (batch + streaming) e preparada para casos de uso em tempo real.
+- **Abstração Multicloud**: reestruturar a camada de infraestrutura e os microserviços para desacoplar dependências específicas da Azure, viabilizando execução em múltiplos provedores de nuvem (AWS, GCP, Azure), com conectores e provisionamento agnósticos.
 
 ###  5.2 Considerações Finais
 

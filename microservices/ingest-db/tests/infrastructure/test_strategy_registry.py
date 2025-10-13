@@ -8,9 +8,9 @@ def test_connection_strategies_contains_postgres():
     """
     Test that CONNECTION_STRATEGIES contains the expected Postgres strategy.
     """
-    assert "postgres" in strategy_registry.CONNECTION_STRATEGIES
+    assert "postgresql" in strategy_registry.CONNECTION_STRATEGIES
     assert (
-        strategy_registry.CONNECTION_STRATEGIES["postgres"]
+        strategy_registry.CONNECTION_STRATEGIES["postgresql"]
         is PostgresConnection
     )
 
@@ -19,7 +19,7 @@ def test_ingestion_strategies_contains_postgres():
     """
     Test that INGESTION_STRATEGIES contains the expected Postgres strategy.
     """
-    assert "postgres" in strategy_registry.INGESTION_STRATEGIES
+    assert "postgresql" in strategy_registry.INGESTION_STRATEGIES
     assert (
-        strategy_registry.INGESTION_STRATEGIES["postgres"] is PostgresIngestion
+        strategy_registry.INGESTION_STRATEGIES["postgresql"] is PostgresIngestion
     )

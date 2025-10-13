@@ -13,11 +13,6 @@ output "container_registry_name" {
   value       = module.acr.container_registry_name
 }
 
-output "key_vault_name" {
-  description = "Name of the Key Vault"
-  value       = module.key_vault.key_vault_name
-}
-
 output "kubernetes_cluster_name" {
   description = "Name of the AKS cluster"
   value       = module.aks.kubernetes_cluster_name
@@ -32,4 +27,12 @@ output "kube_config" {
 output "databricks_workspace_url" {
   description = "URL of the Databricks workspace"
   value       = module.databricks.databricks_workspace_url
+}
+
+output "databricks_access_connector_id" {
+  value = module.databricks.databricks_access_connector_id
+}
+
+output "databricks_access_connector_principal_id" {
+  value = module.databricks.databricks_access_connector_principal_id
 }

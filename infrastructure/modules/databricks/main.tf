@@ -2,18 +2,29 @@ resource "azurerm_databricks_workspace" "dbw" {
   name                        = "${var.prefix}-${var.random_id}-dbw"
   resource_group_name         = var.resource_group_name
   location                    = var.location
-  sku                         = "standard"
+  sku                         = "premium"
   managed_resource_group_name = "${var.prefix}-${var.random_id}-dbw-mrg"
+}
+
+locals {
+  databricks_catalog_name = replace(azurerm_databricks_workspace.dbw.name, "-", "_")
+}
+
+resource "databricks_schema" "data_processing_db" {
+  provider      = databricks.accounts
+  name          = "data_processing_db"
+  catalog_name  = local.databricks_catalog_name
 }
 
 locals {
   storage_account = var.storage_account_name
 
   base_spark_conf = {
-    "spark.databricks.cluster.profile"             = "singleNode"
-    "spark.master"                                 = "local[*]"
-    "spark.databricks.delta.optimizeWrite.enabled" = "true"
-    "spark.databricks.delta.autoCompact.enabled"   = "true"
+    "spark.databricks.cluster.profile"                = "singleNode"
+    "spark.master"                                    = "local[*]"
+    "spark.databricks.delta.optimizeWrite.enabled"    = "true"
+    "spark.databricks.delta.autoCompact.enabled"      = "true"
+    "spark.databricks.delta.schema.autoMerge.enabled" = "true"
   }
 
   dynamic_spark_conf = {
@@ -48,6 +59,8 @@ resource "databricks_job" "data_process" {
       custom_tags = {
         "ResourceClass" = "SingleNode"
       }
+
+      data_security_mode = "SINGLE_USER"
     }
   }
 
@@ -65,7 +78,11 @@ resource "databricks_job" "data_process" {
     spark_python_task {
       source      = "GIT"
       python_file = "data-processing/bronze/src/main.py"
-      parameters  = ["--storage-account", var.storage_account_name]
+      parameters  = [
+          "--storage-account", var.storage_account_name,
+          "--catalog", local.databricks_catalog_name,
+          "--database", databricks_schema.data_processing_db.name
+      ]
     }
   }
 
@@ -81,7 +98,11 @@ resource "databricks_job" "data_process" {
     spark_python_task {
       source      = "GIT"
       python_file = "data-processing/silver/src/main.py"
-      parameters  = ["--storage-account", var.storage_account_name]
+      parameters  = [
+          "--storage-account", var.storage_account_name,
+          "--catalog", local.databricks_catalog_name,
+          "--database", databricks_schema.data_processing_db.name
+      ]
     }
   }
 
@@ -97,7 +118,74 @@ resource "databricks_job" "data_process" {
     spark_python_task {
       source      = "GIT"
       python_file = "data-processing/gold/src/main.py"
-      parameters  = ["--storage-account", var.storage_account_name]
+      parameters  = [
+          "--storage-account", var.storage_account_name,
+          "--catalog", local.databricks_catalog_name,
+          "--database", databricks_schema.data_processing_db.name
+      ]
     }
   }
+}
+
+resource "azurerm_databricks_access_connector" "connect-unity" {
+  name                = "${var.prefix}-${var.random_id}-cnct"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "databricks_storage_credential" "credential" {
+  provider = databricks.accounts
+  name     = "connector_cred"
+
+  azure_managed_identity {
+    access_connector_id = azurerm_databricks_access_connector.connect-unity.id
+  }
+  
+  skip_validation = true
+  force_update    = true
+  force_destroy   = true
+  comment         = "Managed identity credential for Databricks Access Connector"
+}
+
+resource "azurerm_role_assignment" "databricks_blob_contributor" {
+  scope                = var.storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_databricks_access_connector.connect-unity.identity[0].principal_id
+}
+
+resource "databricks_external_location" "bronze" {
+  provider        = databricks.accounts
+  name            = "bronze_external"
+  url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net"
+  credential_name = databricks_storage_credential.credential.name
+  fallback        = true
+  skip_validation = true
+  force_update    = true
+  comment         = "Bronze external location"
+}
+
+resource "databricks_external_location" "silver" {
+  provider        = databricks.accounts
+  name            = "silver_external"
+  url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net"
+  credential_name = databricks_storage_credential.credential.name
+  fallback        = true
+  skip_validation = true
+  force_update    = true
+  comment         = "Silver external location"
+}
+
+resource "databricks_external_location" "gold" {
+  provider        = databricks.accounts
+  name            = "gold_external"
+  url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net"
+  credential_name = databricks_storage_credential.credential.name
+  fallback        = true
+  skip_validation = true
+  force_update    = true
+  comment         = "Gold external location"
 }

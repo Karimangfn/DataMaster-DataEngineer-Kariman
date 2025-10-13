@@ -18,6 +18,11 @@ variable "storage_account_name" {
   description = "Name of the Azure Storage Account for Jobs"
 }
 
+variable "storage_account_id" {
+  type        = string
+  description = "ID do Storage Account que será usado para role assignment e external locations"
+}
+
 variable "location" {
   description = "Azure region to deploy resources"
   type        = string

@@ -1,6 +1,6 @@
 import json
-
 from datetime import datetime
+
 from src.application.services.database_ingestion_service import \
     DatabaseIngestionService
 from src.application.validators.env_vars_validator import validate_env_vars
@@ -9,8 +9,8 @@ from src.domain.exceptions.exceptions import (IngestionError,
                                               UnsupportedDatabaseTypeError)
 from src.infrastructure.config.strategy_registry import (CONNECTION_STRATEGIES,
                                                          INGESTION_STRATEGIES)
-from src.infrastructure.storage.azure_blob_uploader import AzureBlobUploader
 from src.infrastructure.logging.logging_setup import get_logger
+from src.infrastructure.storage.azure_blob_uploader import AzureBlobUploader
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,10 @@ def main():
         json_str = json.dumps(data, default=str)
 
         blob_uploader = AzureBlobUploader()
-        blob_name = f"{storage_folder}/data_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.json"
+        blob_name = (
+            f"{storage_folder}/data_"
+            f"{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.json"
+        )
         blob_uploader.upload_json(
             container_name=storage_container,
             blob_name=blob_name,

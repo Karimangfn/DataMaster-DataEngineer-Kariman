@@ -43,7 +43,7 @@ jobs:
 
           echo "RUN_ID=$(cat $RUN_ID_PATH)" >> "$GITHUB_ENV"
 
-      - name: Download Terraform state from previous run
+      - name: 📥 Download Terraform state from Previous Run
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
@@ -56,7 +56,26 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: 🔍 Detectar Resource Group via Terraform Output
+        working-directory: ./infrastructure
+        run: |
+          echo "📄 Listando todos os outputs do Terraform..."
+          terraform output
+      
+          # RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || true)
+          RG_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "unknown-rg")
+      
+          if [ -n "$RG_NAME" ]; then
+            echo "✅ Resource Group detectado via Terraform output: $RG_NAME"
+            echo "## ☁️ Resource Group via Terraform" >> $GITHUB_STEP_SUMMARY
+            echo "**Nome real:** $RG_NAME" >> $GITHUB_STEP_SUMMARY
+            echo "DETECTED_RG=$RG_NAME" >> $GITHUB_ENV
+          else
+            echo "⚠️ Nenhum output chamado 'resource_group_name' encontrado."
+          fi
+
       - run: terraform init
+      
       - run: terraform validate
 
       - name: 🧹 Conditionally delete Network Watchers not managed by Terraform
@@ -93,8 +112,9 @@ jobs:
         run: |
           resources=(
             "module.databricks.databricks_job.data_process"
+            "module.databricks.databricks_schema.data_processing_db"
           )
-
+      
           subscription_id=$(az account show --query id -o tsv)
           
           for res in "${resources[@]}"; do
@@ -121,11 +141,27 @@ jobs:
           -var="subscription_id=$(az account show --query id -o tsv)" \
           -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
 
+      - name: Delete Databricks Unity Catalog Resources
+        run: |
+          set +e
+          RG_NAME="${{ secrets.RESOURCE_GROUP }}"
+          DB_RG="${RG_NAME%-rg}-dbw-mrg"
+      
+          if az group show --name "$DB_RG" &>/dev/null; then
+            echo "🗑️ Resource group $DB_RG found. Deleting..."
+            az group delete --name "$DB_RG" --yes --no-wait
+            echo "✅ Deletion initiated for $DB_RG."
+          else
+            echo "ℹ️ Resource group $DB_RG does not exist. Skipping."
+          fi
+      
       - name: Generate summary of resources to be destroyed
         if: always()
         run: |
           echo "## 🧹 Terraform Resources to be Destroyed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          Resource_NAME=$(terraform output -state=./infrastructure/terraform.tfstate -raw resource_group_name 2>/dev/null || echo "unknown-rg")
       
           if grep -q '^\s*# .*will be destroyed' plan.txt; then
             echo "| Resource Type | Resource Name | Delete Status |" >> $GITHUB_STEP_SUMMARY
@@ -156,6 +192,10 @@ jobs:
                 if [ -z "$name" ]; then
                   name="$id"
                 fi
+              fi
+
+              if [ "$type" = "resource_group" ]; then
+                name="$Resource_NAME"
               fi
             
               echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY

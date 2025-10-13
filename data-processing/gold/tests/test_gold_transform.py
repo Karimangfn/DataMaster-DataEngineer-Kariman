@@ -5,7 +5,11 @@ import pytest
 from unittest.mock import patch, MagicMock
 from src.modules.gold_transform import transform_gold
 
-mock_args = types.SimpleNamespace(storage_account="mock")
+mock_args = types.SimpleNamespace(
+    storage_account="mock",
+    catalog="mock_catalog",
+    database="mock_database"
+)
 
 
 @patch("src.modules.gold_transform.aggregate_purchase_metrics")
@@ -26,14 +30,29 @@ def test_gold_transform_pipeline(mock_add_month, mock_agg):
     fake_spark = MagicMock()
     fake_spark.read.format.return_value.load.return_value = fake_df
 
+    write_mock = fake_df.write.format.return_value
+    mode_mock = write_mock.mode.return_value
+    option_mock = mode_mock.option.return_value
+    option_mock.saveAsTable.return_value = None
+
     silver_path = "fake_silver_path"
     gold_path = "fake_gold_path"
 
-    transform_gold(fake_spark, silver_path, gold_path)
+    config = {
+        "silver_path": silver_path,
+        "gold_path": gold_path,
+        "catalog": "fake_catalog",
+        "database": "fake_database"
+    }
+    
+    transform_gold(fake_spark, config)
 
     mock_add_month.assert_called_once_with(fake_df)
     mock_agg.assert_called_once_with(fake_df, ["store_location", "purchase_month"])
-    fake_df.write.format.return_value.mode.return_value.save.assert_called_once_with(gold_path)
+    
+    option_mock.saveAsTable.assert_called_once_with(
+        f"{config['catalog']}.{config['database']}.gold"
+    )
 
 
 def test_gold_transform_pipeline_error():

@@ -61,7 +61,34 @@ jobs:
           fi
 
   check-azure-role-assignments:
-    name: 📜 Check Azure Role Assignments
+    name: 🔐 Check Azure Role Assignments
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: 🔎 Check Role Assignments
+        run: |
+          set -e
+          
+          CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
+          SCOPE="/subscriptions/$SUBSCRIPTION_ID"
+          
+          echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
+          ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
+          
+          echo "$ROLES" | grep -q "Contributor" || \
+               { echo "❌ Service Principal does not have the 'Contributor' role"; exit 1; }
+          
+          echo "$ROLES" | grep -q "User Access Administrator" || \
+               { echo "❌ Service Principal does not have the 'User Access Administrator' role"; exit 1; }
+          
+          echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
+
+  check-azuread-group-permissions:
+    name: 🔐 Check Azure AD Graph Permissions
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Azure Login
@@ -69,34 +96,39 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🔎 Check Role Assignments
+      - name: 🔎 Validate SPN Graph Permissions
         run: |
           set -e
 
           CLIENT_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-          SUBSCRIPTION_ID="${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}"
-          SCOPE="/subscriptions/$SUBSCRIPTION_ID"
+          echo "🔍 Debug: CLIENT_ID=$CLIENT_ID"
 
-          echo "🔍 Checking permissions for Service Principal: $CLIENT_ID in scope $SCOPE..."
-
-          ROLES=$(az role assignment list --assignee "$CLIENT_ID" --scope "$SCOPE" --query "[].roleDefinitionName" -o tsv)
-
-          echo "$ROLES" | grep -q "Contributor" || {
-            echo "❌ Service Principal does not have the 'Contributor' role"
+          echo "🔍 Validating SPN has Application.Read.All permission..."
+          if ! az ad app permission list --id "$CLIENT_ID" -o tsv >/dev/null 2>&1; then
+            echo "❌ Service Principal does NOT have Application.Read.All permission."
             exit 1
-          }
+          fi
+          echo "✅ SPN has Application.Read.All permission."
 
-          echo "$ROLES" | grep -q "User Access Administrator" || {
-            echo "❌ Service Principal does not have the 'User Access Administrator' role"
-            exit 1
-          }
+          echo "🔍 Checking Group.ReadWrite.All permission..."
+          PERMS=$(az ad app permission list --id "$CLIENT_ID" --query "[?resourceAppId=='00000003-0000-0000-c000-000000000000'].resourceAccess[].id" -o tsv)
+          echo "🔍 Debug: PERMISSIONS IDs retrieved:"
+          echo "$PERMS"
 
-          echo "✅ Client ID has the 'Contributor' and 'User Access Administrator' roles."
+          GROUP_RW_ID=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query "appRoles[?value=='Group.ReadWrite.All'].id" -o tsv)
+          echo "🔍 Debug: Group.ReadWrite.All ID=$GROUP_RW_ID"
+
+          if echo "$PERMS" | grep -iq "$GROUP_RW_ID"; then
+              echo "✅ Service Principal has Group.ReadWrite.All permission granted with admin consent."
+          else
+              echo "❌ Service Principal does NOT have Group.ReadWrite.All permission granted with admin consent."
+              exit 1
+          fi
           
   resource-group:
     name: 🏗️ Creating Resource Group
     runs-on: ubuntu-latest
-    needs: [check-azure-role-assignments, check-gh-pat]
+    needs: [check-azure-role-assignments, check-azuread-group-permissions, check-gh-pat]
     defaults:
       run:
         working-directory: ./infrastructure
@@ -108,57 +140,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 📁 Check and set RUN_ID
-        id: check-run-id
-        run: |
-          RUN_ID_PATH="../assets/terraform_state/run_id.txt"
-      
-          if [ ! -f "$RUN_ID_PATH" ]; then
-            echo "✅ run_id.txt file not found. Download step will be skipped."
-            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
-      
-          if [ ! -s "$RUN_ID_PATH" ]; then
-            echo "⚠️ run_id.txt file is empty. Download step will be skipped."
-            echo "SKIP_DOWNLOAD=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
-      
-          RUN_ID=$(cat "$RUN_ID_PATH")
-          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          echo "SKIP_DOWNLOAD=false" >> "$GITHUB_ENV"
-      
-      - name: 📥 Download Terraform state
-        if: env.SKIP_DOWNLOAD == 'false'
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state
-          path: ./infrastructure
-          run-id: ${{ env.RUN_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
 
-      - run: terraform init
+      - name: 🧰 Initialize Terraform
+        run: terraform init
 
-      - run: |
-           terraform plan -out=tfplan -no-color \
-           -target=module.resource_group.azurerm_resource_group.rg \
-           -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan >> plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
       
-      - run: terraform validate
-      - run: | 
+      - name: 🚀 Apply Resource Group via Terraform
+        run: | 
           terraform apply -auto-approve \
             -target=module.resource_group.azurerm_resource_group.rg \
             -var="subscription_id=$(az account show --query id -o tsv)"
@@ -170,29 +164,11 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-      - name: 📤 Upload Terraform summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: infrastructure/plan.txt
-          overwrite: true
-
-      - name: 💾 Save current run ID
-        run: echo "${{ github.run_id }}" > ../assets/terraform_state/run_id.txt
-      
-      - name: 💬 Commit run ID
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git add ../assets/terraform_state/run_id.txt
-          git commit -m "Terraform State run_id"
-          git push
-
       - name: 📦 Get Resource Group Name
         id: tfoutput_rg
         run: |
           RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          echo "Detected Resource Group from Terraform: $RESOURCE_GROUP_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
 
       - name: 🧾 Set RESOURCE_GROUP_NAME secret via gh CLI
@@ -223,36 +199,30 @@ jobs:
         with:
           name: terraform-state
           path: ./infrastructure
-
-      - name: 📥 Download Terraform summary
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
+      - name: 🧰 Initialize Terraform
+        run: terraform init
 
-      - run: |
-           terraform plan -out=tfplan -no-color \
-           -target=module.acr.azurerm_container_registry.acr \
-           -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan >> plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
 
-      - run: terraform validate
-      - run: |
+      - name: 🚀 Apply ACR via Terraform
+        run: |
           terraform apply -auto-approve \
             -target=module.acr.azurerm_container_registry.acr \
             -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: 📦 Get Container Registry Name
         id: tfoutput_acr
@@ -267,25 +237,11 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           gh secret set ACR_NAME --repo $REPO --body "$CONTAINER_REGISTRY_NAME"
-
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
-
-      - name: 📤 Upload Terraform summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: infrastructure/plan.txt
-          overwrite: true
           
   aks:
     name: ☸️ Creating AKS Cluster
     runs-on: ubuntu-latest
-    needs: [resource-group, acr]
+    needs: acr
     defaults:
       run:
         working-directory: ./infrastructure
@@ -296,17 +252,11 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      
+
       - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
-          path: ./infrastructure
-
-      - name: 📥 Download Terraform summary
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan-txt
           path: ./infrastructure
       
       - name: 🧰 Setup Terraform
@@ -314,30 +264,32 @@ jobs:
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
+      - name: 🧰 Initialize Terraform
+        run: terraform init
 
-      - run: |
-           terraform plan -out=tfplan -no-color \
-           -target=module.aks.azurerm_kubernetes_cluster.aks \
-           -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan >> plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
-  
-      - run: terraform validate
-      - run: |
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
+
+      - name: 🚀 Apply AKS Cluster via Terraform
+        run: |
           terraform apply -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -target=module.aks.azurerm_kubernetes_cluster.aks \
             -target=module.aks.azurerm_role_assignment.aks_acr_pull \
             -var="subscription_id=$(az account show --query id -o tsv)"
 
+      - name: 🧹 Clean Up Network Watcher
+        run: |
           terraform destroy -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: ☁️ Get Azure Kubernetes Service Name
         id: tfoutput_aks
@@ -352,25 +304,11 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           gh secret set AKS_NAME --repo $REPO --body "$KUBERNETES_SERVICE"
-
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
-
-      - name: 📤 Upload Terraform summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: infrastructure/plan.txt
-          overwrite: true
-
+ 
   storage-account:
     name: 💾 Creating Storage Account
     runs-on: ubuntu-latest
-    needs: [resource-group, aks]
+    needs: aks
     defaults:
       run:
         working-directory: ./infrastructure
@@ -387,40 +325,32 @@ jobs:
         with:
           name: terraform-state
           path: ./infrastructure
-
-      - name: 📥 Download Terraform summary
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
+      - name: 🧰 Initialize Terraform
+        run: terraform init
 
-      - run: |
-           terraform plan -out=tfplan -no-color \
-           -target=module.storage.azurerm_storage_account.lake \
-           -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
-           -var="subscription_id=$(az account show --query id -o tsv)" \
-           -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
-           terraform show -no-color tfplan >> plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
-      
-      - run: terraform validate
-      - run: |
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
+
+      - name: 🚀 Apply Storage Account via Terraform
+        run: |
           terraform apply -auto-approve \
             -target=module.storage.azurerm_storage_account.lake \
             -target=module.storage.azurerm_role_assignment.spn_storage_blob_contributor \
             -var="subscription_id=$(az account show --query id -o tsv)" \
             -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}"
+
+      - name: 📤 Upload Terraform state
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
+          overwrite: true
 
       - name: 📦 Get Storage Account Name
         id: tfoutput_storage
@@ -436,24 +366,10 @@ jobs:
         run: |
           gh secret set STORAGE_ACCOUNT --repo $REPO --body "$STORAGE_ACCOUNT_NAME"
 
-      - name: 📤 Upload Terraform state
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state
-          path: infrastructure/terraform.tfstate
-          overwrite: true
-
-      - name: 📤 Upload Terraform summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: infrastructure/plan.txt
-          overwrite: true
-
   storage-containers:
     name: 📁 Creating Storage Containers
     runs-on: ubuntu-latest
-    needs: [resource-group, storage-account]
+    needs: storage-account
     defaults:
       run:
         working-directory: ./infrastructure
@@ -470,36 +386,20 @@ jobs:
         with:
           name: terraform-state
           path: ./infrastructure
-
-      - name: 📥 Download Terraform summary
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
       
-      - run: terraform init
+      - name: 🧰 Initialize Terraform
+        run: terraform init
 
-      - run: |
-           terraform plan -out=tfplan -no-color \
-            -target=module.storage.azurerm_storage_container.raw \
-            -target=module.storage.azurerm_storage_container.bronze \
-            -target=module.storage.azurerm_storage_container.silver \
-            -target=module.storage.azurerm_storage_container.gold \
-           -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan >> plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
-      
-      - run: terraform validate
-      - run: |
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
+
+      - name: 🚀 Apply Storage Containers via Terraform
+        run: |
           terraform apply -auto-approve \
             -target=module.storage.azurerm_storage_container.raw \
             -target=module.storage.azurerm_storage_container.bronze \
@@ -514,17 +414,10 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-      - name: 📤 Upload Terraform summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: infrastructure/plan.txt
-          overwrite: true
-  
   databricks:
     name: 🧪 Creating Databricks Workspace
     runs-on: ubuntu-latest
-    needs: [resource-group, storage-account, storage-containers]
+    needs: storage-containers
     defaults:
       run:
         working-directory: ./infrastructure
@@ -541,38 +434,38 @@ jobs:
         with:
           name: terraform-state
           path: ./infrastructure
-
-      - name: 📥 Download Terraform summary
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure
       
       - name: 🧰 Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
-      
-      - run: terraform init
 
-      - run: |
-           terraform plan -out=tfplan -no-color \
-           -target=module.databricks.azurerm_databricks_workspace.dbw \
-           -var="subscription_id=$(az account show --query id -o tsv)"
-           terraform show -no-color tfplan >> plan.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-txt
-          path: ./infrastructure/plan.txt
-          overwrite: true
+      - name: 📦 Get Terraform Outputs
+        id: tfoutput_rg
+        run: |
+          RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+          STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name)
+          echo "✅ Detected Resource Group from Terraform: $RESOURCE_GROUP_NAME"
+          echo "✅ Detected Storage Account from Terraform: $STORAGE_ACCOUNT_NAME"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
+          echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
       
-      - run: terraform validate
-      - run: |
+      - name: 🧰 Initialize Terraform
+        run: terraform init
+
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
+
+      - name: 🚀 Apply Databricks Workspace and Access Connector
+        run: |
           terraform apply -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -target=module.databricks.azurerm_databricks_workspace.dbw \
+            -target=module.databricks.azurerm_databricks_access_connector.connect-unity \
             -var="subscription_id=$(az account show --query id -o tsv)"
-
+  
+      - name: 🧹 Clean Up Network Watcher
+        run: |
           terraform destroy -auto-approve \
             -target=module.aks.azurerm_network_watcher.default \
             -var="subscription_id=$(az account show --query id -o tsv)"
@@ -589,6 +482,8 @@ jobs:
           WORKSPACE_URL="https://$(terraform output -raw databricks_workspace_url)"
           echo "WORKSPACE_URL=$WORKSPACE_URL" >> $GITHUB_ENV
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "workspace_url=$WORKSPACE_URL" >> $GITHUB_OUTPUT
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
           echo "::add-mask::$TOKEN"
 
       - name: 🔧 Create Git Credential on Databricks
@@ -601,17 +496,158 @@ jobs:
               "git_username": "x-token-auth",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
-        
-      - name: 🚀 Deploy Databricks Job
+      
+      - name: 🧹 Clean up old Databricks resources
+        run: |
+          LOCATIONS=("bronze_external" "silver_external" "gold_external")
+          for loc in "${LOCATIONS[@]}"; do
+            echo "🧹 Checking if external location $loc exists..."
+            LOC_URL="$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc"
+            if curl -s -H "Authorization: Bearer $TOKEN" "$LOC_URL" | grep -q '"name"'; then
+              echo "🗑️ Deleting existing external location $loc"
+              curl -X DELETE -H "Authorization: Bearer $TOKEN" "$LOC_URL"
+            fi
+          done
+      
+          CRED_NAME="connector_cred"
+          CRED_URL="$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/$CRED_NAME?force=true"
+          echo "🧹 Checking for existing credential '$CRED_NAME'..."
+          if curl -s -H "Authorization: Bearer $TOKEN" \
+                "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/$CRED_NAME" | grep -q '"name"'; then
+            echo "🗑️ Deleting existing credential '$CRED_NAME' with force=true"
+            curl -X DELETE -H "Authorization: Bearer $TOKEN" "$CRED_URL"
+            sleep 5
+          else
+            echo "✅ No existing credential found"
+          fi
+
+      - name: 🚀 Apply Databricks Storage Credential
         run: |
           terraform apply -auto-approve \
+            -target=module.databricks.databricks_storage_credential.credential \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 🔍 Capture Access Connector Info (from terraform outputs)
+        id: connector-info
+        run: |
+          set -euo pipefail
+      
+          ACCESS_CONNECTOR_ID=$(terraform output -raw databricks_access_connector_id 2>/dev/null || true)
+          PRINCIPAL_ID=$(terraform output -raw databricks_access_connector_principal_id 2>/dev/null || true)
+      
+          if [ -z "$ACCESS_CONNECTOR_ID" ] || [ -z "$PRINCIPAL_ID" ]; then
+            echo "❌ Terraform outputs for access connector are missing. Make sure the connector was applied."
+            echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
+            echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+            exit 1
+          fi
+      
+          echo "✅ Access Connector ID: $ACCESS_CONNECTOR_ID"
+          echo "✅ Principal ID: $PRINCIPAL_ID"
+      
+          echo "ACCESS_CONNECTOR_ID=$ACCESS_CONNECTOR_ID" >> $GITHUB_ENV
+          echo "PRINCIPAL_ID=$PRINCIPAL_ID" >> $GITHUB_ENV
+  
+      - name: 🏗️ Assign Blob Contributor Role to Storage Account
+        run: |
+          set -euo pipefail
+      
+          STORAGE_ACCOUNT="${{ env.STORAGE_ACCOUNT_NAME }}"
+          PRINCIPAL_ID="${{ env.PRINCIPAL_ID }}"
+          SCOPE=$(az storage account show --name "$STORAGE_ACCOUNT" --query id -o tsv)
+      
+          if [ -z "$SCOPE" ]; then
+            echo "❌ Could not find storage account $STORAGE_ACCOUNT"
+            exit 1
+          fi
+      
+          echo "Assigning 'Storage Blob Data Contributor' role..."
+          az role assignment create \
+            --assignee "$PRINCIPAL_ID" \
+            --role "Storage Blob Data Contributor" \
+            --scope "$SCOPE"
+          echo "✅ Role assigned"
+
+      - name: 🛠️ Set ADLS Gen2 ACLs for Databricks Managed Identity
+        run: |
+          ACCOUNT="${{ env.STORAGE_ACCOUNT_NAME }}"
+          PRINCIPAL="${{ env.PRINCIPAL_ID }}"
+      
+          for container in bronze silver gold; do
+            echo "🔑 Setting ACL on $container"
+            az storage fs access set \
+              --account-name "$ACCOUNT" \
+              --file-system "$container" \
+              --path / \
+              --acl "user:${PRINCIPAL}:rwx"
+            echo "✅ ACL set on $container"
+          done
+
+      - name: 🚀 Create Databricks External Locations
+        run: |
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_external_location.bronze \
+            -target=module.databricks.databricks_external_location.silver \
+            -target=module.databricks.databricks_external_location.gold \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 🚀 Create Databricks Schema
+        run: |   
+          terraform apply -auto-approve \
+            -target=module.databricks.databricks_schema.data_processing_db \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+        
+      - name: 🚀 Create Databricks Job
+        run: |
+          terraform apply -auto-approve \
+            -refresh=false \
             -target=module.databricks.databricks_job.data_process \
             -var="client_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" \
             -var="client_secret=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" \
             -var="tenant_id=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" \
             -var="subscription_id=$(az account show --query id -o tsv)" \
+            -var="git_repo_branch=${{ github.ref_name }}" \
             -var="git_repo_url=https://github.com/${{ github.repository }}.git" \
             -var="enable_databricks=true"
+
+      - name: 👥 Create data_engineers group
+        run: |
+          echo "📡 Creating group data_engineers..."
+          RESPONSE=$(
+            curl -i -w "\nStatus: %{http_code}\n" -X POST \
+              "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/scim+json" \
+              -d '{"displayName": "data_engineers"}'
+          )
+          echo "🔍 API Response:"
+          echo "$RESPONSE"
+  
+      - name: 👥 Create data_scientists group
+        run: |
+          echo "📡 Creating group data_scientists..."
+          RESPONSE=$(
+            curl -i -w "\nStatus: %{http_code}\n" -X POST \
+              "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/scim+json" \
+              -d '{"displayName": "data_scientists"}'
+          )
+          echo "🔍 API Response:"
+          echo "$RESPONSE"
+  
+      - name: 👥 Create data_analysts group
+        run: |
+          echo "📡 Creating group data_analysts..."
+          RESPONSE=$(
+            curl -i -w "\nStatus: %{http_code}\n" -X POST \
+              "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/scim+json" \
+              -d '{"displayName": "data_analysts"}'
+          )
+          echo "🔍 API Response:"
+          echo "$RESPONSE"
 
       - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
@@ -620,117 +656,199 @@ jobs:
           path: infrastructure/terraform.tfstate
           overwrite: true
 
-      - name: 📤 Upload Terraform summary
+  azure-groups-and-access:
+    name: 🔑 Create Azure Groups and Assign Roles
+    runs-on: ubuntu-latest
+    needs: databricks
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: ./infrastructure
+
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: 🧰 Initialize Terraform
+        run: terraform init
+
+      - name: ✅ Validate Terraform Configuration
+        run: terraform validate
+
+      - name: 🔎 Check if Azure AD groups exist
+        id: check-groups
+        run: |
+          groups=("data_engineers" "data_analysts" "data_scientists")
+          missing=()
+
+          echo "🔍 Checking existing Azure AD groups..."
+          for group in "${groups[@]}"; do
+            echo "🔹 Checking: $group"
+            if az ad group show --group "$group" --query "id" -o tsv >/dev/null 2>&1; then
+              echo "✅ Group '$group' already exists."
+            else
+              echo "❌ Group '$group' does not exist and will be created."
+              missing+=("$group")
+            fi
+          done
+
+          # Save missing groups as JSON output
+          missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
+          echo "missing_groups=$missing_json" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Create missing Azure AD groups with Terraform
+        if: ${{ steps.check-groups.outputs.missing_groups != '[]' }}
+        run: |
+          echo "🛠️ Creating missing Azure AD groups..."
+          groups=$(echo '${{ steps.check-groups.outputs.missing_groups }}' | jq -r '.[]')
+          for group in $groups; do
+            case "$group" in
+              data_engineers)
+                terraform apply -auto-approve -target=module.access.azuread_group.data_engineers
+                ;;
+              data_analysts)
+                terraform apply -auto-approve -target=module.access.azuread_group.data_analysts
+                ;;
+              data_scientists)
+                terraform apply -auto-approve -target=module.access.azuread_group.data_scientists
+                ;;
+            esac
+          done
+          echo "✅ Missing groups created successfully."
+
+      - name: 🧩 Apply Azure Role Assignments
+        run: |
+          echo "🔗 Applying role assignments..."
+          terraform apply -auto-approve \
+            -target=module.access.azurerm_role_assignment.raw_access \
+            -target=module.access.azurerm_role_assignment.bronze_access \
+            -target=module.access.azurerm_role_assignment.silver_access \
+            -target=module.access.azurerm_role_assignment.gold_access \
+            -var="subscription_id=$(az account show --query id -o tsv)"
+
+      - name: 📤 Upload Terraform state
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-plan-txt
-          path: infrastructure/plan.txt
+          name: terraform-state
+          path: infrastructure/terraform.tfstate
           overwrite: true
 
   generate-summary:
     name: 📝 Generate Creation and Update Summary
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && !cancelled()
     needs:
       - resource-group
       - acr
       - aks
-      - databricks
       - storage-account
       - storage-containers
+      - databricks
+      - azure-groups-and-access
     steps:
-      - name: 📄 Download Terraform plan file
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 📥 Download Terraform state
         uses: actions/download-artifact@v4
         with:
-          name: terraform-plan-txt
+          name: terraform-state
           path: ./infrastructure
-  
-      - name: 📊 Generate Terraform
+
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: 📝 Generate Summary Table
         run: |
-          echo "## 🚀 Terraform Created Resources" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+
+          echo "## 🚀 Terraform Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-  
-          grep -n '^\s*# .*will be created' ./infrastructure/plan.txt || echo "No resources to create found"
-  
-          if grep -q '^\s*# .*will be created' ./infrastructure/plan.txt; then
-            echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
-  
-            grep '^\s*# .*will be created' ./infrastructure/plan.txt | while read -r line; do
-              full_id=$(echo "$line" | sed -E 's/^\s*# ([^ ]+) will be created/\1/')
-              short_id=$(echo "$full_id" | sed -E 's/^module\.([^.]+)\.//')
-            
-              full_type=$(echo "$short_id" | awk -F'.' '{print $1}')
-              block_name=$(echo "$short_id" | awk -F'.' '{print $2}')
-              type=${full_type#azurerm_}
+          echo "| Stage | Resource Name | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------------|--------|" >> $GITHUB_STEP_SUMMARY
 
-              if [ "$type" = "random_id" ] || 
-                 [ "$type" = "role_assignment" ] || 
-                 [ "$type" = "databricks_job" ]; then
-                continue
-              fi
-            
-              block=$(sed -n "/+ resource \"$full_type\" \"$block_name\" {/,/^}/p" ./infrastructure/plan.txt)
+          cd infrastructure
+          terraform init -input=false -no-color >/dev/null
 
-              name=$(echo "$block" \
-                | grep '^[ ~+-]*name\s*=' \
-                | head -n1 \
-                | sed -E 's/^[ ~+-]*name\s*=\s*"(.*)".*/\1/' \
-                | sed -E 's/ ->.*//')
-              
-              if [ -z "$name" ] || [[ "$name" == "(known after apply)" ]]; then
-                name="$block_name"
-              fi
-            
-              echo "| $type | $name | ✅ |" >> $GITHUB_STEP_SUMMARY
-            done
+          RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || echo "N/A")
+          ACR_NAME=$(terraform output -raw container_registry_name 2>/dev/null || echo "N/A")
+          AKS_NAME=$(terraform output -raw kubernetes_service_name 2>/dev/null || echo "N/A")
+          STORAGE_ACCOUNT=$(terraform output -raw storage_account_name 2>/dev/null || echo "N/A")
+          DB_WORKSPACE=$(terraform output -raw databricks_workspace_url 2>/dev/null || echo "N/A")
+
+          declare -A JOBS
+          declare -A RESOURCES
+
+          JOBS["🏗️ Resource Group"]="${{ needs.resource-group.result }}"
+          RESOURCES["🏗️ Resource Group"]="$RG_NAME"
+
+          JOBS["🐳 Azure Container Registry (ACR)"]="${{ needs.acr.result }}"
+          RESOURCES["🐳 Azure Container Registry (ACR)"]="$ACR_NAME"
+
+          JOBS["☸️ Azure Kubernetes Service (AKS)"]="${{ needs.aks.result }}"
+          RESOURCES["☸️ Azure Kubernetes Service (AKS)"]="$AKS_NAME"
+
+          JOBS["💾 Storage Account"]="${{ needs.storage-account.result }}"
+          RESOURCES["💾 Storage Account"]="$STORAGE_ACCOUNT"
+
+          JOBS["📁 Storage Containers"]="${{ needs.storage-containers.result }}"
+          RESOURCES["📁 Storage Containers"]="raw, bronze, silver, gold"
+
+          JOBS["🧪 Databricks Workspace"]="${{ needs.databricks.result }}"
+          RESOURCES["🧪 Databricks Workspace"]="$DB_WORKSPACE"
+
+          JOBS["🔑 Azure AD Groups & Access"]="${{ needs.azure-groups-and-access.result }}"
+          RESOURCES["🔑 Azure AD Groups & Access"]="data_engineers, data_scientists, data_analysts"
+
+          STOP=false
+          for STAGE in "🏗️ Resource Group" \
+                       "🐳 Azure Container Registry (ACR)" \
+                       "☸️ Azure Kubernetes Service (AKS)" \
+                       "💾 Storage Account" \
+                       "📁 Storage Containers" \
+                       "🧪 Databricks Workspace" \
+                       "🔑 Azure AD Groups & Access"; do
+
+            if [ "$STOP" = true ]; then
+              break
+            fi
+
+            RESULT="${JOBS[$STAGE]}"
+            NAME="${RESOURCES[$STAGE]}"
+
+            if [ "$RESULT" = "success" ]; then
+              STATUS="✅"
+            else
+              STATUS="❌"
+              STOP=true
+            fi
+
+            echo "| $STAGE | $NAME | $STATUS |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$STOP" = true ]; then
+            echo "❌ **Pipeline stopped due to failure in one or more stages.**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "_No resources to create._" >> $GITHUB_STEP_SUMMARY
-          fi
-  
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🔁 Terraform Updated Resources" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-  
-          if grep -q '^\s*# .*must be replaced' ./infrastructure/plan.txt; then
-            echo "| Resource Type | Resource Name | Deployment Status |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------------|---------------|-------------------|" >> $GITHUB_STEP_SUMMARY
-          
-            grep '^\s*# .*must be replaced' ./infrastructure/plan.txt | while read -r line; do
-              resource=$(echo "$line" | sed -E 's/^\s*# ([^ ]+)\.([^ ]+) must be replaced/\1 \2/')
-          
-              short_id=$(echo "$resource" | sed -E 's/^module\.([^.]+)\.//')
-          
-              full_type=$(echo "$short_id" | awk '{print $1}')
-              id=$(echo "$short_id" | awk '{print $2}')
-              type=${full_type#azurerm_}
-
-              if [ "$type" = "random_id" ] || 
-                 [ "$type" = "role_assignment" ] || 
-                 [ "$type" = "databricks_job" ]; then
-                continue
-              fi
-          
-              block=$(sed -n "/[-+\/] resource \"$full_type\" \"$id\" {/,/^}/p" ./infrastructure/plan.txt)
-          
-              if [ -z "$block" ]; then
-                echo "⚠️ WARNING: Could not extract block for $full_type.$id"
-                continue
-              fi
-          
-              changed_line=$(echo "$block" | grep -m1 -P '^\s*~ .* = ".*" -> ".*"')
-              if [ -n "$changed_line" ]; then
-                new_name=$(echo "$changed_line" | sed -E 's/.*-> "(.*)".*/\1/')
-              else
-                new_name=$(echo "$block" | grep '^[ +-]*name\s*=' | head -n1 | sed -E 's/^[ +-]*name\s*=\s*"(.*)"/\1/')
-              fi
-          
-              if [ -z "$new_name" ]; then
-                new_name="$id"
-              fi
-          
-              echo "| $type | $new_name | ✅ |" >> $GITHUB_STEP_SUMMARY
-            done
-          else
-            echo "_No resources to update._" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All Terraform-managed resources were successfully created and configured.**" >> $GITHUB_STEP_SUMMARY
           fi
