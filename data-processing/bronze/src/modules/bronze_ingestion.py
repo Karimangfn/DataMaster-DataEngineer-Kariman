@@ -42,7 +42,9 @@ def ingest_bronze_customer_data(
                 LOCATION '{config['output_path']}'
             """)
 
-            grant_access_to_bronze(spark, config['catalog'], config['database'])
+            grant_access_to_bronze(
+                spark, config['catalog'], config['database']
+            )
         else:
             pass
     except Exception as e:
