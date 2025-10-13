@@ -3,8 +3,6 @@ Dataset configuration for the Bronze Layer data ingestion pipeline.
 """
 
 import argparse
-import sys
-import shlex
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

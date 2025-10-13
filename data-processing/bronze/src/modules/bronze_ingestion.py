@@ -4,8 +4,8 @@ from typing import Any, Dict, List
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
-from utils.utils import add_metadata_columns, generate_batch_id
 from utils.access import grant_access_to_bronze
+from utils.utils import add_metadata_columns, generate_batch_id
 
 logger = logging.getLogger(__name__)
 
