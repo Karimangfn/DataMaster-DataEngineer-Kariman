@@ -480,20 +480,25 @@ O projeto foi estruturado para suportar aumento de volume de dados e crescimento
 
 #### Escalabilidade
 - **Microserviços em AKS**: permitem escalar horizontalmente, aumentando ou reduzindo réplicas conforme a demanda de ingestão.  
-- **Databricks**: suporte a clusters escaláveis sob demanda, otimizando custo e performance no processamento das camadas Bronze, Silver e Gold.  
-- **Storage Account**: arquitetura baseada em containers independentes para cada camada de dados, possibilitando expansão sem necessidade de reestruturação.  
+- **Databricks**: os jobs utilizam clusters com autoscale configurado, que realizam escalabilidade horizontal, adicionando ou removendo nós automaticamente conforme o volume de dados processado.
+- **Storage Account**: arquitetura baseada em containers independentes para cada camada de dados, possibilitando expansão sem necessidade de reestruturação.
 
 #### Desempenho
 - **Delta Lake**: garante performance em consultas e manipulação de grandes volumes de dados por meio de otimizações internas (indexação, caching e compactação de arquivos).  
 - **Auto Loader**: possibilita ingestão contínua e eficiente dos dados da Raw para a Bronze, reduzindo o tempo de latência.  
 - **Transformações distribuídas no Databricks**: uso de processamento paralelo para melhorar a velocidade em operações de limpeza e padronização.
 
-#### Otimização de Escrita no Delta Lake  
+#### Parâmetros de Performance e Eficiência do Cluster Databricks 
 
 O cluster Databricks está configurado com parâmetros de otimização para melhorar a performance de escrita e leitura de dados em tabelas Delta:  
 
-- `spark.databricks.delta.optimizeWrite.enabled = true` → Habilita **optimize write**, que reduz o número de pequenos arquivos gerados, consolidando-os automaticamente durante a escrita.  
-- `spark.databricks.delta.autoCompact.enabled = true` → Ativa a **auto compactação**, que combina arquivos pequenos em arquivos maiores de forma contínua, melhorando a performance de leitura e queries analíticas.
+- `spark.databricks.delta.optimizeWrite.enabled = true` → reduz o número de pequenos arquivos gerados, consolidando-os automaticamente durante a escrita.  
+- `spark.databricks.delta.autoCompact.enabled = true` → combina arquivos pequenos em arquivos maiores de forma contínua, melhorando a performance de leitura e queries analíticas.
+- `spark.databricks.delta.schema.autoMerge.enabled = true` → Permite que o Delta Lake atualize automaticamente o schema de uma tabela durante operações de merge, append ou overwrite, sem necessidade de recriação manual.
+- `spark.sql.adaptive.enabled = true` → Ativa o Adaptive Query Execution, recurso do Spark que ajusta dinamicamente o plano de execução em tempo de execução (por exemplo, alterando o número de partições ou aplicando broadcast joins quando vantajoso), melhorando desempenho de forma automática.
+- `spark.databricks.adaptive.autoOptimizeShuffle = true` → Faz parte do AQE e permite que o Databricks reajuste dinamicamente a estratégia de shuffle, otimizando a distribuição de dados entre os executores para evitar skew (desequilíbrio de carga entre partições).
+- `spark.sql.adaptive.coalescePartitions.enabled = true` → Habilita o ajuste automático de partições após o shuffle, reduzindo o número de partições pequenas e otimizando o uso de recursos ao evitar a criação de tarefas muito pequenas (task overhead).
+- `spark.databricks.io.cache.enabled = true` → Ativa o Databricks I/O Cache, que armazena dados frequentemente acessados em disco local SSD do cluster, reduzindo o tempo de leitura e o custo de reprocessamento em consultas repetitivas.
 
 **Benefícios principais**:  
 - Capacidade de lidar com aumento no volume e variedade de dados.  
