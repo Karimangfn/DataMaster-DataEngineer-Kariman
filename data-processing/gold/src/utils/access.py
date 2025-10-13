@@ -1,7 +1,9 @@
 import logging
+
 from pyspark.sql import SparkSession
 
 logger = logging.getLogger(__name__)
+
 
 def grant_access_to_gold(spark: SparkSession, catalog: str, database: str):
     """
@@ -18,17 +20,26 @@ def grant_access_to_gold(spark: SparkSession, catalog: str, database: str):
     try:
         gold_table = f"{catalog}.{database}.gold"
 
-        logger.info(f"Granting ALL PRIVILEGES on table {gold_table} to the data_engineers group...")
+        logger.info(
+            f"Granting ALL PRIVILEGES on table {gold_table} "
+            "to the data_engineers group..."
+        )
         spark.sql(f"""
             GRANT ALL PRIVILEGES ON TABLE {gold_table} TO `data_engineers`
         """)
 
-        logger.info(f"Granting SELECT on table {gold_table} to the data_scientists group...")
+        logger.info(
+            f"Granting SELECT on table {gold_table} "
+            "to the data_scientists group..."
+        )
         spark.sql(f"""
             GRANT SELECT ON TABLE {gold_table} TO `data_scientists`
         """)
 
-        logger.info(f"Granting SELECT on table {gold_table} to the data_analysts group...")
+        logger.info(
+            f"Granting SELECT on table {gold_table} "
+            "to the data_analysts group..."
+        )
         spark.sql(f"""
             GRANT SELECT ON TABLE {gold_table} TO `data_analysts`
         """)

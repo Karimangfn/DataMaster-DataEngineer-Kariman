@@ -1,9 +1,9 @@
 import logging
+from typing import Dict
 
-from typing import Any, Dict
 from pyspark.sql import SparkSession
-from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
 from utils.access import grant_access_to_gold
+from utils.utils import add_purchase_month_column, aggregate_purchase_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,9 @@ def transform_gold(
         None
     """
     try:
-        logger.info(f"Reading data from Silver path: {config['silver_path']}")
+        logger.info(
+            f"Reading data from Silver path: {config['silver_path']}"
+        )
         df = spark.read.format("delta").load(config["silver_path"])
 
         logger.info("Adding purchase_month column...")
@@ -38,7 +40,9 @@ def transform_gold(
             df, ["store_location", "purchase_month"]
         )
 
-        logger.info(f"Writing aggregated data to Gold path: {config['gold_path']}")
+        logger.info(
+            f"Writing aggregated data to Gold path: {config['gold_path']}"
+        )
         df_agg.write \
             .format("delta") \
             .mode("overwrite") \
