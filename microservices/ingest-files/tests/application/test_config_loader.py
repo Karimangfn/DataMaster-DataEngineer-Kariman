@@ -16,6 +16,7 @@ def test_load_ingestion_config_from_env(mock_validate_env_vars):
         "STORAGE_ACCOUNT": "account-name",
         "STORAGE_CONTAINER": "container-name",
         "SOURCE_FOLDER": "/some/source/folder",
+        "STORAGE_FOLDER": "raw-folder",
     }
 
     config = load_ingestion_config_from_env()
