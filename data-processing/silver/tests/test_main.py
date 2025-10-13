@@ -19,6 +19,5 @@ def test_main_calls_transform_silver(spark):
 
             mock_transform.assert_called_once_with(
                 spark,
-                main_module.DATASET_CONFIG["bronze_path"],
-                main_module.DATASET_CONFIG["silver_path"]
+                main_module.DATASET_CONFIG
             )
