@@ -44,7 +44,9 @@ def grant_access_to_silver(spark: SparkSession, catalog: str, database: str):
             GRANT SELECT ON TABLE {silver_table} TO `data_analysts`
         """)
 
-        logger.info(f"Permissions granted successfully on table {silver_table}")
+        logger.info(
+            f"Permissions granted successfully on table {silver_table}"
+        )
 
     except Exception as e:
         logger.error(f"Error granting permissions on Silver table: {e}")
