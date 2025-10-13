@@ -20,11 +20,13 @@ locals {
   storage_account = var.storage_account_name
 
   base_spark_conf = {
-    "spark.databricks.cluster.profile"                = "singleNode"
-    "spark.master"                                    = "local[*]"
     "spark.databricks.delta.optimizeWrite.enabled"    = "true"
     "spark.databricks.delta.autoCompact.enabled"      = "true"
     "spark.databricks.delta.schema.autoMerge.enabled" = "true"
+    "spark.sql.adaptive.enabled"                      = "true"
+    "spark.databricks.adaptive.autoOptimizeShuffle"   = "true"
+    "spark.sql.adaptive.coalescePartitions.enabled"   = "true"
+    "spark.databricks.io.cache.enabled"               = "true"
   }
 
   dynamic_spark_conf = {
@@ -47,7 +49,10 @@ resource "databricks_job" "data_process" {
     job_cluster_key = "data_process_cluster"
 
     new_cluster {
-      num_workers   = 0
+      autoscale {
+        min_workers = 1
+        max_workers = 10
+      }
       spark_version = "15.4.x-scala2.12"
       node_type_id  = "Standard_F4"
 
@@ -55,10 +60,6 @@ resource "databricks_job" "data_process" {
         local.base_spark_conf,
         local.dynamic_spark_conf
       )
-
-      custom_tags = {
-        "ResourceClass" = "SingleNode"
-      }
 
       data_security_mode = "SINGLE_USER"
     }
