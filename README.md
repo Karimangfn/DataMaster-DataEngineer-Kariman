@@ -460,33 +460,19 @@ Nesse projeto, o tema de governança de dados é tratado para garantir que cada 
 #### Unity Catalog
 
 - O Unity Catalog gerencia tabelas, views, esquemas e funções, garantindo controle de acesso, incluindo permissões em nível de objeto, linha e coluna.
-- Rastreamento e auditoria: permite registrar lineage completo, histórico de alterações e acessos aos dados.
-- Democratização de dados: usuários podem descobrir e acessar dados de forma segura sem depender de pipelines específicos ou da intervenção de engenheiros de dados.
-- Compartilhamento seguro de dados: tabelas e views podem ser compartilhadas entre diferentes equipes, unidades de negócio ou até parceiros externos, mantendo o controle sobre quem pode visualizar ou alterar os dados.
-- Padronização e organização: centraliza metadados, schemas e nomenclaturas, garantindo consistência em todo o Data Lake e em múltiplas camadas de processamento.
+- **Rastreamento e auditoria**: permite registrar lineage completo, histórico de alterações e acessos aos dados.
+- **Democratização de dados**: usuários podem descobrir e acessar dados de forma segura sem depender de pipelines específicos ou da intervenção de engenheiros de dados.
+- **Compartilhamento seguro de dados**: tabelas e views podem ser compartilhadas entre diferentes equipes, unidades de negócio ou até parceiros externos, mantendo o controle sobre quem pode visualizar ou alterar os dados.
+- **Padronização e organização**: centraliza metadados, schemas e nomenclaturas, garantindo consistência em todo o Data Lake e em múltiplas camadas de processamento.
 
 ### 3.12 Observabilidade e Monitoramento
 
-O projeto prevê mecanismos de **observabilidade e monitoramento** para acompanhar a execução dos pipelines, identificar falhas rapidamente e garantir confiabilidade no fluxo de dados.
+O projeto adota logs como principal mecanismo de monitoramento para acompanhar a execução dos pipelines e detectar falhas, garantindo rastreabilidade e confiabilidade nos fluxos de dados.
 
 #### Logs e Métricas
-- **Microserviços (AKS)**: geração de logs de execução e falhas, que podem ser integrados ao **Azure Monitor** ou **Application Insights**.  
+- **Microserviços (AKS)**: geração de logs de execução e falhas.
 - **Databricks Jobs**: registro automático de logs de execução, status de tarefas e métricas de processamento.  
-- **GitHub Actions**: logs detalhados de cada etapa de CI/CD, permitindo auditoria das execuções.  
-
-#### Alertas
-- Configuração de alertas no **Azure Monitor** para falhas em microserviços ou indisponibilidade de recursos.  
-- Alertas no **Databricks** para jobs que falharem ou ultrapassarem o tempo limite de execução.  
-
-#### Observabilidade de Dados
-- Métricas de volume de dados ingeridos em cada fonte.  
-- Taxa de erros de ingestão ou registros inválidos.  
-- Possibilidade futura de integração com ferramentas de **Data Lineage** para rastreabilidade ponta a ponta.  
-
-**Benefícios principais**:  
-- Redução do tempo de detecção e resposta a falhas.  
-- Garantia de confiabilidade e disponibilidade dos pipelines.  
-- Maior transparência sobre a saúde do ecossistema de dados.  
+- **GitHub Actions**: logs de cada etapa de CI/CD, permitindo auditoria das execuções.
 
 ### 3.13 Escalabilidade e Desempenho
 
@@ -709,6 +695,7 @@ Durante a execução do Job, é possível acompanhar:
 - **Expurgo da Camada Raw** : remover dados da camada Raw após a ingestão e validação, reduzindo custos de armazenamento.
 - **Suporte a Streaming**: estender a arquitetura atual para incluir pipelines de ingestão e processamento streaming, tornando a plataforma híbrida (batch + streaming) e preparada para casos de uso em tempo real.
 - **Abstração Multicloud**: reestruturar a camada de infraestrutura e os microserviços para desacoplar dependências específicas da Azure, viabilizando execução em múltiplos provedores de nuvem (AWS, GCP, Azure), com conectores e provisionamento agnósticos.
+- **Evolução do fluxo de monitoramento**: aprimorar o monitoramento atual, baseado em logs de microserviços, Databricks Jobs e GitHub Actions, centralizando métricas, dashboards e alertas em ferramentas como Azure Monitor ou Grafana.
 
 ###  5.2 Considerações Finais
 
