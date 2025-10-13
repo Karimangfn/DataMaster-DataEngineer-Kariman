@@ -1,10 +1,10 @@
 import logging
-
 from typing import Any, Dict
+
 from pyspark.sql import SparkSession
+from utils.access import grant_access_to_silver
 from utils.utils import (add_high_value_flag, clean_and_cast_columns,
                          deduplicate, mask_sensitive_data)
-from utils.access import grant_access_to_silver
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,9 @@ def transform_silver(
         logger.info("Adding high value purchase flag...")
         df = add_high_value_flag(df)
 
-        logger.info(f"Writing transformed data to Silver path: {config['silver_path']}")
+        logger.info(
+            f"Writing transformed data to Silver path: {config['silver_path']}"
+        )
         df.write \
           .format("delta") \
           .mode("append") \
