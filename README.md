@@ -9,7 +9,7 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
 ## 📑 Sumário
 
 <details>
-  <summary>📌 1. Objetivo do Projeto</summary>
+  <summary>📌 1. Visão Geral do Projeto</summary>
 
   - [Início Rápido](#inicio-rapido)
 
@@ -65,11 +65,7 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
 </details>
 
 <details>
-  <summary>💰 6. Custos do Projeto</summary>
-</details>
-
-<details>
-  <summary>📚 7. Referências</summary>
+  <summary>📚 6. Referências</summary>
 </details>
 
 ## 📌 1. Visão Geral do Projeto
