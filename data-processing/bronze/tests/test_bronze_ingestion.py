@@ -27,18 +27,23 @@ def test_ingest_bronze_customer_data_mock(mock_batch, mock_add_metadata):
 
     mock_spark.readStream = mock_readStream
     mock_add_metadata.return_value = mock_df
-    mock_df.writeStream.format.return_value.outputMode.return_value.trigger.return_value.option.return_value.start.return_value = "query"
+    
+    mock_query = MagicMock()
+    mock_query.awaitTermination.return_value = None
+    mock_df.writeStream.format.return_value.outputMode.return_value.trigger.return_value.option.return_value.start.return_value = mock_query
 
     config = {
         "input_path": "input",
         "output_path": "output",
-        "checkpoint_path": "checkpoint"
+        "checkpoint_path": "checkpoint",
+        "catalog": "mock_catalog",
+        "database": "mock_database"
     }
     schema = MagicMock()
     file_format = "csv"
 
     result = bronze_ingestion.ingest_bronze_customer_data(mock_spark, config, schema, file_format)
-    assert result == ["query"]
+    assert result == [mock_query]
     mock_batch.assert_called_once()
     mock_add_metadata.assert_called_once_with(mock_df, "batch123")
 
@@ -51,7 +56,9 @@ def test_ingest_bronze_no_files(spark):
     config = {
         "input_path": ["input"],
         "output_path": "output",
-        "checkpoint_path": "checkpoint"
+        "checkpoint_path": "checkpoint",
+        "catalog": "mock_catalog",
+        "database": "mock_database"
     }
 
     mock_rdd = MagicMock()
@@ -74,7 +81,9 @@ def test_create_delta_table(mock_is_delta, spark):
     config = {
         "input_path": "input",
         "output_path": "output",
-        "checkpoint_path": "checkpoint"
+        "checkpoint_path": "checkpoint",
+        "catalog": "mock_catalog",
+        "database": "mock_database"
     }
 
     spark.createDataFrame = MagicMock(return_value=MagicMock(write=MagicMock()))
