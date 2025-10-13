@@ -714,16 +714,23 @@ jobs:
         run: |
           echo "🛠️ Creating missing Azure AD groups..."
           groups=$(echo '${{ steps.check-groups.outputs.missing_groups }}' | jq -r '.[]')
+          subscription_id=$(az account show --query id -o tsv)
           for group in $groups; do
             case "$group" in
               data_engineers)
-                terraform apply -auto-approve -target=module.access.azuread_group.data_engineers
+                terraform apply -auto-approve \
+                  -target=module.access.azuread_group.data_engineers \
+                  -var="subscription_id=$subscription_id"
                 ;;
               data_analysts)
-                terraform apply -auto-approve -target=module.access.azuread_group.data_analysts
+                terraform apply -auto-approve \
+                  -target=module.access.azuread_group.data_analysts \
+                  -var="subscription_id=$subscription_id"
                 ;;
               data_scientists)
-                terraform apply -auto-approve -target=module.access.azuread_group.data_scientists
+                terraform apply -auto-approve \
+                  -target=module.access.azuread_group.data_scientists \
+                  -var="subscription_id=$subscription_id"
                 ;;
             esac
           done
