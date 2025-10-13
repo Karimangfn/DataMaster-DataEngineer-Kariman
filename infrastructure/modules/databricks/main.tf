@@ -51,7 +51,7 @@ resource "databricks_job" "data_process" {
     new_cluster {
       autoscale {
         min_workers = 1
-        max_workers = 10
+        max_workers = 5
       }
       spark_version = "15.4.x-scala2.12"
       node_type_id  = "Standard_F4"
