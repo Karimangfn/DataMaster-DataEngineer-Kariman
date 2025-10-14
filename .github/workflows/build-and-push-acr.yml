@@ -3,12 +3,6 @@ name: Build and Push to ACR
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - develop
-      - main
-    paths:
-      - 'microservices/**/VERSION'
 
 jobs:
   detect_services:
