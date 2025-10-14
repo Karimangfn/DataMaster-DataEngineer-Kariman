@@ -23,6 +23,9 @@ def grant_access_to_bronze(spark: SparkSession, catalog: str, database: str):
             spark.sql(f"""
                 GRANT USE CATALOG ON CATALOG {catalog} TO `{group}`
             """)
+            spark.sql(f"""
+                GRANT USE SCHEMA ON SCHEMA {catalog}.{database} TO `{group}`
+            """)
 
         bronze_schema = f"{catalog}.{database}.bronze"
 
