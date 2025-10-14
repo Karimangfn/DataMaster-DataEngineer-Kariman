@@ -799,9 +799,9 @@ jobs:
 
           RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || echo "N/A")
           ACR_NAME=$(terraform output -raw container_registry_name 2>/dev/null || echo "N/A")
-          AKS_NAME=$(terraform output -raw kubernetes_service_name 2>/dev/null || echo "N/A")
+          AKS_NAME=$(terraform output -raw kubernetes_cluster_name 2>/dev/null || echo "N/A")
           STORAGE_ACCOUNT=$(terraform output -raw storage_account_name 2>/dev/null || echo "N/A")
-          DB_WORKSPACE=$(terraform output -raw databricks_workspace_url 2>/dev/null || echo "N/A")
+          DB_WORKSPACE=$(terraform output -raw databricks_workspace_name 2>/dev/null || echo "N/A")
 
           declare -A JOBS
           declare -A RESOURCES
