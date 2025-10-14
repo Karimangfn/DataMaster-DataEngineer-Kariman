@@ -1,7 +1,7 @@
 import re
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, row_number, sha2, to_date, udf
+from pyspark.sql.functions import coalesce, regexp_replace, col, row_number, sha2, to_date, udf
 from pyspark.sql.types import BooleanType
 from pyspark.sql.window import Window
 
@@ -33,23 +33,26 @@ def validate_email(
     return df.withColumn("is_email_valid", is_valid_email_udf(df[email_col]))
 
 
-def clean_and_cast_columns(df: DataFrame) -> DataFrame:
+def clean_and_cast_columns(df):
     """
-    Converts 'purchase_date' to date type and casts 'total_amount' to double.
-
-    Args:
-        df: Input DataFrame.
-
-    Returns:
-        DataFrame with updated column types.
+    Cleans and casts columns to proper types.
+    Handles $, commas, and multiple date formats.
     """
-    return (
-        df.withColumn("purchase_date",
-                      to_date(col("purchase_date"), "M/d/yyyy"))
-          .withColumn("total_amount",
-                      col("total_amount").cast("double"))
+    df = df.withColumn(
+        "total_amount",
+        regexp_replace(col("total_amount"), "[$,]", "").cast("double")
     )
 
+    df = df.withColumn(
+        "purchase_date",
+        coalesce(
+            to_date(col("purchase_date"), "M/d/yyyy"),
+            to_date(col("purchase_date"), "MM/dd/yyyy"),
+            to_date(col("purchase_date"), "yyyy-MM-dd")
+        )
+    )
+
+    return df
 
 def deduplicate(df: DataFrame) -> DataFrame:
     """
