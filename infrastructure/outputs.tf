@@ -29,10 +29,17 @@ output "databricks_workspace_url" {
   value       = module.databricks.databricks_workspace_url
 }
 
+output "databricks_workspace_name" {
+  description = "Name of the Databricks workspace resource"
+  value       = module.databricks.databricks_workspace_name
+}
+
 output "databricks_access_connector_id" {
-  value = module.databricks.databricks_access_connector_id
+  description = "Resource ID of the Databricks Access Connector"
+  value       = module.databricks.databricks_access_connector_id
 }
 
 output "databricks_access_connector_principal_id" {
-  value = module.databricks.databricks_access_connector_principal_id
+  description = "Principal ID (objectId) of the Access Connector managed identity"
+  value       = module.databricks.databricks_access_connector_principal_id
 }
