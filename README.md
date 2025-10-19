@@ -8,65 +8,51 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
 
 ## 📑 Sumário
 
-<details>
-  <summary>📌 1. Visão Geral do Projeto</summary>
+1. 📌 [Visão Geral do Projeto](#1-visão-geral-do-projeto)
 
-  - [Início Rápido](#inicio-rapido)
+   * [Propósito](#11-propósito)
+   * [Abordagem](#12-abordagem)
 
-</details>
+2. 🏗️ [Arquitetura de Solução](#2-arquitetura-de-solução)
 
-<details>
-  <summary>🏗️ 2. Arquitetura de Solução</summary>
+   * [Visão Geral](#21-visão-geral)
+   * [Diagrama da Arquitetura de Solução](#22-diagrama-da-arquitetura-de-solução)
+   * [Componentes Principais](#23-componentes-principais)
 
-  - [Visão Geral](#visao-geral)
-  - [Diagrama da Arquitetura de Solução](#diagrama-da-arquitetura-de-solucao)
-  - [Componentes Principais](#componentes-principais)
-  - [Características Essenciais do Projeto](#caracteristicas-essenciais-do-projeto)
+3. ⚙️ [Arquitetura Técnica](#3-arquitetura-técnica)
 
-</details>
+   * [Visão Geral Técnica](#31-visão-geral-técnica)
+   * [Descrição do Fluxo de Dados](#32-descrição-do-fluxo-de-dados)
+   * [Tecnologias e Serviços Utilizados](#33-tecnologias-e-serviços-utilizados)
+   * [Infraestrutura como Código (IaC)](#34-infraestrutura-como-código-iac)
+   * [Orquestração de Pipelines](#35-orquestração-de-pipelines)
+   * [Extração e Ingestão de Dados](#36-extração-e-ingestão-de-dados)
+   * [Armazenamento de Dados](#37-armazenamento-de-dados)
+   * [Processamento e Transformação dos Dados](#38-processamento-e-transformação-dos-dados)
+   * [Qualidade e Validação de Dados](#39-qualidade-e-validação-de-dados)
+   * [Mascaramento e Segurança dos Dados](#310-mascaramento-e-segurança-dos-dados)
+   * [Governança](#311-governança)
+   * [Observabilidade e Monitoramento](#312-observabilidade-e-monitoramento)
+   * [Escalabilidade e Desempenho](#313-escalabilidade-e-desempenho)
+   * [Metodologia de Desenvolvimento](#314-metodologia-de-desenvolvimento)
 
-<details>
-  <summary>⚙️ 3. Arquitetura Técnica</summary>
+4. 🚀 [Guia de Configuração e Execução](#4-guia-de-configuração-e-execução)
 
-  - [Visão Geral Técnica](#visao-geral-tecnica)
-  - [Descrição do Fluxo de Dados](#descricao-do-fluxo-de-dados)
-  - [Modelagem e Estrutura do Data Lake](#modelagem-e-estrutura-do-data-lake)
-  - [Tecnologias e Serviços Utilizados](#tecnologias-e-servicos-utilizados)
-  - [Infraestrutura como Código](#infraestrutura-como-codigo)
-  - [Orquestração de Pipelines](#orquestracao-de-pipelines)
-  - [Extração e Ingestão de Dados](#extracao-e-ingestao-de-dados)
-  - [Armazenamento de Dados](#armazenamento-de-dados)
-  - [Processamento e Transformação dos Dados](#processamento-e-transformacao-dos-dados)
-  - [Qualidade e Validação de Dados](#qualidade-e-validacao-de-dados)
-  - [Mascaramento e Segurança dos Dados](#mascaramento-e-seguranca-dos-dados)
-  - [Observabilidade e Monitoramento](#observabilidade-e-monitoramento)
-  - [Escalabilidade e Desempenho](#escalabilidade-e-desempenho)
+   * [Pré-requisitos](#41-pré-requisitos)
+   * [Criação do Repositório a partir do Template](#42-criação-do-repositório-a-partir-do-template)
+   * [Configuração das Secrets e Variáveis de Ambiente](#43-configuração-das-secrets-e-variáveis-de-ambiente)
+   * [Provisionamento da Infraestrutura na Azure](#44-provisionamento-da-infraestrutura-na-azure)
+   * [Build e Publicação das Imagens Docker](#45-build-e-publicação-das-imagens-docker)
+   * [Deploy dos Microserviços no AKS](#46-deploy-dos-microserviços-no-aks)
+   * [Execução do Pipeline de Dados](#47-execução-do-pipeline-de-dados)
+   * [Verificação e Monitoramento](#48-verificação-e-monitoramento)
 
-</details>
+5. 💡 [Melhorias e Considerações Finais](#5-melhorias-e-considerações-finais)
 
-<details>
-  <summary>🚀 4. Guia de Configuração e Execução</summary>
+   * [Melhorias Futuras](#51-melhorias-futuras)
+   * [Considerações Finais](#52-considerações-finais)
 
-  - [Pré-requisitos](#pre-requisitos)
-  - [Configuração da Infraestrutura](#configuracao-da-infraestrutura)
-  - [Configuração de Credenciais e Acessos](#configuracao-de-credenciais-e-acessos)
-  - [Execução dos Pipelines de Ingestão](#execucao-dos-pipelines-de-ingestao)
-  - [Execução dos Pipelines de Transformação](#execucao-dos-pipelines-de-transformacao)
-  - [Execução da Integração com o CRM](#execucao-da-integracao-com-o-crm)
-
-</details>
-
-<details>
-  <summary>💡 5. Melhorias e Considerações Finais</summary>
-
-  - [Melhorias Futuras](#melhorias-futuras)
-  - [Considerações Finais](#consideracoes-finais)
-
-</details>
-
-<details>
-  <summary>📚 6. Referências</summary>
-</details>
+6. 📚 [Referências](#6-referências)
 
 ## 📌 1. Visão Geral do Projeto
 
@@ -722,4 +708,54 @@ A solução aplicou boas práticas de engenharia de dados (arquitetura medalhão
 
 Embora ainda existam pontos de evolução, a arquitetura atual já fornece uma base sólida para ingestão, transformação e disponibilização de dados prontos para análise, podendo ser expandida gradualmente conforme as necessidades de negócio e requisitos de governança cresçam.
 
-##  📚 6. Referências
+## 📚 6. Referências
+
+### **Infraestrutura e Cloud**
+
+* [Microsoft Azure Documentation]() — Storage Account, AKS, ACR, RBAC, Service Principals, Managed Identities
+* [Terraform Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) — configuração e boas práticas
+* [Unity Catalog (Databricks)](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/) — governança e lineage de dados
+* [Azure Databricks Architecture Overview](https://learn.microsoft.com/en-us/azure/databricks/getting-started/high-level-architecture) — arquitetura e práticas recomendadas
+
+---
+
+### **Engenharia de Dados**
+
+* [Arquitetura Medalhão (Medallion Architecture)](https://www.databricks.com/glossary/medallion-architecture) — boas práticas e camadas de dados
+* [Delta Lake](https://learn.microsoft.com/en-us/azure/databricks/delta/) — fundamentos ACID e otimização de performance
+* [Auto Loader (Databricks)](https://learn.microsoft.com/en-us/azure/databricks/ingestion/cloud-object-storage/auto-loader/) — ingestão incremental
+* [Data Quality Framework](https://www.montecarlodata.com/blog-pyspark-data-quality-checks) — PySpark validations
+* [Mascaramento e Anonimização de Dados](https://www.totvs.com/blog/negocios/anonimizacao/) — princípios LGPD / GDPR
+
+---
+
+### **Engenharia de Software**
+
+* [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — princípios de arquitetura limpa (Robert C. Martin)
+* [Python Best Practices](https://peps.python.org/pep-0008/) — PEP8
+* [GitFlow Workflow](https://www.alura.com.br/artigos/git-flow-o-que-e-como-quando-utilizar) — versionamento e integração contínua
+* [Testes Automatizados em Python](https://medium.com/@habbema/testes-seu-scripts-python-com-pytest-c08638423ba9) — pytest, mocks e CI
+* [Linting e Pre-Commit Hooks](https://pre-commit.com/) — padronização de código
+* [Docker e Helm Charts](https://medium.com/@max.difranco/level-up-your-deployments-with-helm-docker-and-kubernetes-5f3f8982fa6a) — empacotamento e deploy
+
+---
+
+### **Automação e CI/CD**
+
+* [GitHub Actions Documentation](https://github.com/features/actions?locale=pt-BR) — workflows, secrets e pipelines
+
+---
+
+### **Observabilidade, Segurança e Governança**
+
+* [Databricks Job Monitoring](https://learn.microsoft.com/en-us/azure/databricks/jobs/monitor) — logs e auditoria
+* [Unity Catalog (Databricks)](https://www.databricks.com/blog/unity-catalog-governance-action-monitoring-reporting-and-lineage) — data lineage e catalogação de dados
+
+---
+
+### **Metodologias e Boas Práticas**
+
+* [DataOps](https://blog.dsacademy.com.br/o-que-e_dataops/) — automação, versionamento e governança
+* [DevOps para Engenharia de Dados (Data DevOps)](https://www.xenonstack.com/insights/devops-best-practices-for-data-engineers) — integração e entrega contínua
+
+---
