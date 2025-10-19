@@ -500,12 +500,14 @@ jobs:
       - name: 🧹 Clean up old Databricks resources
         run: |
           LOCATIONS=("bronze_external" "silver_external" "gold_external")
+          
           for loc in "${LOCATIONS[@]}"; do
             echo "🧹 Checking if external location $loc exists..."
             LOC_URL="$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc"
             if curl -s -H "Authorization: Bearer $TOKEN" "$LOC_URL" | grep -q '"name"'; then
               echo "🗑️ Deleting existing external location $loc"
-              curl -X DELETE -H "Authorization: Bearer $TOKEN" "$LOC_URL"
+              curl -X DELETE -H "Authorization: Bearer $TOKEN" \
+                "$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc?force=true"
             fi
           done
       
