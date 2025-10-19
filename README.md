@@ -85,6 +85,8 @@ A solução foi projetada para atender a esses desafios de forma **modular e int
 * **Observabilidade e Monitoramento** para acompanhamento de execuções e detecção de falhas.
 * **Boas práticas de Engenharia de Software**, como Clean Architecture, testes automatizados e validações de qualidade de código.
 
+---
+
 ##  🏗️ 2. Arquitetura de Solução
 
 ### 2.1 Visão Geral
@@ -108,6 +110,8 @@ Os dados são ingeridos de três origens distintas (banco de dados, API e arquiv
 - **Databricks**: realiza o processamento e a transformação dos dados. A camada Bronze utiliza o Auto Loader para ingestão automatizada, a camada Silver aplica limpeza, padronização e mascaramento de dados, e a camada Gold gera a tabela pronta para análise.
 - **Infraestrutura como Código (Terraform)**: Provisiona todos os recursos necessários, incluindo ACR, AKS, Storage Account, Databricks e demais componentes da arquitetura.
 - **Automação (GitHub Actions)**: Gerencia a criação, o deploy dos microserviços e verificação de qualidade de código.
+
+---
 
 ## ⚙️ 3. Arquitetura Técnica
 
@@ -500,6 +504,8 @@ Principais práticas adotadas:
 - **Release branches** → usadas para preparar versões estáveis antes de ir para produção.  
 - **Hotfix branches** → permitem correções rápidas diretamente na `main`.
 
+---
+
 ##  🚀 4. Guia de Configuração e Execução
 
 ### 4.1 Pré-requisitos
@@ -686,6 +692,7 @@ manage_runners:org → Manage org runners and runner groups
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-04.png)
 
+---
 
 ##  💡 5. Melhorias e Considerações Finais
 
@@ -709,6 +716,8 @@ O projeto demonstrou como é possível integrar dados de múltiplas fontes e for
 A solução aplicou boas práticas de engenharia de dados (arquitetura medalhão, uso de Delta Lake, pipelines automatizados) em conjunto com boas práticas de engenharia de software (microserviços, CI/CD, IaC).  
 
 Embora ainda existam pontos de evolução, a arquitetura atual já fornece uma base sólida para ingestão, transformação e disponibilização de dados prontos para análise, podendo ser expandida gradualmente conforme as necessidades de negócio e requisitos de governança cresçam.
+
+---
 
 ## 📚 6. Referências
 
