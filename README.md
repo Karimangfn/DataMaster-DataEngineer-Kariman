@@ -563,15 +563,19 @@ manage_runners:org → Manage org runners and runner groups
 ### **4.2 Criação do Repositório a partir do Template**
 
 1. No repositório do projeto, acesse **“Use this template”**.
+   
    ![Template - 01](assets/images/config-execution/template-01.png)
 
 2. Selecione **“Create a new repository”**.
+   
    ![Template - 02](assets/images/config-execution/template-02.png)
 
 3. Mantenha marcada a opção para levar todas as *branches* do repositório, defina o nome em **Repository name**, adicione uma descrição, configure a visibilidade e clique em **Create repository**.
+   
    ![Template - 03](assets/images/config-execution/template-03.png)
 
 4. Aguarde alguns minutos enquanto o repositório é criado.
+   
    ![Template - 04](assets/images/config-execution/template-04.png)
 
 ---
@@ -579,52 +583,67 @@ manage_runners:org → Manage org runners and runner groups
 ### **4.3 Configuração das Secrets e Variáveis de Ambiente**
 
 5. Após o repositório ser criado, acesse **Settings**.
+   
    ![Secrets - 01](assets/images/config-execution/secrets-01.png)
 
 6. No menu à esquerda, clique em **Secrets and variables**.
+   
    ![Secrets - 02](assets/images/config-execution/secrets-02.png)
 
 7. Selecione a opção **Actions**.
+   
    ![Secrets - 03](assets/images/config-execution/secrets-03.png)
 
 8. Em **Actions secrets and variables**, clique em **New repository secret**.
+   
    ![Secrets - 04](assets/images/config-execution/secrets-04.png)
 
 9. A primeira *secret* a ser adicionada será **AZURE_CREDENTIALS**, seguindo o modelo JSON abaixo:
+   
    ![Secrets - 05](assets/images/config-execution/secrets-05.png)
 
 10. Em seguida, cadastre o token do GitHub com o nome **GH_PAT_TOKEN**.
-    ![Secrets - 06](assets/images/config-execution/secrets-06.png)
+   
+   ![Secrets - 06](assets/images/config-execution/secrets-06.png)
 
 11. Cadastre a chave para acessar a API, chamada **API_KEY**.
-    ![Secrets - 07](assets/images/config-execution/secrets-07.png)
+   
+   ![Secrets - 07](assets/images/config-execution/secrets-07.png)
 
 12. Cadastre a chave para acessar o banco de dados, chamada **DB_KEY**.
-    ![Secrets - 08](assets/images/config-execution/secrets-08.png)
+   
+   ![Secrets - 08](assets/images/config-execution/secrets-08.png)
 
 13. Ao finalizar, o painel de *secrets* deve se parecer com este:
-    ![Secrets - 09](assets/images/config-execution/secrets-09.png)
+   
+   ![Secrets - 09](assets/images/config-execution/secrets-09.png)
 
 ---
 
 ### **4.4 Provisionamento da Infraestrutura na Azure**
 
 14. Com tudo configurado, acesse a aba **Actions** no topo do repositório.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-01.png)
 
 15. No menu à esquerda, selecione o workflow **Deploy Cloud Infrastructure**.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-02.png)
 
 16. Clique em **Run workflow** e confirme.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-03.png)
 
 17. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-04.png)
 
 18. Verifique na sua conta Azure os **Resource Groups** criados: um para os recursos principais, outro para os recursos base do AKS e outro para os recursos base do Databricks.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-05.png)
 
 19. O **Resource Group principal** conterá os recursos criados pelo workflow, incluindo **Databricks, AKS, ACR, Storage Account e Metastore Connector**.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-06.png)
 
 ---
@@ -632,12 +651,15 @@ manage_runners:org → Manage org runners and runner groups
 ### **4.5 Build e Publicação das Imagens Docker**
 
 20. Com a infraestrutura pronta, acesse os workflows e selecione **Build and Push to ACR**.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-01.png)
 
 21. No menu à direita, selecione as opções de **Run workflow**.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-02.png)
 
 22. Após a execução, verifique no **Azure Container Registry (ACR)** os containers e versões criadas dos microserviços.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-03.png)
 
 ---
@@ -645,12 +667,15 @@ manage_runners:org → Manage org runners and runner groups
 ### **4.6 Deploy dos Microserviços no AKS**
 
 23. Após o workflow do ACR, o workflow do **AKS** é disparado automaticamente.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-01.png)
 
 24. Acompanhe no **summary** as versões dos microserviços que estão sendo implantadas.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-02.png)
 
 25. Verifique no **AKS** se os microserviços estão em execução.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-03.png)
 
 ---
@@ -658,15 +683,19 @@ manage_runners:org → Manage org runners and runner groups
 ### **4.7 Execução do Pipeline de Dados**
 
 26. Com tudo instalado, execute o pipeline de ingestão e transformação de dados, selecionando o workflow **Orchestrate Data Pipeline**.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-01.png)
 
 27. Clique em **Run workflow**.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-02.png)
 
 28. Após a execução, verifique no **AKS** se os jobs foram concluídos com sucesso.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-03.png)
 
 29. Por fim, confirme no **Databricks** a execução do job de transformação.
+    
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-04.png)
 
 
