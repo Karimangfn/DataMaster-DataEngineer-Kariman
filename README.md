@@ -54,6 +54,8 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
 
 6. 📚 [Referências](#6-referências)
 
+---
+
 ## 📌 1. Visão Geral do Projeto
 
 Este projeto consiste em uma **plataforma de engenharia e experimentação de dados** desenvolvida para demonstrar, em um ambiente controlado e reproduzível, as principais práticas de **ingestão, processamento, governança e automação de dados em nuvem**.
