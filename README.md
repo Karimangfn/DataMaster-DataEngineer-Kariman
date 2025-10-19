@@ -560,127 +560,115 @@ write:org → Read and write org and team membership, read and write org project
 read:org → Read org and team membership, read org projects
 manage_runners:org → Manage org runners and runner groups
 
-### 4.2 Configuração da Infraestrutura
+### **4.2 Criação do Repositório a partir do Template**
 
-1. **Criar repositório a partir do template**  
-   - Clique no botão **"Use this template"** no repositório original.  
-   - Crie seu próprio repositório a partir dele.  
-   - Faça o clone do **seu repositório recém-criado**:  
-     ```bash
-     git clone https://github.com/<usuario>/<novo-repo>.git
-     cd <novo-repo>
-     ```
-    **OBS**: Colocar aqui imagem dos recursos criados na Azure
+1. No repositório do projeto, acesse **“Use this template”**.
+   ![Template - 01](assets/images/config-execution/template-01.png)
 
-2. **Configurar as *secrets* no GitHub**  
-   - Defina todas as *secrets* obrigatórias listadas na seção **Pré-requisitos**.  
-   - Certifique-se de que as **Workflow permissions** estejam configuradas como *Read and Write*.
+2. Selecione **“Create a new repository”**.
+   ![Template - 02](assets/images/config-execution/template-02.png)
 
-   **OBS**: Colocar aqui imagem dos recursos criados na Azure
+3. Mantenha marcada a opção para levar todas as *branches* do repositório, defina o nome em **Repository name**, adicione uma descrição, configure a visibilidade e clique em **Create repository**.
+   ![Template - 03](assets/images/config-execution/template-03.png)
 
-3. **Executar o workflow de criação da infraestrutura**  
-   - O workflow do GitHub Actions responsável pela criação deve ser acionado manualmente (`workflow_dispatch`) ou via push no branch principal.  
-   - Esse pipeline realiza:  
-     - Validação de credenciais e permissões.  
-     - Criação/atualização do **Resource Group**.  
-     - Provisionamento do **Storage Account** com containers (Raw, Bronze, Silver, Gold).  
-     - Criação do **Azure Container Registry (ACR)**.  
-     - Deploy do **Azure Kubernetes Service (AKS)**.  
-     - Configuração do **Azure Databricks**.
-
-     **OBS**: Colocar aqui imagem dos recursos criados na Azure
-
-4. **Validar a implantação**  
-   - Confirme que todos os recursos foram criados no **Resource Group** especificado.  
-   
-   **OBS**: Colocar aqui imagem dos recursos criados na Azure
+4. Aguarde alguns minutos enquanto o repositório é criado.
+   ![Template - 04](assets/images/config-execution/template-04.png)
 
 ---
 
-**Observações**  
-- O **Terraform** utiliza *Remote State* armazenado nos *artifacts* do GitHub Actions, permitindo atualizações e destruição da infraestrutura de forma segura.
-- Existe um workflow específico para exclusão completa da infraestrutura.
-  
-  **OBS**: Colocar aqui imagem dos recursos criados na Azure
+### **4.3 Configuração das Secrets e Variáveis de Ambiente**
 
-### 4.4 Execução dos Pipelines de Ingestão
+5. Após o repositório ser criado, acesse **Settings**.
+   ![Secrets - 01](assets/images/config-execution/secrets-01.png)
 
-A ingestão de dados neste projeto é realizada por meio de **microserviços** executados em um cluster **AKS (Azure Kubernetes Service)**.  
-Cada microserviço é responsável por extrair dados de uma fonte distinta (**Banco de Dados**, **API** e **Arquivos CSV**) e gravá-los na camada **Raw** do Data Lake.
+6. No menu à esquerda, clique em **Secrets and variables**.
+   ![Secrets - 02](assets/images/config-execution/secrets-02.png)
 
-#### 1. Deploy dos Microserviços
-O deploy dos microserviços é feito via GitHub Actions.  
-Ao realizar um **merge** na branch `main`, o pipeline responsável irá:
+7. Selecione a opção **Actions**.
+   ![Secrets - 03](assets/images/config-execution/secrets-03.png)
 
-1. **Buildar as imagens** Docker dos microserviços.  
-2. **Publicar as imagens** no **Azure Container Registry (ACR)**.  
-3. **Deployar as imagens** no cluster **AKS**.
+8. Em **Actions secrets and variables**, clique em **New repository secret**.
+   ![Secrets - 04](assets/images/config-execution/secrets-04.png)
 
-Esse processo é totalmente automatizado pela esteira de CI/CD configurada no repositório.
+9. A primeira *secret* a ser adicionada será **AZURE_CREDENTIALS**, seguindo o modelo JSON abaixo:
+   ![Secrets - 05](assets/images/config-execution/secrets-05.png)
 
-#### 2. Execução da Ingestão
-Uma vez que os microserviços estejam em execução no **AKS**, cada um consome sua fonte de dados:
+10. Em seguida, cadastre o token do GitHub com o nome **GH_PAT_TOKEN**.
+    ![Secrets - 06](assets/images/config-execution/secrets-06.png)
 
-- **Banco de Dados** → extrai registros no formato `.json`.  
-- **API** → coleta dados de clientes e normaliza no mesmo schema.  
-- **Arquivos CSV** → lê e processa arquivos armazenados em diretórios de entrada.  
+11. Cadastre a chave para acessar a API, chamada **API_KEY**.
+    ![Secrets - 07](assets/images/config-execution/secrets-07.png)
 
-Todos os dados são enviados para a **camada Raw** do **Azure Storage Account**.
+12. Cadastre a chave para acessar o banco de dados, chamada **DB_KEY**.
+    ![Secrets - 08](assets/images/config-execution/secrets-08.png)
 
-#### 3. Acesso ao Cluster Privado
-Como o **AKS** é privado, os comandos de execução e troubleshooting devem ser feitos usando:
+13. Ao finalizar, o painel de *secrets* deve se parecer com este:
+    ![Secrets - 09](assets/images/config-execution/secrets-09.png)
 
-5. Considerações
-A arquitetura permite que novas fontes sejam adicionadas facilmente criando um novo microserviço e registrando sua imagem no ACR.
+---
 
-O pipeline garante que qualquer atualização de código nos microserviços resulte em uma nova versão sendo automaticamente publicada e executada no AKS.
+### **4.4 Provisionamento da Infraestrutura na Azure**
 
-### 4.5 Execução dos Pipelines de Transformação
+14. Com tudo configurado, acesse a aba **Actions** no topo do repositório.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-01.png)
 
-Após a ingestão na camada **Raw**, os dados passam por pipelines de transformação no **Databricks**, organizados segundo a **arquitetura medalhão** (Bronze → Silver → Gold).  
-Esses pipelines são implementados como **notebooks em Python** e orquestrados via **Databricks Jobs**.
+15. No menu à esquerda, selecione o workflow **Deploy Cloud Infrastructure**.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-02.png)
 
-#### 1. Estrutura do Job no Databricks
-O Job é composto por **3 tasks sequenciais**:
+16. Clique em **Run workflow** e confirme.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-03.png)
 
-1. **Bronze**  
-   - Consome dados da camada Raw utilizando o **Auto Loader** do Databricks.  
-   - Cria tabelas Delta na camada Bronze.  
-   - Garante schema enforcement e versionamento dos dados.  
+17. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-04.png)
 
-2. **Silver**  
-   - Aplica transformações de limpeza e padronização.  
-   - Realiza o **mascaramento de dados sensíveis** (ex.: CPF, cartão de crédito).  
-   - Cria tabelas Delta refinadas e prontas para análises intermediárias.  
+18. Verifique na sua conta Azure os **Resource Groups** criados: um para os recursos principais, outro para os recursos base do AKS e outro para os recursos base do Databricks.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-05.png)
 
-3. **Gold**  
-   - Gera tabelas analíticas e métricas de negócio (ex.: total de compras, clientes por loja).  
-   - Disponibiliza dados prontos para consumo por ferramentas de BI e relatórios.  
+19. O **Resource Group principal** conterá os recursos criados pelo workflow, incluindo **Databricks, AKS, ACR, Storage Account e Metastore Connector**.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-06.png)
 
-#### 2. Execução Manual do Job
-Para executar manualmente os pipelines no Databricks:
+---
 
-1. Acesse o **Workspace do Databricks**.  
-2. Vá até a seção **Jobs**.
-3. Localize o Job configurado (ex.: `etl-customers`).
-4. Clique em **Run Now** para disparar a execução.
+### **4.5 Build e Publicação das Imagens Docker**
 
-#### 3. Execução Automatizada
-A execução também pode ser disparada automaticamente via **GitHub Actions**:
-- Ao atualizar os notebooks no repositório, a esteira de CI/CD valida o código.  
-- Caso aprovado, o pipeline de deploy publica os notebooks no Databricks.  
-- O **Databricks CLI** é então usado para disparar o Job de transformação.  
+20. Com a infraestrutura pronta, acesse os workflows e selecione **Build and Push to ACR**.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-01.png)
 
-#### 4. Monitoramento
-Durante a execução do Job, é possível acompanhar:
-- **Logs de execução** diretamente no Databricks.  
-- Status de cada task (Success / Failed / Running).  
-- Histórico de execuções, permitindo auditoria e rastreabilidade.  
+21. No menu à direita, selecione as opções de **Run workflow**.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-02.png)
 
-#### 5. Considerações
-- O uso do **Delta Lake** garante versionamento e controle de qualidade.  
-- A separação em camadas (Bronze, Silver, Gold) assegura evolução gradual na confiabilidade dos dados.  
-- Novas transformações podem ser adicionadas facilmente criando tasks adicionais no Job.
+22. Após a execução, verifique no **Azure Container Registry (ACR)** os containers e versões criadas dos microserviços.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-03.png)
+
+---
+
+### **4.6 Deploy dos Microserviços no AKS**
+
+23. Após o workflow do ACR, o workflow do **AKS** é disparado automaticamente.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-01.png)
+
+24. Acompanhe no **summary** as versões dos microserviços que estão sendo implantadas.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-02.png)
+
+25. Verifique no **AKS** se os microserviços estão em execução.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-03.png)
+
+---
+
+### **4.7 Execução do Pipeline de Dados**
+
+26. Com tudo instalado, execute o pipeline de ingestão e transformação de dados, selecionando o workflow **Orchestrate Data Pipeline**.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-01.png)
+
+27. Clique em **Run workflow**.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-02.png)
+
+28. Após a execução, verifique no **AKS** se os jobs foram concluídos com sucesso.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-03.png)
+
+29. Por fim, confirme no **Databricks** a execução do job de transformação.
+    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-04.png)
+
 
 ##  💡 5. Melhorias e Considerações Finais
 
