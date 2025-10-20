@@ -24,7 +24,7 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
    * [Descrição do Fluxo de Dados](#31-descrição-do-fluxo-de-dados)
    * [Tecnologias e Serviços Utilizados](#32-tecnologias-e-serviços-utilizados)
    * [Infraestrutura como Código (IaC)](#33-infraestrutura-como-código)
-   * [GitHub Actions](34-github-actions)
+   * [GitHub Actions](#34-github-actions)
    * [Orquestração de Pipelines](#35-orquestração-de-pipelines)
    * [Extração e Ingestão de Dados](#36-extração-e-ingestão-de-dados)
    * [Armazenamento de Dados](#37-armazenamento-de-dados)
