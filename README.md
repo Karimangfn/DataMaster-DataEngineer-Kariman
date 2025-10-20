@@ -8,7 +8,7 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
 
 ## 📑 Sumário
 
-1. 📌 [Visão Geral do Projeto](#-1-visao-geral-do-projeto)
+1. 📌 [Visão Geral do Projeto](#-1-visão-geral-do-projeto)
 
    * [Propósito](#11-propósito)
    * [Abordagem](#12-abordagem)
