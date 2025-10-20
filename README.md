@@ -36,7 +36,7 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
    * [Escalabilidade e Desempenho](#313-escalabilidade-e-desempenho)
    * [Metodologia de Desenvolvimento](#314-metodologia-de-desenvolvimento)
 
-4. 🚀 [Guia de Configuração e Execução](#4-guia-de-configuração-e-execução)
+4. 🚀 [Guia de Configuração e Execução](#-4-guia-de-configuração-e-execução)
 
    * [Pré-requisitos](#41-pré-requisitos)
    * [Criação do Repositório a partir do Template](#42-criação-do-repositório-a-partir-do-template)
@@ -45,14 +45,13 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
    * [Build e Publicação das Imagens Docker](#45-build-e-publicação-das-imagens-docker)
    * [Deploy dos Microserviços no AKS](#46-deploy-dos-microserviços-no-aks)
    * [Execução do Pipeline de Dados](#47-execução-do-pipeline-de-dados)
-   * [Verificação e Monitoramento](#48-verificação-e-monitoramento)
 
-5. 💡 [Melhorias e Considerações Finais](#5-melhorias-e-considerações-finais)
+5. 💡 [Melhorias e Considerações Finais](#-5-melhorias-e-considerações-finais)
 
    * [Melhorias Futuras](#51-melhorias-futuras)
    * [Considerações Finais](#52-considerações-finais)
 
-6. 📚 [Referências](#6-referências)
+6. 📚 [Referências](#-6-referências)
 
 ---
 
