@@ -511,47 +511,100 @@ Principais práticas adotadas:
 
 Antes de configurar e executar o projeto, é necessário garantir que o ambiente possua os seguintes pré-requisitos:
 
-#### Identidade, Permissões, Credenciais e Acessos
-- **Service Principal (SPN)** criado previamente.  
-- **Secret da SPN** configurado (*Secret Value*, não o *Secret ID*).  
+#### 4.1.1 **Service Principal (SPN)** criado previamente
+
+A criação de uma SPN pode ser feita de forma simples de acordo com a documentação da Microsoft: [Criação de SPN](https://learn.microsoft.com/en-us/entra/identity-platform/howto-create-service-principal-portal#register-an-application-with-microsoft-entra-id-and-create-a-service-principal)
+
+#### 4.1.2 **Secret da SPN** configurado (*Secret Value*, não o *Secret ID*)
+
+1. Acesse sua SPN criada anteriormente, buscando ela na barra de pesquisa:
+
+![SPN - 0101](assets/images/pre-configs/spn-01-01.png)
+
+2. No menu a esquerda, selecione *Certificates & secrets*
+
+![SPN - 02](assets/images/pre-configs/spn-01.png)
+
+3. Na aba **Client secrets** selecione **New client secret**, no menu que sera aberto a direita, coloque uma descrição e tempo de expiração para a secret e selecione **Add**
+
+![SPN - 03](assets/images/pre-configs/spn-02.png)
+
+4. Na proxima aba copie/salve o valor que esta na coluna **Value** (Não copie o Secret ID, ele não será usado)
+
+![SPN - 04](assets/images/pre-configs/spn-03.png)
+
+#### 4.1.3 **Permissionamento da SPN**
+
 - A **SPN** precisa ter permissões na assinatura da Azure:  
-  - *Contributor*  
+  - *Contributor*
   - *User Access Administrator*
 
-#### GitHub Actions
-- **Personal Access Token (PAT)** do GitHub criado e salvo nas *Secrets* do repositório com permissões adequadas.  
-
-#### Secrets obrigatórias no GitHub
-As seguintes *secrets* devem estar configuradas no repositório antes da execução de qualquer fluxo de criação:  
-
-- `DB_KEY` → Para conexão com o Database.  
-- `API_KEY` → Para conexão com a API.  
-- `AZURE_CREDENTIALS` → Credenciais para conexão na Azure, seguindo o seguinte modelo JSON:  
+  1. Na sua subscription, acesse a opção: **Access control (IAM)**, no menu a direita clique em **add +** e depois em **Add role assignment**
   
-  ```json
-  {
-    "clientId": "", 
-    "clientSecret": "", 
-    "subscriptionId": "", 
-    "tenantId": "" 
-  }
-  ```
+  ![Access Subs - 01](assets/images/pre-configs/access-subs-01.png)
 
-- `GH_PAT_TOKEN` → Token criado no GitHub, com as seguintes permissões:
+  2. Nas Roles, usa a barra de pesquisa para encontrar a **Contributor** e depois selecione ela no menu **Name**
 
-repo → Full control of private repositories
-repo:status → Access commit status
-repo_deployment → Access deployment status
-public_repo → Access public repositories
-repo:invite → Access repository invitations
-security_events → Read and write security events
-workflow → Update GitHub Action workflows
-write:packages → Upload packages to GitHub Package Registry
-read:packages → Download packages from GitHub Package Registry
-admin:org → Full control of orgs and teams, read and write org projects
-write:org → Read and write org and team membership, read and write org projects
-read:org → Read org and team membership, read org projects
-manage_runners:org → Manage org runners and runner groups
+  ![Access Subs - 02](assets/images/pre-configs/access-subs-02.png)
+
+  3. Na aba Member, selecione a SPN em **+ Select members**, será aberto um menu a direita, então busque sua SPN e clique em **Select**
+
+  ![Access Subs - 03](assets/images/pre-configs/access-subs-04.png)
+
+  Se tudo estiver certo, sua SPN vai aparecer nos membros
+
+  ![Access Subs - 04](assets/images/pre-configs/access-subs-05.png)
+
+  4. Na aba **Review + assign** verifique a role e a SPN então clique em **Review + assign**
+
+  ![Access Subs - 05](assets/images/pre-configs/access-subs-06.png)
+
+  5. Agora faça o mesmo para a role **User Access Administrator**
+
+  ![Access Subs - 06](assets/images/pre-configs/access-subs-03.png)
+
+  Uma observação: para esse acesso, é necessario marcar a terceira opção de acesso na aba **Conditions**
+
+  ![Access Subs - 07](assets/images/pre-configs/access-subs-07.png)
+
+  6. Após atribuição dos 2 acessos, elas vão aparecer na aba de acessos da sua SPN
+
+  ![Access Subs - 08](assets/images/pre-configs/access-subs-08.png)
+
+- A **SPN** precisa ter permissões no serviço Microsoft Graph:  
+  - *Application.Read.All*
+  - *Group.ReadWrite.All*
+  - *User.Read*
+
+  1. No menu da sua SPN, acesse a opção **API permissions**
+
+  ![Access API - 01](assets/images/pre-configs/spn-api-01.png)
+
+  2. No centro da pagina, selecione **+ Add a permission**, no menu que será aberto a direita, selecione **Microsoft Graph**
+
+  ![Access API - 02](assets/images/pre-configs/spn-api-02.png)
+
+  3. Agora selecione **Application permissions**, na barra de busca pesquisa **application**, na barra das permissões de application, selecione **Application.Read.All** e **Add permissions**
+
+  ![Access API - 03](assets/images/pre-configs/spn-api-03.png)
+
+  4. Faça o mesmo para a permissão **Group.ReadWrite.All**
+
+  ![Access API - 04](assets/images/pre-configs/spn-api-04.png)
+
+  5. Após as permissões serem adicionadas, selecione o botão **Grant admin consent for Default Directory**
+
+  ![Access API - 05](assets/images/pre-configs/spn-api-05.png)
+
+  6. Após isso, as permissões com acesso ao directory estarão aplicadas
+
+  ![Access API - 06](assets/images/pre-configs/spn-api-06.png)
+
+#### 4.1.4 **Personal Access Token (PAT)** do GitHub criado. 
+
+Permissões necessarias no Token:
+
+![Token - 01](assets/images/pre-configs/token-01.png)
 
 ### **4.2 Criação do Repositório a partir do Template**
 
@@ -575,39 +628,51 @@ manage_runners:org → Manage org runners and runner groups
 
 ### **4.3 Configuração das Secrets e Variáveis de Ambiente**
 
-5. Após o repositório ser criado, acesse **Settings**.
+1. Após o repositório ser criado, acesse **Settings**.
    
    ![Secrets - 01](assets/images/config-execution/secrets-01.png)
 
-6. No menu à esquerda, clique em **Secrets and variables**.
+2. No menu à esquerda, clique em **Secrets and variables**.
    
    ![Secrets - 02](assets/images/config-execution/secrets-02.png)
 
-7. Selecione a opção **Actions**.
+3. Selecione a opção **Actions**.
    
    ![Secrets - 03](assets/images/config-execution/secrets-03.png)
 
-8. Em **Actions secrets and variables**, clique em **New repository secret**.
+4. Em **Actions secrets and variables**, clique em **New repository secret**.
    
    ![Secrets - 04](assets/images/config-execution/secrets-04.png)
 
-9. A primeira *secret* a ser adicionada será **AZURE_CREDENTIALS**, seguindo o modelo JSON abaixo:
+5. A primeira *secret* a ser adicionada será **AZURE_CREDENTIALS**, seguindo o modelo JSON abaixo:
+   
+   **clientId** -> ID da sua SPN
+   
+   **clientSecret** -> Secret da sua SPN
+   
+   **subscriptionId** -> ID da sua Subscription
+   
+   **tenantId** -> ID do seu tenant
    
    ![Secrets - 05](assets/images/config-execution/secrets-05.png)
 
-10. Em seguida, cadastre o token do GitHub com o nome **GH_PAT_TOKEN**.
+6. Em seguida, cadastre o token do GitHub com o nome **GH_PAT_TOKEN**.
    
    ![Secrets - 06](assets/images/config-execution/secrets-06.png)
 
-11. Cadastre a chave para acessar a API, chamada **API_KEY**.
+7. Cadastre a chave para acessar a API, chamada **API_KEY**.
+
+   Observação: Utilize o mesmo valor da imagem -> 8af74270
    
    ![Secrets - 07](assets/images/config-execution/secrets-07.png)
 
-12. Cadastre a chave para acessar o banco de dados, chamada **DB_KEY**.
+8. Cadastre a chave para acessar o banco de dados, chamada **DB_KEY**.
+
+   Observação: Utilze o mesmo valor da imagem -> npg_Q94FurniGUlq
    
    ![Secrets - 08](assets/images/config-execution/secrets-08.png)
 
-13. Ao finalizar, o painel de *secrets* deve se parecer com este:
+9. Ao finalizar, o painel de *secrets* deve se parecer com este:
    
    ![Secrets - 09](assets/images/config-execution/secrets-09.png)
 
@@ -615,27 +680,27 @@ manage_runners:org → Manage org runners and runner groups
 
 ### **4.4 Provisionamento da Infraestrutura na Azure**
 
-14. Com tudo configurado, acesse a aba **Actions** no topo do repositório.
+1. Com tudo configurado, acesse a aba **Actions** no topo do repositório.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-01.png)
 
-15. No menu à esquerda, selecione o workflow **Deploy Cloud Infrastructure**.
+2. No menu à esquerda, selecione o workflow **Deploy Cloud Infrastructure**.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-02.png)
 
-16. Clique em **Run workflow** e confirme.
+3. Clique em **Run workflow** e confirme.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-03.png)
 
-17. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
+4. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-04.png)
 
-18. Verifique na sua conta Azure os **Resource Groups** criados: um para os recursos principais, outro para os recursos base do AKS e outro para os recursos base do Databricks.
+5. Verifique na sua conta Azure os **Resource Groups** criados: um para os recursos principais, outro para os recursos base do AKS e outro para os recursos base do Databricks.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-05.png)
 
-19. O **Resource Group principal** conterá os recursos criados pelo workflow, incluindo **Databricks, AKS, ACR, Storage Account e Metastore Connector**.
+6. O **Resource Group principal** conterá os recursos criados pelo workflow, incluindo **Databricks, AKS, ACR, Storage Account e Metastore Connector**.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-06.png)
 
@@ -643,15 +708,15 @@ manage_runners:org → Manage org runners and runner groups
 
 ### **4.5 Build e Publicação das Imagens Docker**
 
-20. Com a infraestrutura pronta, acesse os workflows e selecione **Build and Push to ACR**.
+1. Com a infraestrutura pronta, acesse os workflows e selecione **Build and Push to ACR**.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-01.png)
 
-21. No menu à direita, selecione as opções de **Run workflow**.
+2. No menu à direita, selecione as opções de **Run workflow**.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-02.png)
 
-22. Após a execução, verifique no **Azure Container Registry (ACR)** os containers e versões criadas dos microserviços.
+3. Após a execução, verifique no **Azure Container Registry (ACR)** os containers e versões criadas dos microserviços.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-03.png)
 
@@ -659,15 +724,15 @@ manage_runners:org → Manage org runners and runner groups
 
 ### **4.6 Deploy dos Microserviços no AKS**
 
-23. Após o workflow do ACR, o workflow do **AKS** é disparado automaticamente.
+1. Após o workflow do ACR, o workflow do **AKS** é disparado automaticamente.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-01.png)
 
-24. Acompanhe no **summary** as versões dos microserviços que estão sendo implantadas.
+2. Acompanhe no **summary** as versões dos microserviços que estão sendo implantadas.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-02.png)
 
-25. Verifique no **AKS** se os microserviços estão em execução.
+3. Verifique no **AKS** se os microserviços estão instalados.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-03.png)
 
@@ -675,21 +740,33 @@ manage_runners:org → Manage org runners and runner groups
 
 ### **4.7 Execução do Pipeline de Dados**
 
-26. Com tudo instalado, execute o pipeline de ingestão e transformação de dados, selecionando o workflow **Orchestrate Data Pipeline**.
+1. Com tudo instalado, execute o pipeline de ingestão e transformação de dados, selecionando o workflow **Orchestrate Data Pipeline**.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-01.png)
 
-27. Clique em **Run workflow**.
+2. Clique em **Run workflow**.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-02.png)
 
-28. Após a execução, verifique no **AKS** se os jobs foram concluídos com sucesso.
+3. Após a execução, verifique no **AKS** se os jobs foram concluídos com sucesso.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-03.png)
 
-29. Por fim, confirme no **Databricks** a execução do job de transformação.
+4. Se acompanharmos no Storage Account, no container Raw, poderemos ver as pastas e dados referentes a cada uma das fontes de dados (File, Database e API)
+
+5. Confirme no **Databricks** a execução do job de transformação.
     
     ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-04.png)
+
+6. Podemos verificar no nosso catalogo de dados no Databricks, que as tabelas bronze, silver e gold estarão criadas
+
+7. No Storage Account também temos a informação dos dados repousados, cada um em seu container especifico
+
+8. A tabela bronze virá com os dados X de forma Y
+
+9. A tabela silver de forma Z
+
+10. A tabela gold de forma XYZ
 
 ---
 
@@ -714,7 +791,9 @@ manage_runners:org → Manage org runners and runner groups
 O projeto demonstrou como é possível integrar dados de múltiplas fontes e formatos, organizando-os em um pipeline escalável e confiável na Azure.  
 A solução aplicou boas práticas de engenharia de dados (arquitetura medalhão, uso de Delta Lake, pipelines automatizados) em conjunto com boas práticas de engenharia de software (microserviços, CI/CD, IaC).  
 
-Embora ainda existam pontos de evolução, a arquitetura atual já fornece uma base sólida para ingestão, transformação e disponibilização de dados prontos para análise, podendo ser expandida gradualmente conforme as necessidades de negócio e requisitos de governança cresçam.
+Ao longo do desenvolvimento, foi possível explorar tecnologias como Terraform, Azure, AKS, Databricks, Delta Lake e GitHub Actions, reforçando a importância da Infraestrutura como Código, da modularização de microserviços e da observabilidade ponta a ponta no ciclo de vida dos dados.
+
+Esses elementos resultaram em uma solução orientada à automação — capaz de sustentar fluxos de dados com segurança, rastreabilidade e eficiência. Além de validar conceitos técnicos, o projeto também proporcionou uma visão integrada sobre o papel estratégico da engenharia de dados na construção de plataformas analíticas e escaláveis.
 
 ---
 
