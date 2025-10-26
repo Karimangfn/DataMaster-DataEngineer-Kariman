@@ -614,39 +614,54 @@ jobs:
 
       - name: 👥 Create data_engineers group
         run: |
-          echo "📡 Creating group data_engineers..."
+          echo "📡 Creating group data_engineers with workspace access..."
           RESPONSE=$(
             curl -i -w "\nStatus: %{http_code}\n" -X POST \
               "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/scim+json" \
-              -d '{"displayName": "data_engineers"}'
+              -d '{
+                "displayName": "data_engineers",
+                "entitlements": [
+                  { "value": "workspace-access" }
+                ]
+              }'
           )
           echo "🔍 API Response:"
           echo "$RESPONSE"
   
       - name: 👥 Create data_scientists group
         run: |
-          echo "📡 Creating group data_scientists..."
+          echo "📡 Creating group data_scientists with workspace access..."
           RESPONSE=$(
             curl -i -w "\nStatus: %{http_code}\n" -X POST \
               "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/scim+json" \
-              -d '{"displayName": "data_scientists"}'
+              -d '{
+                "displayName": "data_scientists",
+                "entitlements": [
+                  { "value": "workspace-access" }
+                ]
+              }'
           )
           echo "🔍 API Response:"
           echo "$RESPONSE"
   
       - name: 👥 Create data_analysts group
         run: |
-          echo "📡 Creating group data_analysts..."
+          echo "📡 Creating group data_analysts with workspace access..."
           RESPONSE=$(
             curl -i -w "\nStatus: %{http_code}\n" -X POST \
               "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/scim+json" \
-              -d '{"displayName": "data_analysts"}'
+              -d '{
+                "displayName": "data_analysts",
+                "entitlements": [
+                  { "value": "workspace-access" }
+                ]
+              }'
           )
           echo "🔍 API Response:"
           echo "$RESPONSE"
