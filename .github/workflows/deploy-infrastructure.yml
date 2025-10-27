@@ -710,15 +710,17 @@ jobs:
         run: |
           groups=("data_engineers" "data_analysts" "data_scientists")
           missing=()
+          declare -A existing_ids
 
           echo "🔍 Checking existing Azure AD groups..."
           for group in "${groups[@]}"; do
-            echo "🔹 Checking: $group"
-            if az ad group show --group "$group" --query "id" -o tsv >/dev/null 2>&1; then
-              echo "✅ Group '$group' already exists."
-            else
+            id=$(az ad group show --group "$group" --query "id" -o tsv 2>/dev/null || echo "")
+            if [ -z "$id" ]; then
               echo "❌ Group '$group' does not exist and will be created."
               missing+=("$group")
+            else
+              echo "✅ Group '$group' already exists."
+              existing_ids["$group"]=$id
             fi
           done
 
@@ -727,8 +729,21 @@ jobs:
           else
             missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
           fi
-          
           echo "missing_groups=$missing_json" >> $GITHUB_OUTPUT
+
+          existing_json=$(for key in "${!existing_ids[@]}"; do
+            printf '{"key":"%s","id":"%s"}\n' "$key" "${existing_ids[$key]}"
+          done | jq -s .)
+          echo "existing_groups=$existing_json" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Import existing Azure AD groups
+        if: ${{ steps.check-groups.outputs.existing_groups != '[]' }}
+        run: |
+          for group in $(echo '${{ steps.check-groups.outputs.existing_groups }}' | jq -r '.[].key'); do
+            id=$(echo '${{ steps.check-groups.outputs.existing_groups }}' | jq -r ".[] | select(.key==\"$group\") | .id")
+            echo "🌐 Importing existing group $group with id $id"
+            terraform import "module.access.azuread_group.$group" "$id"
+          done
 
       - name: 🚀 Create missing Azure AD groups with Terraform
         if: ${{ steps.check-groups.outputs.missing_groups != '[]' }}
