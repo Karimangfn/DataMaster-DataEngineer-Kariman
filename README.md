@@ -211,10 +211,10 @@ O GitHub Actions é responsável por orquestrar e automatizar todas as etapas do
 
 #### Resumo de Execução (Summary)
 Cada execução de workflow gera automaticamente um **summary** dentro do GitHub Actions, contendo:  
-- Recursos criados/atualizados pelo Terraform.
+- Recursos criados/atualizados ou implantados de acordo com o tipo de workflow.
 - Status de execução das etapas (Infra, Ingestão, Transformação).
 
-**Colocar imagem aqui dos summaries depois**
+   ![Figura 4.2 — Infra](assets/images/config-execution/infra-04-02.png)
 
 #### Fluxo dos Workflows
 
@@ -242,11 +242,11 @@ A orquestração dos pipelines é realizada por um **workflow do GitHub Actions*
 - Dispara o **job de transformação no Databricks**, garantindo a execução dos pipelines Bronze, Silver e Gold.
 - Coleta os resultados das execuções, tanto do AKS quanto do Databricks, e gera um resumo consolidado da execução.
 
-- **Colocar Desenho?**
+   ![Figura 1 — New Pipeline](assets/images/config-execution/pipeline-new.png)
 
 ### 3.6 Extração e Ingestão de Dados
 
-![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)  
+![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)
 
 *Figura 3 — Arquitetura de CI/CD dos microserviços de ingestão: extração de dados, build, deploy no AKS.*
 
@@ -447,7 +447,7 @@ Nesse projeto, o tema de governança de dados é tratado para garantir que cada 
 #### Unity Catalog
 
 - O Unity Catalog gerencia tabelas, views, esquemas e funções, garantindo controle de acesso, incluindo permissões em nível de objeto, linha e coluna.
-- **Rastreamento e auditoria**: permite registrar lineage completo, histórico de alterações e acessos aos dados.
+- **Rastreamento e auditoria**: permite registrar data lineage completo, histórico de alterações e acessos aos dados.
 - **Democratização de dados**: usuários podem descobrir e acessar dados de forma segura sem depender de pipelines específicos ou da intervenção de engenheiros de dados.
 - **Compartilhamento seguro de dados**: tabelas e views podem ser compartilhadas entre diferentes equipes, unidades de negócio ou até parceiros externos, mantendo o controle sobre quem pode visualizar ou alterar os dados.
 - **Padronização e organização**: centraliza metadados, schemas e nomenclaturas, garantindo consistência em todo o Data Lake e em múltiplas camadas de processamento.
@@ -503,6 +503,8 @@ Principais práticas adotadas:
 - **Release branches** → usadas para preparar versões estáveis antes de ir para produção.  
 - **Hotfix branches** → permitem correções rápidas diretamente na `main`.
 
+   ![Figura 1 — Gitflow](assets/images/config-execution/gitflow.png)
+
 ---
 
 ##  🚀 4. Guia de Configuração e Execução
@@ -538,6 +540,7 @@ A criação de uma SPN pode ser feita de forma simples de acordo com a documenta
 - A **SPN** precisa ter permissões na assinatura da Azure:  
   - *Contributor*
   - *User Access Administrator*
+
 
   1. Na sua subscription, acesse a opção: **Access control (IAM)**, no menu a direita clique em **add +** e depois em **Add role assignment**
   
@@ -575,6 +578,7 @@ A criação de uma SPN pode ser feita de forma simples de acordo com a documenta
   - *Application.Read.All*
   - *Group.ReadWrite.All*
   - *User.Read*
+
 
   1. No menu da sua SPN, acesse a opção **API permissions**
 
@@ -682,27 +686,31 @@ Permissões necessarias no Token:
 
 1. Com tudo configurado, acesse a aba **Actions** no topo do repositório.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-01.png)
+    ![Figura 1 — Infra](assets/images/config-execution/infra-01.png)
 
 2. No menu à esquerda, selecione o workflow **Deploy Cloud Infrastructure**.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-02.png)
+    ![Figura 2 — Infra](assets/images/config-execution/infra-02.png)
 
 3. Clique em **Run workflow** e confirme.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-03.png)
+    ![Figura 3 — Infra](assets/images/config-execution/infra-03.png)
 
 4. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-04.png)
+    ![Figura 4 — Infra](assets/images/config-execution/infra-04.png)
+
+   No Summary é possivel acompanhar um resumo dos recursos que foram criados
+
+    ![Figura 4.2 — Infra](assets/images/config-execution/infra-04-02.png)
 
 5. Verifique na sua conta Azure os **Resource Groups** criados: um para os recursos principais, outro para os recursos base do AKS e outro para os recursos base do Databricks.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-05.png)
+    ![Figura 5 — Infra](assets/images/config-execution/infra-05.png)
 
 6. O **Resource Group principal** conterá os recursos criados pelo workflow, incluindo **Databricks, AKS, ACR, Storage Account e Metastore Connector**.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/infra-06.png)
+    ![Figura 6 — Infra](assets/images/config-execution/infra-06.png)
 
 ---
 
@@ -710,15 +718,23 @@ Permissões necessarias no Token:
 
 1. Com a infraestrutura pronta, acesse os workflows e selecione **Build and Push to ACR**.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-01.png)
+    ![Figura 1 — ACR](assets/images/config-execution/acr-01.png)
 
 2. No menu à direita, selecione as opções de **Run workflow**.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-02.png)
+    ![Figura 2 — ACR](assets/images/config-execution/acr-02.png)
 
-3. Após a execução, verifique no **Azure Container Registry (ACR)** os containers e versões criadas dos microserviços.
+3. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/acr-03.png)
+    ![Figura 3 — ACR](assets/images/config-execution/acr-02-02.png)
+
+   No Summary é possivel acompanhar um resumo das imagens e versões que foram enviadas ao ACR
+
+    ![Figura 3.2 — ACR](assets/images/config-execution/acr-02-03.png)
+
+4. Verifique no **Azure Container Registry (ACR)** os repositórios e versões criadas dos microserviços.
+    
+    ![Figura 4 — ACR](assets/images/config-execution/acr-03.png)
 
 ---
 
@@ -726,15 +742,15 @@ Permissões necessarias no Token:
 
 1. Após o workflow do ACR, o workflow do **AKS** é disparado automaticamente.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-01.png)
+    ![Figura 1 — AKS](assets/images/config-execution/aks-01.png)
 
 2. Acompanhe no **summary** as versões dos microserviços que estão sendo implantadas.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-02.png)
+    ![Figura 2 — AKS](assets/images/config-execution/aks-02.png)
 
 3. Verifique no **AKS** se os microserviços estão instalados.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/aks-03.png)
+    ![Figura 3 — AKS](assets/images/config-execution/aks-03.png)
 
 ---
 
@@ -742,31 +758,57 @@ Permissões necessarias no Token:
 
 1. Com tudo instalado, execute o pipeline de ingestão e transformação de dados, selecionando o workflow **Orchestrate Data Pipeline**.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-01.png)
+    ![Figura 1 — Pipeline](assets/images/config-execution/pipe-01.png)
 
 2. Clique em **Run workflow**.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-02.png)
+    ![Figura 2 — Pipeline](assets/images/config-execution/pipe-02.png)
 
 3. Após a execução, verifique no **AKS** se os jobs foram concluídos com sucesso.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-03.png)
+    ![Figura 3 — Pipeline](assets/images/config-execution/pipe-03.png)
 
 4. Se acompanharmos no Storage Account, no container Raw, poderemos ver as pastas e dados referentes a cada uma das fontes de dados (File, Database e API)
 
+    ![Figura 1 — Storage](assets/images/config-execution/storage-01.png)
+
+    ![Figura 2 — Storage](assets/images/config-execution/storage-02.png)
+
+    ![Figura 3 — Storage](assets/images/config-execution/storage-03.png)
+
+    ![Figura 4 — Storage](assets/images/config-execution/storage-04.png)
+
 5. Confirme no **Databricks** a execução do job de transformação.
     
-    ![Figura 4 — Data Processing CI](assets/images/config-execution/pipe-04.png)
+    ![Figura 4 — Pipeline](assets/images/config-execution/pipe-04.png)
 
 6. Podemos verificar no nosso catalogo de dados no Databricks, que as tabelas bronze, silver e gold estarão criadas
 
+    ![Figura 1 — Catalog](assets/images/config-execution/catalog-01.png)
+
 7. No Storage Account também temos a informação dos dados repousados, cada um em seu container especifico
+
+    ![Figura 5 — Storage](assets/images/config-execution/storage-05.png)
+
+    ![Figura 6 — Storage](assets/images/config-execution/storage-06.png)
+
+    ![Figura 7 — Storage](assets/images/config-execution/storage-07.png)
 
 8. A tabela bronze virá com os dados X de forma Y
 
+    ![Figura 1 — Table](assets/images/config-execution/table-01.png)
+
 9. A tabela silver de forma Z
 
+    ![Figura 2 — Table](assets/images/config-execution/table-02.png)
+
 10. A tabela gold de forma XYZ
+
+    ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+### **4.8 Desenvolvimento e Atualização de Microserviços de ingestão**
+
+### **4.9 Desenvolvimento e Atualização de Microserviços de Data Processing**
 
 ---
 
