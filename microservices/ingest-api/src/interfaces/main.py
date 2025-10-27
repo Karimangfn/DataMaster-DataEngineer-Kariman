@@ -21,6 +21,7 @@ def main():
     """
     Main entry point that ingests data from an API
     and uploads it to Azure Blob Storage.
+    new
     """
     try:
         required_vars = [

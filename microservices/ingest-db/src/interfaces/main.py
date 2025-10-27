@@ -19,6 +19,7 @@ def main():
     """
     Main entry point that ingests data from a database
     using specified connection and query, then outputs the result.
+    new
     """
     try:
         required_vars = [

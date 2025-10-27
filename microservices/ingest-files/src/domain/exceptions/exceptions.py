@@ -1,5 +1,5 @@
 class IngestionError(Exception):
-    """Base class for ingestion-related errors."""
+    """Base class for ingestion-related errors.new"""
     pass
 
 
