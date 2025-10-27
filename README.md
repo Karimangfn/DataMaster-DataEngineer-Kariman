@@ -307,6 +307,19 @@ Arquivos de Configuração:
 - **.pre-commit-config.yaml** -> Hooks para validações automáticas antes do commit.
 - **pytest.ini** -> Configurações para execução dos testes com Pytest.
 
+#### Workflow de CI (Microservice Quality)
+
+Esse workflow é responsável por garantir a qualidade e consistência de todos os microserviços de ingestão antes da integração de novas alterações nas branches principais. Ele é acionado automaticamente quando há pull requests que envolvem mudanças dentro do diretório microservices/**.
+
+O pipeline é dividido em múltiplas etapas, assegurando que cada serviço alterado passe por um ciclo de validação:
+- **Detect Modified Microservices**: Identifica quais microserviços foram modificados em relação à branch develop, processando apenas os serviços impactados.
+- **Run Pre-commit**: Executa hooks automáticos de formatação, lint e validação de código.
+- **Run Unit Tests**: Roda os testes unitários de cada microserviço para garantir o funcionamento individual.
+- **Run MyPy**: Aplica análise estática de tipos para garantir coerência e qualidade do código Python.
+- **Validate Docker Build**: Constrói a imagem Docker de cada serviço, garantindo que o Dockerfile e as dependências estão corretos.
+- **Check ACR Version**: Verifica se a versão da imagem já existe no Azure Container Registry, evitando duplicidades.
+- **Generate Summary**: Cria um resumo automático com os resultados de cada etapa diretamente no painel do GitHub Actions.
+
 ### 3.7 Armazenamento de Dados
 
 O armazenamento dos dados é realizado em uma **Azure Storage Account**, estruturada segundo a arquitetura medalhão.
@@ -373,6 +386,17 @@ Arquivos de Configuração
 - **.gitignore** → Define arquivos ignorados no versionamento.
 - **.pre-commit-config.yaml** → Hooks para validações automáticas antes do commit.  
 - **pytest.ini** → Configurações para execução dos testes com Pytest.
+
+#### Workflow de CI (Data Processing Quality)
+
+Esse workflow é responsável por garantir a qualidade e consistência dos microserviços de Data Processing antes da integração de novas alterações nas branches principais. Ele é acionado automaticamente quando há pull requests que envolvem mudanças dentro do diretório data-processing/**.
+
+O pipeline é dividido em múltiplas etapas, assegurando que cada camada de processamento alterada passe por um ciclo de validação:
+- **Detect Modified Layers**: Identifica quais camadas (módulos) do job de Data Processing foram modificadas em relação à branch develop, processando apenas as partes impactadas.
+- **Run Pre-commit**: Executa hooks automáticos de lint, formatação e validação de código.
+- **Run Unit Tests**: Roda os testes unitários de cada camada para garantir o correto funcionamento das transformações.
+- **Run MyPy**: Realiza análise estática de tipos, assegurando coerência e padronização do código Python.
+- **Generate Summary**: Cria um resumo automático com os resultados de cada etapa diretamente no painel do GitHub Actions.
 
 ### 3.9 Qualidade e Validação de Dados
 
@@ -808,7 +832,27 @@ Permissões necessarias no Token:
 
 ### **4.8 Desenvolvimento e Atualização de Microserviços de ingestão**
 
+   Para executar o workflow de qualidade de microserviços de Ingestão, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta microservices/ 
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
 ### **4.9 Desenvolvimento e Atualização de Microserviços de Data Processing**
+
+   Para executar o workflow de qualidade de microserviços de Data Processing, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta data-processing/ 
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
 
 ---
 
