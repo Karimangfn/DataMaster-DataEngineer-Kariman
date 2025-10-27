@@ -794,15 +794,15 @@ Permissões necessarias no Token:
 
     ![Figura 7 — Storage](assets/images/config-execution/storage-07.png)
 
-8. A tabela bronze virá com os dados X de forma Y
+8. A tabela bronze virá com os dados Brutos
 
     ![Figura 1 — Table](assets/images/config-execution/table-01.png)
 
-9. A tabela silver de forma Z
+9. A tabela silver será criada com os dados tratados da tabela bronze
 
     ![Figura 2 — Table](assets/images/config-execution/table-02.png)
 
-10. A tabela gold de forma XYZ
+10. A tabela gold será criada com agregações dos resultados da tabela silver
 
     ![Figura 3 — Table](assets/images/config-execution/table-03.png)
 
@@ -810,13 +810,13 @@ Permissões necessarias no Token:
 
    Para executar o workflow de qualidade de microserviços de Ingestão, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta microservices/ 
 
-   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+   ![Figura 3 — Table](assets/images/config-execution/qa-microservices-01.png)
 
    O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
 
-   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+   ![Figura 3 — Table](assets/images/config-execution/qa-microservices-02.png)
 
-   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+   ![Figura 3 — Table](assets/images/config-execution/qa-microservices-03.png)
 
 ---
 
@@ -824,13 +824,13 @@ Permissões necessarias no Token:
 
    Para executar o workflow de qualidade de microserviços de Data Processing, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta data-processing/ 
 
-   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+   ![Figura 3 — Table](assets/images/config-execution/qa-dtprocessing-01.png)
 
    O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
 
-   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+   ![Figura 3 — Table](assets/images/config-execution/qa-dtprocessing-02.png)
 
-   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+   ![Figura 3 — Table](assets/images/config-execution/qa-dtprocessing-03.png)
 
 ---
 
