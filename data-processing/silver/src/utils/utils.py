@@ -1,7 +1,8 @@
 import re
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import coalesce, regexp_replace, col, row_number, sha2, to_date, udf
+from pyspark.sql.functions import (coalesce, col, regexp_replace, row_number,
+                                   sha2, to_date, udf)
 from pyspark.sql.types import BooleanType
 from pyspark.sql.window import Window
 

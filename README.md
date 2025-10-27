@@ -808,7 +808,29 @@ Permissões necessarias no Token:
 
 ### **4.8 Desenvolvimento e Atualização de Microserviços de ingestão**
 
+   Para executar o workflow de qualidade de microserviços de Ingestão, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta microservices/ 
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+---
+
 ### **4.9 Desenvolvimento e Atualização de Microserviços de Data Processing**
+
+   Para executar o workflow de qualidade de microserviços de Data Processing, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta data-processing/ 
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+   ![Figura 3 — Table](assets/images/config-execution/table-03.png)
 
 ---
 
