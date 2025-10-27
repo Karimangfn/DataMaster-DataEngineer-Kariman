@@ -708,7 +708,10 @@ jobs:
           existing_json=$(for key in "${!existing_ids[@]}"; do
             printf '{"key":"%s","id":"%s"}\n' "$key" "${existing_ids[$key]}"
           done | jq -s .)
-          echo "existing_groups=$existing_json" >> $GITHUB_OUTPUT
+      
+          echo "existing_groups<<EOF" >> $GITHUB_OUTPUT
+          echo "$existing_json" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: 🔄 Import existing Azure AD groups
         if: ${{ steps.check-groups.outputs.existing_groups != '[]' }}
