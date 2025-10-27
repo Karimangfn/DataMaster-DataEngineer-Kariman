@@ -722,8 +722,12 @@ jobs:
             fi
           done
 
-          # Save missing groups as JSON output
-          missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
+          if [ ${#missing[@]} -eq 0 ]; then
+            missing_json="[]"
+          else
+            missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
+          fi
+          
           echo "missing_groups=$missing_json" >> $GITHUB_OUTPUT
 
       - name: 🚀 Create missing Azure AD groups with Terraform
