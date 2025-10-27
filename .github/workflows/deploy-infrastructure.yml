@@ -719,7 +719,9 @@ jobs:
           for group in $(echo '${{ steps.check-groups.outputs.existing_groups }}' | jq -r '.[].key'); do
             id=$(echo '${{ steps.check-groups.outputs.existing_groups }}' | jq -r ".[] | select(.key==\"$group\") | .id")
             echo "🌐 Importing existing group $group with id $id"
-            terraform import "module.access.azuread_group.$group" "$id"
+            terraform import \
+              -var="subscription_id=$(az account show --query id -o tsv)" \
+              "module.access.azuread_group.$group" "$id"
           done
 
       - name: 🚀 Create missing Azure AD groups with Terraform
