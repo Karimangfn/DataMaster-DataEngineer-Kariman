@@ -721,6 +721,7 @@ jobs:
             echo "🌐 Importing existing group $group with id $id"
             terraform import \
               -var="subscription_id=$(az account show --query id -o tsv)" \
+              -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" \
               "module.access.azuread_group.$group" "/groups/$id"
           done
 
