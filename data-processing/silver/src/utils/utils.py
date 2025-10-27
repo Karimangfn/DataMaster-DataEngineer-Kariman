@@ -55,6 +55,7 @@ def clean_and_cast_columns(df):
 
     return df
 
+
 def deduplicate(df: DataFrame) -> DataFrame:
     """
     Removes duplicates keeping the latest record
