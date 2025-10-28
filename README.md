@@ -8,69 +8,52 @@ O repositório "DataMaster-DataEngineer-Kariman" apresenta a solução de Engenh
 
 ## 📑 Sumário
 
-<details>
-  <summary>📌 1. Objetivo do Projeto</summary>
+1. 📌 [Visão Geral do Projeto](#-1-visão-geral-do-projeto)
 
-  - [Início Rápido](#inicio-rapido)
+   * [Propósito](#11-propósito)
+   * [Abordagem](#12-abordagem)
 
-</details>
+2. 🏗️ [Arquitetura de Solução](#%EF%B8%8F-2-arquitetura-de-solução)
 
-<details>
-  <summary>🏗️ 2. Arquitetura de Solução</summary>
+   * [Visão Geral](#21-visão-geral)
+   * [Diagrama da Arquitetura de Solução](#22-diagrama-da-arquitetura-de-solução)
+   * [Componentes Principais](#23-componentes-principais)
 
-  - [Visão Geral](#visao-geral)
-  - [Diagrama da Arquitetura de Solução](#diagrama-da-arquitetura-de-solucao)
-  - [Componentes Principais](#componentes-principais)
-  - [Características Essenciais do Projeto](#caracteristicas-essenciais-do-projeto)
+3. ⚙️ [Arquitetura Técnica](#%EF%B8%8F-3-arquitetura-técnica)
 
-</details>
+   * [Descrição do Fluxo de Dados](#31-descrição-do-fluxo-de-dados)
+   * [Tecnologias e Serviços Utilizados](#32-tecnologias-e-serviços-utilizados)
+   * [Infraestrutura como Código (IaC)](#33-infraestrutura-como-código)
+   * [GitHub Actions](#34-github-actions)
+   * [Orquestração de Pipelines](#35-orquestração-de-pipelines)
+   * [Extração e Ingestão de Dados](#36-extração-e-ingestão-de-dados)
+   * [Armazenamento de Dados](#37-armazenamento-de-dados)
+   * [Processamento e Transformação dos Dados](#38-processamento-e-transformação-dos-dados)
+   * [Qualidade e Validação de Dados](#39-qualidade-e-validação-de-dados)
+   * [Mascaramento e Segurança dos Dados](#310-mascaramento-e-segurança-dos-dados)
+   * [Governança](#311-governança)
+   * [Observabilidade e Monitoramento](#312-observabilidade-e-monitoramento)
+   * [Escalabilidade e Desempenho](#313-escalabilidade-e-desempenho)
+   * [Metodologia de Desenvolvimento](#314-metodologia-de-desenvolvimento)
 
-<details>
-  <summary>⚙️ 3. Arquitetura Técnica</summary>
+4. 🚀 [Guia de Configuração e Execução](#-4-guia-de-configuração-e-execução)
 
-  - [Visão Geral Técnica](#visao-geral-tecnica)
-  - [Descrição do Fluxo de Dados](#descricao-do-fluxo-de-dados)
-  - [Modelagem e Estrutura do Data Lake](#modelagem-e-estrutura-do-data-lake)
-  - [Tecnologias e Serviços Utilizados](#tecnologias-e-servicos-utilizados)
-  - [Infraestrutura como Código](#infraestrutura-como-codigo)
-  - [Orquestração de Pipelines](#orquestracao-de-pipelines)
-  - [Extração e Ingestão de Dados](#extracao-e-ingestao-de-dados)
-  - [Armazenamento de Dados](#armazenamento-de-dados)
-  - [Processamento e Transformação dos Dados](#processamento-e-transformacao-dos-dados)
-  - [Qualidade e Validação de Dados](#qualidade-e-validacao-de-dados)
-  - [Mascaramento e Segurança dos Dados](#mascaramento-e-seguranca-dos-dados)
-  - [Observabilidade e Monitoramento](#observabilidade-e-monitoramento)
-  - [Escalabilidade e Desempenho](#escalabilidade-e-desempenho)
+   * [Pré-requisitos](#41-pré-requisitos)
+   * [Criação do Repositório a partir do Template](#42-criação-do-repositório-a-partir-do-template)
+   * [Configuração das Secrets e Variáveis de Ambiente](#43-configuração-das-secrets-e-variáveis-de-ambiente)
+   * [Provisionamento da Infraestrutura na Azure](#44-provisionamento-da-infraestrutura-na-azure)
+   * [Build e Publicação das Imagens Docker](#45-build-e-publicação-das-imagens-docker)
+   * [Deploy dos Microserviços no AKS](#46-deploy-dos-microserviços-no-aks)
+   * [Execução do Pipeline de Dados](#47-execução-do-pipeline-de-dados)
 
-</details>
+5. 💡 [Melhorias e Considerações Finais](#-5-melhorias-e-considerações-finais)
 
-<details>
-  <summary>🚀 4. Guia de Configuração e Execução</summary>
+   * [Melhorias Futuras](#51-melhorias-futuras)
+   * [Considerações Finais](#52-considerações-finais)
 
-  - [Pré-requisitos](#pre-requisitos)
-  - [Configuração da Infraestrutura](#configuracao-da-infraestrutura)
-  - [Configuração de Credenciais e Acessos](#configuracao-de-credenciais-e-acessos)
-  - [Execução dos Pipelines de Ingestão](#execucao-dos-pipelines-de-ingestao)
-  - [Execução dos Pipelines de Transformação](#execucao-dos-pipelines-de-transformacao)
-  - [Execução da Integração com o CRM](#execucao-da-integracao-com-o-crm)
+6. 📚 [Referências](#-6-referências)
 
-</details>
-
-<details>
-  <summary>💡 5. Melhorias e Considerações Finais</summary>
-
-  - [Melhorias Futuras](#melhorias-futuras)
-  - [Considerações Finais](#consideracoes-finais)
-
-</details>
-
-<details>
-  <summary>💰 6. Custos do Projeto</summary>
-</details>
-
-<details>
-  <summary>📚 7. Referências</summary>
-</details>
+---
 
 ## 📌 1. Visão Geral do Projeto
 
@@ -101,6 +84,8 @@ A solução foi projetada para atender a esses desafios de forma **modular e int
 * **Observabilidade e Monitoramento** para acompanhamento de execuções e detecção de falhas.
 * **Boas práticas de Engenharia de Software**, como Clean Architecture, testes automatizados e validações de qualidade de código.
 
+---
+
 ##  🏗️ 2. Arquitetura de Solução
 
 ### 2.1 Visão Geral
@@ -124,6 +109,8 @@ Os dados são ingeridos de três origens distintas (banco de dados, API e arquiv
 - **Databricks**: realiza o processamento e a transformação dos dados. A camada Bronze utiliza o Auto Loader para ingestão automatizada, a camada Silver aplica limpeza, padronização e mascaramento de dados, e a camada Gold gera a tabela pronta para análise.
 - **Infraestrutura como Código (Terraform)**: Provisiona todos os recursos necessários, incluindo ACR, AKS, Storage Account, Databricks e demais componentes da arquitetura.
 - **Automação (GitHub Actions)**: Gerencia a criação, o deploy dos microserviços e verificação de qualidade de código.
+
+---
 
 ## ⚙️ 3. Arquitetura Técnica
 
@@ -224,10 +211,10 @@ O GitHub Actions é responsável por orquestrar e automatizar todas as etapas do
 
 #### Resumo de Execução (Summary)
 Cada execução de workflow gera automaticamente um **summary** dentro do GitHub Actions, contendo:  
-- Recursos criados/atualizados pelo Terraform.
+- Recursos criados/atualizados ou implantados de acordo com o tipo de workflow.
 - Status de execução das etapas (Infra, Ingestão, Transformação).
 
-**Colocar imagem aqui dos summaries depois**
+   ![Figura 4.2 — Infra](assets/images/config-execution/infra-04-02.png)
 
 #### Fluxo dos Workflows
 
@@ -255,11 +242,11 @@ A orquestração dos pipelines é realizada por um **workflow do GitHub Actions*
 - Dispara o **job de transformação no Databricks**, garantindo a execução dos pipelines Bronze, Silver e Gold.
 - Coleta os resultados das execuções, tanto do AKS quanto do Databricks, e gera um resumo consolidado da execução.
 
-- **Colocar Desenho?**
+   ![Figura 1 — New Pipeline](assets/images/config-execution/pipeline-new.png)
 
 ### 3.6 Extração e Ingestão de Dados
 
-![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)  
+![Figura 3 — Microserviços de Ingestão](assets/images/Arquitetura-Microservices-CI-CD.png)
 
 *Figura 3 — Arquitetura de CI/CD dos microserviços de ingestão: extração de dados, build, deploy no AKS.*
 
@@ -460,7 +447,7 @@ Nesse projeto, o tema de governança de dados é tratado para garantir que cada 
 #### Unity Catalog
 
 - O Unity Catalog gerencia tabelas, views, esquemas e funções, garantindo controle de acesso, incluindo permissões em nível de objeto, linha e coluna.
-- **Rastreamento e auditoria**: permite registrar lineage completo, histórico de alterações e acessos aos dados.
+- **Rastreamento e auditoria**: permite registrar data lineage completo, histórico de alterações e acessos aos dados.
 - **Democratização de dados**: usuários podem descobrir e acessar dados de forma segura sem depender de pipelines específicos ou da intervenção de engenheiros de dados.
 - **Compartilhamento seguro de dados**: tabelas e views podem ser compartilhadas entre diferentes equipes, unidades de negócio ou até parceiros externos, mantendo o controle sobre quem pode visualizar ou alterar os dados.
 - **Padronização e organização**: centraliza metadados, schemas e nomenclaturas, garantindo consistência em todo o Data Lake e em múltiplas camadas de processamento.
@@ -516,175 +503,336 @@ Principais práticas adotadas:
 - **Release branches** → usadas para preparar versões estáveis antes de ir para produção.  
 - **Hotfix branches** → permitem correções rápidas diretamente na `main`.
 
+   ![Figura 1 — Gitflow](assets/images/config-execution/gitflow.png)
+
+---
+
 ##  🚀 4. Guia de Configuração e Execução
 
 ### 4.1 Pré-requisitos
 
 Antes de configurar e executar o projeto, é necessário garantir que o ambiente possua os seguintes pré-requisitos:
 
-#### Identidade, Permissões, Credenciais e Acessos
-- **Service Principal (SPN)** criado previamente.  
-- **Secret da SPN** configurado (*Secret Value*, não o *Secret ID*).  
+#### 4.1.1 **Service Principal (SPN)** criado previamente
+
+A criação de uma SPN pode ser feita de forma simples de acordo com a documentação da Microsoft: [Criação de SPN](https://learn.microsoft.com/en-us/entra/identity-platform/howto-create-service-principal-portal#register-an-application-with-microsoft-entra-id-and-create-a-service-principal)
+
+#### 4.1.2 **Secret da SPN** configurado (*Secret Value*, não o *Secret ID*)
+
+1. Acesse sua SPN criada anteriormente, buscando ela na barra de pesquisa:
+
+![SPN - 0101](assets/images/pre-configs/spn-01-01.png)
+
+2. No menu a esquerda, selecione *Certificates & secrets*
+
+![SPN - 02](assets/images/pre-configs/spn-01.png)
+
+3. Na aba **Client secrets** selecione **New client secret**, no menu que sera aberto a direita, coloque uma descrição e tempo de expiração para a secret e selecione **Add**
+
+![SPN - 03](assets/images/pre-configs/spn-02.png)
+
+4. Na proxima aba copie/salve o valor que esta na coluna **Value** (Não copie o Secret ID, ele não será usado)
+
+![SPN - 04](assets/images/pre-configs/spn-03.png)
+
+#### 4.1.3 **Permissionamento da SPN**
+
 - A **SPN** precisa ter permissões na assinatura da Azure:  
-  - *Contributor*  
+  - *Contributor*
   - *User Access Administrator*
 
-#### GitHub Actions
-- **Personal Access Token (PAT)** do GitHub criado e salvo nas *Secrets* do repositório com permissões adequadas.  
 
-#### Secrets obrigatórias no GitHub
-As seguintes *secrets* devem estar configuradas no repositório antes da execução de qualquer fluxo de criação:  
-
-- `DB_KEY` → Para conexão com o Database.  
-- `API_KEY` → Para conexão com a API.  
-- `AZURE_CREDENTIALS` → Credenciais para conexão na Azure, seguindo o seguinte modelo JSON:  
+  1. Na sua subscription, acesse a opção: **Access control (IAM)**, no menu a direita clique em **add +** e depois em **Add role assignment**
   
-  ```json
-  {
-    "clientId": "", 
-    "clientSecret": "", 
-    "subscriptionId": "", 
-    "tenantId": "" 
-  }
-  ```
+  ![Access Subs - 01](assets/images/pre-configs/access-subs-01.png)
 
-- `GH_PAT_TOKEN` → Token criado no GitHub, com as seguintes permissões:
+  2. Nas Roles, usa a barra de pesquisa para encontrar a **Contributor** e depois selecione ela no menu **Name**
 
-repo → Full control of private repositories
-repo:status → Access commit status
-repo_deployment → Access deployment status
-public_repo → Access public repositories
-repo:invite → Access repository invitations
-security_events → Read and write security events
-workflow → Update GitHub Action workflows
-write:packages → Upload packages to GitHub Package Registry
-read:packages → Download packages from GitHub Package Registry
-admin:org → Full control of orgs and teams, read and write org projects
-write:org → Read and write org and team membership, read and write org projects
-read:org → Read org and team membership, read org projects
-manage_runners:org → Manage org runners and runner groups
+  ![Access Subs - 02](assets/images/pre-configs/access-subs-02.png)
 
-### 4.2 Configuração da Infraestrutura
+  3. Na aba Member, selecione a SPN em **+ Select members**, será aberto um menu a direita, então busque sua SPN e clique em **Select**
 
-1. **Criar repositório a partir do template**  
-   - Clique no botão **"Use this template"** no repositório original.  
-   - Crie seu próprio repositório a partir dele.  
-   - Faça o clone do **seu repositório recém-criado**:  
-     ```bash
-     git clone https://github.com/<usuario>/<novo-repo>.git
-     cd <novo-repo>
-     ```
-    **OBS**: Colocar aqui imagem dos recursos criados na Azure
+  ![Access Subs - 03](assets/images/pre-configs/access-subs-04.png)
 
-2. **Configurar as *secrets* no GitHub**  
-   - Defina todas as *secrets* obrigatórias listadas na seção **Pré-requisitos**.  
-   - Certifique-se de que as **Workflow permissions** estejam configuradas como *Read and Write*.
+  Se tudo estiver certo, sua SPN vai aparecer nos membros
 
-   **OBS**: Colocar aqui imagem dos recursos criados na Azure
+  ![Access Subs - 04](assets/images/pre-configs/access-subs-05.png)
 
-3. **Executar o workflow de criação da infraestrutura**  
-   - O workflow do GitHub Actions responsável pela criação deve ser acionado manualmente (`workflow_dispatch`) ou via push no branch principal.  
-   - Esse pipeline realiza:  
-     - Validação de credenciais e permissões.  
-     - Criação/atualização do **Resource Group**.  
-     - Provisionamento do **Storage Account** com containers (Raw, Bronze, Silver, Gold).  
-     - Criação do **Azure Container Registry (ACR)**.  
-     - Deploy do **Azure Kubernetes Service (AKS)**.  
-     - Configuração do **Azure Databricks**.
+  4. Na aba **Review + assign** verifique a role e a SPN então clique em **Review + assign**
 
-     **OBS**: Colocar aqui imagem dos recursos criados na Azure
+  ![Access Subs - 05](assets/images/pre-configs/access-subs-06.png)
 
-4. **Validar a implantação**  
-   - Confirme que todos os recursos foram criados no **Resource Group** especificado.  
+  5. Agora faça o mesmo para a role **User Access Administrator**
+
+  ![Access Subs - 06](assets/images/pre-configs/access-subs-03.png)
+
+  Uma observação: para esse acesso, é necessario marcar a terceira opção de acesso na aba **Conditions**
+
+  ![Access Subs - 07](assets/images/pre-configs/access-subs-07.png)
+
+  6. Após atribuição dos 2 acessos, elas vão aparecer na aba de acessos da sua SPN
+
+  ![Access Subs - 08](assets/images/pre-configs/access-subs-08.png)
+
+- A **SPN** precisa ter permissões no serviço Microsoft Graph:  
+  - *Application.Read.All*
+  - *Group.ReadWrite.All*
+  - *User.Read*
+
+
+  1. No menu da sua SPN, acesse a opção **API permissions**
+
+  ![Access API - 01](assets/images/pre-configs/spn-api-01.png)
+
+  2. No centro da pagina, selecione **+ Add a permission**, no menu que será aberto a direita, selecione **Microsoft Graph**
+
+  ![Access API - 02](assets/images/pre-configs/spn-api-02.png)
+
+  3. Agora selecione **Application permissions**, na barra de busca pesquisa **application**, na barra das permissões de application, selecione **Application.Read.All** e **Add permissions**
+
+  ![Access API - 03](assets/images/pre-configs/spn-api-03.png)
+
+  4. Faça o mesmo para a permissão **Group.ReadWrite.All**
+
+  ![Access API - 04](assets/images/pre-configs/spn-api-04.png)
+
+  5. Após as permissões serem adicionadas, selecione o botão **Grant admin consent for Default Directory**
+
+  ![Access API - 05](assets/images/pre-configs/spn-api-05.png)
+
+  6. Após isso, as permissões com acesso ao directory estarão aplicadas
+
+  ![Access API - 06](assets/images/pre-configs/spn-api-06.png)
+
+#### 4.1.4 **Personal Access Token (PAT)** do GitHub criado. 
+
+Permissões necessarias no Token:
+
+![Token - 01](assets/images/pre-configs/token-01.png)
+
+### **4.2 Criação do Repositório a partir do Template**
+
+1. No repositório do projeto, acesse **“Use this template”**.
    
-   **OBS**: Colocar aqui imagem dos recursos criados na Azure
+   ![Template - 01](assets/images/config-execution/template-01.png)
+
+2. Selecione **“Create a new repository”**.
+   
+   ![Template - 02](assets/images/config-execution/template-02.png)
+
+3. Mantenha marcada a opção para levar todas as *branches* do repositório, defina o nome em **Repository name**, adicione uma descrição, configure a visibilidade e clique em **Create repository**.
+   
+   ![Template - 03](assets/images/config-execution/template-03.png)
+
+4. Aguarde alguns minutos enquanto o repositório é criado.
+   
+   ![Template - 04](assets/images/config-execution/template-04.png)
 
 ---
 
-**Observações**  
-- O **Terraform** utiliza *Remote State* armazenado nos *artifacts* do GitHub Actions, permitindo atualizações e destruição da infraestrutura de forma segura.
-- Existe um workflow específico para exclusão completa da infraestrutura.
-  
-  **OBS**: Colocar aqui imagem dos recursos criados na Azure
+### **4.3 Configuração das Secrets e Variáveis de Ambiente**
 
-### 4.4 Execução dos Pipelines de Ingestão
+1. Após o repositório ser criado, acesse **Settings**.
+   
+   ![Secrets - 01](assets/images/config-execution/secrets-01.png)
 
-A ingestão de dados neste projeto é realizada por meio de **microserviços** executados em um cluster **AKS (Azure Kubernetes Service)**.  
-Cada microserviço é responsável por extrair dados de uma fonte distinta (**Banco de Dados**, **API** e **Arquivos CSV**) e gravá-los na camada **Raw** do Data Lake.
+2. No menu à esquerda, clique em **Secrets and variables**.
+   
+   ![Secrets - 02](assets/images/config-execution/secrets-02.png)
 
-#### 1. Deploy dos Microserviços
-O deploy dos microserviços é feito via GitHub Actions.  
-Ao realizar um **merge** na branch `main`, o pipeline responsável irá:
+3. Selecione a opção **Actions**.
+   
+   ![Secrets - 03](assets/images/config-execution/secrets-03.png)
 
-1. **Buildar as imagens** Docker dos microserviços.  
-2. **Publicar as imagens** no **Azure Container Registry (ACR)**.  
-3. **Deployar as imagens** no cluster **AKS**.
+4. Em **Actions secrets and variables**, clique em **New repository secret**.
+   
+   ![Secrets - 04](assets/images/config-execution/secrets-04.png)
 
-Esse processo é totalmente automatizado pela esteira de CI/CD configurada no repositório.
+5. A primeira *secret* a ser adicionada será **AZURE_CREDENTIALS**, seguindo o modelo JSON abaixo:
+   
+   **clientId** -> ID da sua SPN
+   
+   **clientSecret** -> Secret da sua SPN
+   
+   **subscriptionId** -> ID da sua Subscription
+   
+   **tenantId** -> ID do seu tenant
+   
+   ![Secrets - 05](assets/images/config-execution/secrets-05.png)
 
-#### 2. Execução da Ingestão
-Uma vez que os microserviços estejam em execução no **AKS**, cada um consome sua fonte de dados:
+6. Em seguida, cadastre o token do GitHub com o nome **GH_PAT_TOKEN**.
+   
+   ![Secrets - 06](assets/images/config-execution/secrets-06.png)
 
-- **Banco de Dados** → extrai registros no formato `.json`.  
-- **API** → coleta dados de clientes e normaliza no mesmo schema.  
-- **Arquivos CSV** → lê e processa arquivos armazenados em diretórios de entrada.  
+7. Cadastre a chave para acessar a API, chamada **API_KEY**.
 
-Todos os dados são enviados para a **camada Raw** do **Azure Storage Account**.
+   Observação: Utilize o mesmo valor da imagem -> 8af74270
+   
+   ![Secrets - 07](assets/images/config-execution/secrets-07.png)
 
-#### 3. Acesso ao Cluster Privado
-Como o **AKS** é privado, os comandos de execução e troubleshooting devem ser feitos usando:
+8. Cadastre a chave para acessar o banco de dados, chamada **DB_KEY**.
 
-5. Considerações
-A arquitetura permite que novas fontes sejam adicionadas facilmente criando um novo microserviço e registrando sua imagem no ACR.
+   Observação: Utilze o mesmo valor da imagem -> npg_Q94FurniGUlq
+   
+   ![Secrets - 08](assets/images/config-execution/secrets-08.png)
 
-O pipeline garante que qualquer atualização de código nos microserviços resulte em uma nova versão sendo automaticamente publicada e executada no AKS.
+9. Ao finalizar, o painel de *secrets* deve se parecer com este:
+   
+   ![Secrets - 09](assets/images/config-execution/secrets-09.png)
 
-### 4.5 Execução dos Pipelines de Transformação
+---
 
-Após a ingestão na camada **Raw**, os dados passam por pipelines de transformação no **Databricks**, organizados segundo a **arquitetura medalhão** (Bronze → Silver → Gold).  
-Esses pipelines são implementados como **notebooks em Python** e orquestrados via **Databricks Jobs**.
+### **4.4 Provisionamento da Infraestrutura na Azure**
 
-#### 1. Estrutura do Job no Databricks
-O Job é composto por **3 tasks sequenciais**:
+1. Com tudo configurado, acesse a aba **Actions** no topo do repositório.
+    
+    ![Figura 1 — Infra](assets/images/config-execution/infra-01.png)
 
-1. **Bronze**  
-   - Consome dados da camada Raw utilizando o **Auto Loader** do Databricks.  
-   - Cria tabelas Delta na camada Bronze.  
-   - Garante schema enforcement e versionamento dos dados.  
+2. No menu à esquerda, selecione o workflow **Deploy Cloud Infrastructure**.
+    
+    ![Figura 2 — Infra](assets/images/config-execution/infra-02.png)
 
-2. **Silver**  
-   - Aplica transformações de limpeza e padronização.  
-   - Realiza o **mascaramento de dados sensíveis** (ex.: CPF, cartão de crédito).  
-   - Cria tabelas Delta refinadas e prontas para análises intermediárias.  
+3. Clique em **Run workflow** e confirme.
+    
+    ![Figura 3 — Infra](assets/images/config-execution/infra-03.png)
 
-3. **Gold**  
-   - Gera tabelas analíticas e métricas de negócio (ex.: total de compras, clientes por loja).  
-   - Disponibiliza dados prontos para consumo por ferramentas de BI e relatórios.  
+4. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
+    
+    ![Figura 4 — Infra](assets/images/config-execution/infra-04.png)
 
-#### 2. Execução Manual do Job
-Para executar manualmente os pipelines no Databricks:
+   No Summary é possivel acompanhar um resumo dos recursos que foram criados
 
-1. Acesse o **Workspace do Databricks**.  
-2. Vá até a seção **Jobs**.
-3. Localize o Job configurado (ex.: `etl-customers`).
-4. Clique em **Run Now** para disparar a execução.
+    ![Figura 4.2 — Infra](assets/images/config-execution/infra-04-02.png)
 
-#### 3. Execução Automatizada
-A execução também pode ser disparada automaticamente via **GitHub Actions**:
-- Ao atualizar os notebooks no repositório, a esteira de CI/CD valida o código.  
-- Caso aprovado, o pipeline de deploy publica os notebooks no Databricks.  
-- O **Databricks CLI** é então usado para disparar o Job de transformação.  
+5. Verifique na sua conta Azure os **Resource Groups** criados: um para os recursos principais, outro para os recursos base do AKS e outro para os recursos base do Databricks.
+    
+    ![Figura 5 — Infra](assets/images/config-execution/infra-05.png)
 
-#### 4. Monitoramento
-Durante a execução do Job, é possível acompanhar:
-- **Logs de execução** diretamente no Databricks.  
-- Status de cada task (Success / Failed / Running).  
-- Histórico de execuções, permitindo auditoria e rastreabilidade.  
+6. O **Resource Group principal** conterá os recursos criados pelo workflow, incluindo **Databricks, AKS, ACR, Storage Account e Metastore Connector**.
+    
+    ![Figura 6 — Infra](assets/images/config-execution/infra-06.png)
 
-#### 5. Considerações
-- O uso do **Delta Lake** garante versionamento e controle de qualidade.  
-- A separação em camadas (Bronze, Silver, Gold) assegura evolução gradual na confiabilidade dos dados.  
-- Novas transformações podem ser adicionadas facilmente criando tasks adicionais no Job.
+---
+
+### **4.5 Build e Publicação das Imagens Docker**
+
+1. Com a infraestrutura pronta, acesse os workflows e selecione **Build and Push to ACR**.
+    
+    ![Figura 1 — ACR](assets/images/config-execution/acr-01.png)
+
+2. No menu à direita, selecione as opções de **Run workflow**.
+    
+    ![Figura 2 — ACR](assets/images/config-execution/acr-02.png)
+
+3. Após a execução completa, o workflow deve aparecer com todos os *steps* concluídos.
+    
+    ![Figura 3 — ACR](assets/images/config-execution/acr-02-02.png)
+
+   No Summary é possivel acompanhar um resumo das imagens e versões que foram enviadas ao ACR
+
+    ![Figura 3.2 — ACR](assets/images/config-execution/acr-02-03.png)
+
+4. Verifique no **Azure Container Registry (ACR)** os repositórios e versões criadas dos microserviços.
+    
+    ![Figura 4 — ACR](assets/images/config-execution/acr-03.png)
+
+---
+
+### **4.6 Deploy dos Microserviços no AKS**
+
+1. Após o workflow do ACR, o workflow do **AKS** é disparado automaticamente.
+    
+    ![Figura 1 — AKS](assets/images/config-execution/aks-01.png)
+
+2. Acompanhe no **summary** as versões dos microserviços que estão sendo implantadas.
+    
+    ![Figura 2 — AKS](assets/images/config-execution/aks-02.png)
+
+3. Verifique no **AKS** se os microserviços estão instalados.
+    
+    ![Figura 3 — AKS](assets/images/config-execution/aks-03.png)
+
+---
+
+### **4.7 Execução do Pipeline de Dados**
+
+1. Com tudo instalado, execute o pipeline de ingestão e transformação de dados, selecionando o workflow **Orchestrate Data Pipeline**.
+    
+    ![Figura 1 — Pipeline](assets/images/config-execution/pipe-01.png)
+
+2. Clique em **Run workflow**.
+    
+    ![Figura 2 — Pipeline](assets/images/config-execution/pipe-02.png)
+
+3. Após a execução, verifique no **AKS** se os jobs foram concluídos com sucesso.
+    
+    ![Figura 3 — Pipeline](assets/images/config-execution/pipe-03.png)
+
+4. Se acompanharmos no Storage Account, no container Raw, poderemos ver as pastas e dados referentes a cada uma das fontes de dados (File, Database e API)
+
+    ![Figura 1 — Storage](assets/images/config-execution/storage-01.png)
+
+    ![Figura 2 — Storage](assets/images/config-execution/storage-02.png)
+
+    ![Figura 3 — Storage](assets/images/config-execution/storage-03.png)
+
+    ![Figura 4 — Storage](assets/images/config-execution/storage-04.png)
+
+5. Confirme no **Databricks** a execução do job de transformação.
+    
+    ![Figura 4 — Pipeline](assets/images/config-execution/pipe-04.png)
+
+6. Podemos verificar no nosso catalogo de dados no Databricks, que as tabelas bronze, silver e gold estarão criadas
+
+    ![Figura 1 — Catalog](assets/images/config-execution/catalog-01.png)
+
+7. No Storage Account também temos a informação dos dados repousados, cada um em seu container especifico
+
+    ![Figura 5 — Storage](assets/images/config-execution/storage-05.png)
+
+    ![Figura 6 — Storage](assets/images/config-execution/storage-06.png)
+
+    ![Figura 7 — Storage](assets/images/config-execution/storage-07.png)
+
+8. A tabela bronze virá com os dados Brutos
+
+    ![Figura 1 — Table](assets/images/config-execution/table-01.png)
+
+9. A tabela silver será criada com os dados tratados da tabela bronze
+
+    ![Figura 2 — Table](assets/images/config-execution/table-02.png)
+
+10. A tabela gold será criada com agregações dos resultados da tabela silver
+
+    ![Figura 3 — Table](assets/images/config-execution/table-03.png)
+
+### **4.8 Desenvolvimento e Atualização de Microserviços de ingestão**
+
+   Para executar o workflow de qualidade de microserviços de Ingestão, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta microservices/ 
+
+   ![Figura 3 — Table](assets/images/config-execution/qa-microservices-01.png)
+
+   O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
+
+   ![Figura 3 — Table](assets/images/config-execution/qa-microservices-02.png)
+
+   ![Figura 3 — Table](assets/images/config-execution/qa-microservices-03.png)
+
+---
+
+### **4.9 Desenvolvimento e Atualização de Microserviços de Data Processing**
+
+   Para executar o workflow de qualidade de microserviços de Data Processing, é necessária a abertura de um pull request para branch develop ou main com alguma alteração dentro da pasta data-processing/ 
+
+   ![Figura 3 — Table](assets/images/config-execution/qa-dtprocessing-01.png)
+
+   O Workflow vai verificar todos os microserviços modificados e gerar um summary sobre o resultado final
+
+   ![Figura 3 — Table](assets/images/config-execution/qa-dtprocessing-02.png)
+
+   ![Figura 3 — Table](assets/images/config-execution/qa-dtprocessing-03.png)
+
+---
 
 ##  💡 5. Melhorias e Considerações Finais
 
@@ -707,6 +855,60 @@ Durante a execução do Job, é possível acompanhar:
 O projeto demonstrou como é possível integrar dados de múltiplas fontes e formatos, organizando-os em um pipeline escalável e confiável na Azure.  
 A solução aplicou boas práticas de engenharia de dados (arquitetura medalhão, uso de Delta Lake, pipelines automatizados) em conjunto com boas práticas de engenharia de software (microserviços, CI/CD, IaC).  
 
-Embora ainda existam pontos de evolução, a arquitetura atual já fornece uma base sólida para ingestão, transformação e disponibilização de dados prontos para análise, podendo ser expandida gradualmente conforme as necessidades de negócio e requisitos de governança cresçam.
+Ao longo do desenvolvimento, foi possível explorar tecnologias como Terraform, Azure, AKS, Databricks, Delta Lake e GitHub Actions, reforçando a importância da Infraestrutura como Código, da modularização de microserviços e da observabilidade ponta a ponta no ciclo de vida dos dados.
 
-##  📚 6. Referências
+Esses elementos resultaram em uma solução orientada à automação — capaz de sustentar fluxos de dados com segurança, rastreabilidade e eficiência. Além de validar conceitos técnicos, o projeto também proporcionou uma visão integrada sobre o papel estratégico da engenharia de dados na construção de plataformas analíticas e escaláveis.
+
+---
+
+## 📚 6. Referências
+
+### **Infraestrutura e Cloud**
+
+* [Microsoft Azure Documentation]() — Storage Account, AKS, ACR, RBAC, Service Principals, Managed Identities
+* [Terraform Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) — configuração e boas práticas
+* [Unity Catalog (Databricks)](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/) — governança e lineage de dados
+* [Azure Databricks Architecture Overview](https://learn.microsoft.com/en-us/azure/databricks/getting-started/high-level-architecture) — arquitetura e práticas recomendadas
+
+---
+
+### **Engenharia de Dados**
+
+* [Arquitetura Medalhão (Medallion Architecture)](https://www.databricks.com/glossary/medallion-architecture) — boas práticas e camadas de dados
+* [Delta Lake](https://learn.microsoft.com/en-us/azure/databricks/delta/) — fundamentos ACID e otimização de performance
+* [Auto Loader (Databricks)](https://learn.microsoft.com/en-us/azure/databricks/ingestion/cloud-object-storage/auto-loader/) — ingestão incremental
+* [Data Quality Framework](https://www.montecarlodata.com/blog-pyspark-data-quality-checks) — PySpark validations
+* [Mascaramento e Anonimização de Dados](https://www.totvs.com/blog/negocios/anonimizacao/) — princípios LGPD / GDPR
+
+---
+
+### **Engenharia de Software**
+
+* [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — princípios de arquitetura limpa (Robert C. Martin)
+* [Python Best Practices](https://peps.python.org/pep-0008/) — PEP8
+* [GitFlow Workflow](https://www.alura.com.br/artigos/git-flow-o-que-e-como-quando-utilizar) — versionamento e integração contínua
+* [Testes Automatizados em Python](https://medium.com/@habbema/testes-seu-scripts-python-com-pytest-c08638423ba9) — pytest, mocks e CI
+* [Linting e Pre-Commit Hooks](https://pre-commit.com/) — padronização de código
+* [Docker e Helm Charts](https://medium.com/@max.difranco/level-up-your-deployments-with-helm-docker-and-kubernetes-5f3f8982fa6a) — empacotamento e deploy
+
+---
+
+### **Automação e CI/CD**
+
+* [GitHub Actions Documentation](https://github.com/features/actions?locale=pt-BR) — workflows, secrets e pipelines
+
+---
+
+### **Observabilidade, Segurança e Governança**
+
+* [Databricks Job Monitoring](https://learn.microsoft.com/en-us/azure/databricks/jobs/monitor) — logs e auditoria
+* [Unity Catalog (Databricks)](https://www.databricks.com/blog/unity-catalog-governance-action-monitoring-reporting-and-lineage) — data lineage e catalogação de dados
+
+---
+
+### **Metodologias e Boas Práticas**
+
+* [DataOps](https://blog.dsacademy.com.br/o-que-e_dataops/) — automação, versionamento e governança
+* [DevOps para Engenharia de Dados (Data DevOps)](https://www.xenonstack.com/insights/devops-best-practices-for-data-engineers) — integração e entrega contínua
+
+---

@@ -219,7 +219,12 @@ jobs:
   generate_summary:
     name: 📋 Deployment
     runs-on: ubuntu-latest
-    needs: aggregate_validation_results
+    needs: 
+      - aggregate_validation_results
+      - create_api_k8s_secret
+      - create_db_k8s_secret
+      - create_git_token_secret
+      - setup_cluster
     steps:
       - run: |
           echo "## 🚀 Microservices Deployment on AKS" >> $GITHUB_STEP_SUMMARY

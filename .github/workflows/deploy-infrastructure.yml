@@ -496,30 +496,6 @@ jobs:
               "git_username": "x-token-auth",
               "personal_access_token": "'"${{ secrets.GH_PAT_TOKEN }}"'"
             }'
-      
-      - name: 🧹 Clean up old Databricks resources
-        run: |
-          LOCATIONS=("bronze_external" "silver_external" "gold_external")
-          for loc in "${LOCATIONS[@]}"; do
-            echo "🧹 Checking if external location $loc exists..."
-            LOC_URL="$WORKSPACE_URL/api/2.1/unity-catalog/external-locations/$loc"
-            if curl -s -H "Authorization: Bearer $TOKEN" "$LOC_URL" | grep -q '"name"'; then
-              echo "🗑️ Deleting existing external location $loc"
-              curl -X DELETE -H "Authorization: Bearer $TOKEN" "$LOC_URL"
-            fi
-          done
-      
-          CRED_NAME="connector_cred"
-          CRED_URL="$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/$CRED_NAME?force=true"
-          echo "🧹 Checking for existing credential '$CRED_NAME'..."
-          if curl -s -H "Authorization: Bearer $TOKEN" \
-                "$WORKSPACE_URL/api/2.1/unity-catalog/storage-credentials/$CRED_NAME" | grep -q '"name"'; then
-            echo "🗑️ Deleting existing credential '$CRED_NAME' with force=true"
-            curl -X DELETE -H "Authorization: Bearer $TOKEN" "$CRED_URL"
-            sleep 5
-          else
-            echo "✅ No existing credential found"
-          fi
 
       - name: 🚀 Apply Databricks Storage Credential
         run: |
@@ -612,39 +588,54 @@ jobs:
 
       - name: 👥 Create data_engineers group
         run: |
-          echo "📡 Creating group data_engineers..."
+          echo "📡 Creating group data_engineers with workspace access..."
           RESPONSE=$(
             curl -i -w "\nStatus: %{http_code}\n" -X POST \
               "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/scim+json" \
-              -d '{"displayName": "data_engineers"}'
+              -d '{
+                "displayName": "data_engineers",
+                "entitlements": [
+                  { "value": "workspace-access" }
+                ]
+              }'
           )
           echo "🔍 API Response:"
           echo "$RESPONSE"
   
       - name: 👥 Create data_scientists group
         run: |
-          echo "📡 Creating group data_scientists..."
+          echo "📡 Creating group data_scientists with workspace access..."
           RESPONSE=$(
             curl -i -w "\nStatus: %{http_code}\n" -X POST \
               "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/scim+json" \
-              -d '{"displayName": "data_scientists"}'
+              -d '{
+                "displayName": "data_scientists",
+                "entitlements": [
+                  { "value": "workspace-access" }
+                ]
+              }'
           )
           echo "🔍 API Response:"
           echo "$RESPONSE"
   
       - name: 👥 Create data_analysts group
         run: |
-          echo "📡 Creating group data_analysts..."
+          echo "📡 Creating group data_analysts with workspace access..."
           RESPONSE=$(
             curl -i -w "\nStatus: %{http_code}\n" -X POST \
               "$WORKSPACE_URL/api/2.0/preview/scim/v2/Groups" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/scim+json" \
-              -d '{"displayName": "data_analysts"}'
+              -d '{
+                "displayName": "data_analysts",
+                "entitlements": [
+                  { "value": "workspace-access" }
+                ]
+              }'
           )
           echo "🔍 API Response:"
           echo "$RESPONSE"
@@ -693,21 +684,46 @@ jobs:
         run: |
           groups=("data_engineers" "data_analysts" "data_scientists")
           missing=()
+          declare -A existing_ids
 
           echo "🔍 Checking existing Azure AD groups..."
           for group in "${groups[@]}"; do
-            echo "🔹 Checking: $group"
-            if az ad group show --group "$group" --query "id" -o tsv >/dev/null 2>&1; then
-              echo "✅ Group '$group' already exists."
-            else
+            id=$(az ad group show --group "$group" --query "id" -o tsv 2>/dev/null || echo "")
+            if [ -z "$id" ]; then
               echo "❌ Group '$group' does not exist and will be created."
               missing+=("$group")
+            else
+              echo "✅ Group '$group' already exists."
+              existing_ids["$group"]=$id
             fi
           done
 
-          # Save missing groups as JSON output
-          missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
+          if [ ${#missing[@]} -eq 0 ]; then
+            missing_json="[]"
+          else
+            missing_json=$(printf '%s\n' "${missing[@]}" | jq -R . | jq -s -c .)
+          fi
           echo "missing_groups=$missing_json" >> $GITHUB_OUTPUT
+
+          existing_json=$(for key in "${!existing_ids[@]}"; do
+            printf '{"key":"%s","id":"%s"}\n' "$key" "${existing_ids[$key]}"
+          done | jq -s .)
+      
+          echo "existing_groups<<EOF" >> $GITHUB_OUTPUT
+          echo "$existing_json" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Import existing Azure AD groups
+        if: ${{ steps.check-groups.outputs.existing_groups != '[]' }}
+        run: |
+          for group in $(echo '${{ steps.check-groups.outputs.existing_groups }}' | jq -r '.[].key'); do
+            id=$(echo '${{ steps.check-groups.outputs.existing_groups }}' | jq -r ".[] | select(.key==\"$group\") | .id")
+            echo "🌐 Importing existing group $group with id $id"
+            terraform import \
+              -var="subscription_id=$(az account show --query id -o tsv)" \
+              -var="client_id=${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}" \
+              "module.access.azuread_group.$group" "/groups/$id"
+          done
 
       - name: 🚀 Create missing Azure AD groups with Terraform
         if: ${{ steps.check-groups.outputs.missing_groups != '[]' }}
@@ -799,9 +815,9 @@ jobs:
 
           RG_NAME=$(terraform output -raw resource_group_name 2>/dev/null || echo "N/A")
           ACR_NAME=$(terraform output -raw container_registry_name 2>/dev/null || echo "N/A")
-          AKS_NAME=$(terraform output -raw kubernetes_service_name 2>/dev/null || echo "N/A")
+          AKS_NAME=$(terraform output -raw kubernetes_cluster_name 2>/dev/null || echo "N/A")
           STORAGE_ACCOUNT=$(terraform output -raw storage_account_name 2>/dev/null || echo "N/A")
-          DB_WORKSPACE=$(terraform output -raw databricks_workspace_url 2>/dev/null || echo "N/A")
+          DB_WORKSPACE=$(terraform output -raw databricks_workspace_name 2>/dev/null || echo "N/A")
 
           declare -A JOBS
           declare -A RESOURCES

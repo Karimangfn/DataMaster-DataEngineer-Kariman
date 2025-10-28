@@ -140,7 +140,7 @@ resource "azurerm_databricks_access_connector" "connect-unity" {
 
 resource "databricks_storage_credential" "credential" {
   provider = databricks.accounts
-  name     = "connector_cred"
+  name     = "connector_cred_${var.random_id}"
 
   azure_managed_identity {
     access_connector_id = azurerm_databricks_access_connector.connect-unity.id
@@ -160,7 +160,7 @@ resource "azurerm_role_assignment" "databricks_blob_contributor" {
 
 resource "databricks_external_location" "bronze" {
   provider        = databricks.accounts
-  name            = "bronze_external"
+  name            = "bronze_external_${var.random_id}"
   url             = "abfss://bronze@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = databricks_storage_credential.credential.name
   fallback        = true
@@ -171,7 +171,7 @@ resource "databricks_external_location" "bronze" {
 
 resource "databricks_external_location" "silver" {
   provider        = databricks.accounts
-  name            = "silver_external"
+  name            = "silver_external_${var.random_id}"
   url             = "abfss://silver@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = databricks_storage_credential.credential.name
   fallback        = true
@@ -182,7 +182,7 @@ resource "databricks_external_location" "silver" {
 
 resource "databricks_external_location" "gold" {
   provider        = databricks.accounts
-  name            = "gold_external"
+  name            = "gold_external_${var.random_id}"
   url             = "abfss://gold@${var.storage_account_name}.dfs.core.windows.net"
   credential_name = databricks_storage_credential.credential.name
   fallback        = true

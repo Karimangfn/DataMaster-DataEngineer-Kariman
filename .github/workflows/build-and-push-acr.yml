@@ -116,51 +116,6 @@ jobs:
       - id: set_output
         run: echo "filtered_matrix=$(cat build_tmp/final_matrix.json)" >> $GITHUB_OUTPUT
 
-  generate_summary:
-    name: 📋 Generate Build
-    runs-on: ubuntu-latest
-    needs: [filter_each_service, aggregate_filter]
-    steps:
-      - name: 📥 Download all status artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: tmp_status
-  
-      - name: 🧩 Merge status files
-        run: |
-          find tmp_status -name "status.json" -exec cat {} + | jq -s '.' > services_status.json
-  
-      - name: 📋 Create detailed build summary
-        run: |
-          echo "## 🚀 Microservices Deployment to Azure Container Registry" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-  
-          total=$(jq length services_status.json)
-          to_build=$(jq '[.[] | select(.status == "to_build")] | length' services_status.json)
-          skipped=$(jq '[.[] | select(.status == "skipped")] | length' services_status.json)
-  
-          echo "**Detected services:** $total" >> $GITHUB_STEP_SUMMARY
-          echo "**New version to deploy detected:** $to_build 📤" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-  
-          echo "### 📦 Service Details:" >> $GITHUB_STEP_SUMMARY
-          echo "| Service | Version | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
-  
-          cat services_status.json | jq -c '.[]' | while read service; do
-            name=$(echo $service | jq -r '.service')
-            version=$(echo $service | jq -r '.version')
-            status=$(echo $service | jq -r '.status')
-  
-            if [ "$status" = "skipped" ]; then
-              echo "| $name | $version | ⏭️ Version already exists in ACR |" >> $GITHUB_STEP_SUMMARY
-            elif [ "$status" = "to_build" ]; then
-              echo "| $name | $version | 📤 Deploying new version to ACR |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| $name | $version | ⚠️ Unknown status |" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
-
   build_and_push:
     name: 🚀 Build and Push
     runs-on: ubuntu-latest
@@ -210,54 +165,47 @@ jobs:
           echo "📤 Pushing $acr_name.azurecr.io/$image_name:$version"
           docker push $acr_name.azurecr.io/$image_name:$version
 
-  build_summary:
-    name: 📝 Build Summary
+  generate_summary:
+    name: 📋 Generate Build
     runs-on: ubuntu-latest
-    needs: filter_each_service
+    needs: [filter_each_service, aggregate_filter, build_and_push]
     steps:
       - name: 📥 Download all status artifacts
         uses: actions/download-artifact@v4
         with:
           path: tmp_status
-
+  
       - name: 🧩 Merge status files
         run: |
-          mkdir -p tmp_status
           find tmp_status -name "status.json" -exec cat {} + | jq -s '.' > services_status.json
-          cat services_status.json
-
-      - name: 📋 Create Build Summary
+  
+      - name: 📋 Create detailed build summary
         run: |
-          echo "## 🚀 Microservices Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Microservices Deployment to Azure Container Registry" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
+  
           total=$(jq length services_status.json)
           to_build=$(jq '[.[] | select(.status == "to_build")] | length' services_status.json)
           skipped=$(jq '[.[] | select(.status == "skipped")] | length' services_status.json)
-
+  
           echo "**Detected services:** $total" >> $GITHUB_STEP_SUMMARY
-          echo "**New versions to deploy:** $to_build 📤" >> $GITHUB_STEP_SUMMARY
-          echo "**Skipped (already on ACR):** $skipped ⏭️" >> $GITHUB_STEP_SUMMARY
+          echo "**New version to deploy detected:** $to_build 📤" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          echo "### 📦 Service Details" >> $GITHUB_STEP_SUMMARY
+  
+          echo "### 📦 Service Details:" >> $GITHUB_STEP_SUMMARY
           echo "| Service | Version | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
-
-          cat services_status.json | jq -c '.[]' | while read -r service; do
-            name=$(echo "$service" | jq -r '.service')
-            version=$(echo "$service" | jq -r '.version')
-            status=$(echo "$service" | jq -r '.status')
-
-            case "$status" in
-              to_build)
-                echo "| $name | $version | 📤 Deploying |" >> $GITHUB_STEP_SUMMARY
-                ;;
-              skipped)
-                echo "| $name | $version | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-                ;;
-              *)
-                echo "| $name | $version | ⚠️ Unknown |" >> $GITHUB_STEP_SUMMARY
-                ;;
-            esac
+  
+          cat services_status.json | jq -c '.[]' | while read service; do
+            name=$(echo $service | jq -r '.service')
+            version=$(echo $service | jq -r '.version')
+            status=$(echo $service | jq -r '.status')
+  
+            if [ "$status" = "skipped" ]; then
+              echo "| $name | $version | ⏭️ Version already exists in ACR |" >> $GITHUB_STEP_SUMMARY
+            elif [ "$status" = "to_build" ]; then
+              echo "| $name | $version | 📤 Deploying new version to ACR |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $name | $version | ⚠️ Unknown status |" >> $GITHUB_STEP_SUMMARY
+            fi
           done

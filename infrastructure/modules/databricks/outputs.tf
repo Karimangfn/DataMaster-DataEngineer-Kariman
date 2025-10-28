@@ -3,6 +3,11 @@ output "databricks_workspace_url" {
   value       = azurerm_databricks_workspace.dbw.workspace_url
 }
 
+output "databricks_workspace_name" {
+  description = "Name of the Databricks workspace resource"
+  value       = azurerm_databricks_workspace.dbw.name
+}
+
 output "workspace_resource_id" {
   value = azurerm_databricks_workspace.dbw.id
 }
