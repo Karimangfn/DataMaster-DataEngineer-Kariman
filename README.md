@@ -666,13 +666,13 @@ Permissões necessarias no Token:
 
 7. Cadastre a chave para acessar a API, chamada **API_KEY**.
 
-   Observação: Utilize o mesmo valor da imagem -> 8af74270
+   Observação: Utilize o mesmo valor da imagem -> 8af74270 (Utilizada apenas durante a entrega do case, atualmente API desativada)
    
    ![Secrets - 07](assets/images/config-execution/secrets-07.png)
 
 8. Cadastre a chave para acessar o banco de dados, chamada **DB_KEY**.
 
-   Observação: Utilze o mesmo valor da imagem -> npg_Q94FurniGUlq
+   Observação: Utilze o mesmo valor da imagem -> npg_Q94FurniGUlq (Utilizada apenas durante a entrega do case, atualmente Database desativado)
    
    ![Secrets - 08](assets/images/config-execution/secrets-08.png)
 
